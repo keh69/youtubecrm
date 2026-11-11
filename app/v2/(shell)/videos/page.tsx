@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
-import { Empty, Loading, Note, PageHead, Panel } from '../../_components/ui'
+import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
 
 export default function V2Videos() {
   const allowed = useMenuGuard('videos')
@@ -60,6 +60,12 @@ export default function V2Videos() {
               <strong className="added-title">{added.video.title}</strong>
               <dl className="kv">
                 <div>
+                  <dt>형식</dt>
+                  <dd>
+                    <FormatChip video={added.video} />
+                  </dd>
+                </div>
+                <div>
                   <dt>종목</dt>
                   <dd>
                     <span className="sym">{added.video.stockName}</span>
@@ -98,6 +104,7 @@ export default function V2Videos() {
               <thead>
                 <tr>
                   <th>영상</th>
+                  <th>형식</th>
                   <th>종목명</th>
                   <th className="num">조회수</th>
                   <th className="num">길이</th>
@@ -117,6 +124,9 @@ export default function V2Videos() {
                           {v.title}
                         </a>
                       </div>
+                    </td>
+                    <td>
+                      <FormatChip video={v} />
                     </td>
                     <td>
                       {editing?.id === v.id ? (

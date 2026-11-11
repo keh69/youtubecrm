@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
+import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
 
 export default function V4Videos() {
@@ -68,6 +68,7 @@ export default function V4Videos() {
               {added.video.title}
             </a>
             <div className="meta-row">
+              <FormatTag video={added.video} />
               <span className="chip">{added.video.stockName}</span>
               <span>조회수 {fmtNumber(added.video.viewCount)}</span>
               <span>{fmtDuration(added.video.durationSeconds)}</span>
@@ -113,6 +114,7 @@ export default function V4Videos() {
                     </div>
                   ) : (
                     <div className="meta-row">
+                      <FormatTag video={v} />
                       <span className="chip">{v.stockName}</span>
                       <span>조회수 {fmtNumber(v.viewCount)}</span>
                       <span>업로드 {fmtDate(v.publishedAt)}</span>
@@ -134,4 +136,9 @@ export default function V4Videos() {
       </section>
     </>
   )
+}
+
+function FormatTag({ video }: { video: { durationSeconds: number | null; contentType?: string } }) {
+  const label = videoFormatLabel(video)
+  return <span className={`fmt-tag ${label === '롱폼' ? 'f-long' : 'f-short'}`}>{label}</span>
 }

@@ -9,6 +9,7 @@
   --accent: #b5532f;
   --ok: #5f7a3a;
   --late: #b8860b;
+  --overtime: #5b4a8a;
   --absent: #9b2c2c;
   --serif: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
   --sans: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -325,9 +326,6 @@
 }
 .v3 .j-stamp.tone-ok {
   color: var(--ok);
-}
-.v3 .j-stamp.tone-late {
-  color: var(--late);
 }
 .v3 .j-stamp.tone-absent {
   color: var(--absent);
@@ -757,6 +755,9 @@
 .v3 .j-table td.absent {
   color: var(--absent);
 }
+.v3 .j-table td.overtime {
+  color: var(--overtime);
+}
 .v3 .j-table.inner {
   font-size: 13px;
   background: var(--paper-light);
@@ -1116,6 +1117,14 @@
 .v3 .j-tab-sep {
   color: var(--hair);
 }
+.v3 .j-tab-no {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  margin-right: 1px;
+}
 
 .v3 .j-chips {
   display: flex;
@@ -1186,6 +1195,106 @@
 }
 .v3 .j-table.matrix td .j-textbtn + .j-textbtn {
   margin-left: 12px;
+}
+
+/* ── 직원근태: 지각/야근 표시 · 기간 합계 ── */
+.v3 .j-mark {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 2px;
+  font-family: var(--serif);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+.v3 .j-mark.late {
+  background: rgba(184, 134, 11, 0.16);
+  color: #8a6408;
+  border: 1px solid rgba(184, 134, 11, 0.55);
+}
+.v3 .j-mark.overtime {
+  background: rgba(91, 74, 138, 0.13);
+  color: var(--overtime);
+  border: 1px solid rgba(91, 74, 138, 0.5);
+}
+.v3 .j-tally {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0 0 18px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+.v3 .j-tally > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  min-width: 0;
+  text-align: center;
+}
+.v3 .j-tally > div + div {
+  border-left: 1px dotted var(--hair);
+}
+.v3 .j-tally dt {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.v3 .j-tally dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: 24px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.v3 .j-tally > div:last-child dd {
+  font-size: 18px;
+  font-weight: 700;
+  padding-top: 4px;
+}
+.v3 .j-tally .late dd {
+  color: var(--late);
+}
+.v3 .j-tally .overtime dd {
+  color: var(--overtime);
+}
+.v3 .j-tally .absent dd {
+  color: var(--absent);
+}
+
+/* ── 영상 형식(롱폼/숏폼) 표시 · 영상통계 표 ── */
+.v3 .j-format {
+  display: inline-block;
+  padding: 0 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.v3 .j-vtable td {
+  vertical-align: middle;
+}
+.v3 .j-vcell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+}
+.v3 .j-vcell .j-thumb {
+  flex: 0 0 112px;
+}
+.v3 .j-vcell .j-story-title {
+  font-size: 15px;
 }
 
 /* ── 모바일 ── */
@@ -1273,6 +1382,24 @@
   .v3 .j-table.matrix {
     min-width: 720px;
   }
+  .v3 .j-table.j-vtable {
+    min-width: 780px;
+  }
+  .v3 .j-vcell {
+    min-width: 220px;
+  }
+  .v3 .j-vcell .j-thumb {
+    flex-basis: 88px;
+  }
+  .v3 .j-tally {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .v3 .j-tally > div:nth-child(4) {
+    border-left: 0;
+  }
+  .v3 .j-tally > div:nth-child(n + 4) {
+    border-top: 1px dotted var(--hair);
+  }
 
   .v3 .j-story {
     grid-template-columns: 116px minmax(0, 1fr);
@@ -1313,5 +1440,63 @@
   }
   .v3 .j-tabs button {
     font-size: 16px;
+  }
+}
+
+/* 역할 순서 끌어서 바꾸기 */
+.v3 .drag-col {
+  width: 28px;
+  color: var(--muted);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+}
+.v3 .drag-row:hover .drag-col {
+  color: var(--accent);
+}
+.v3 .drag-row.dragging td {
+  background: var(--paper-deep);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* 스킨 */
+.v3 .j-skin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.v3 .j-skin-list li {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hair);
+}
+.v3 .j-skin-list li.on {
+  background: var(--paper-light);
+}
+.v3 .j-skin-key {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+.v3 .j-skin-body h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 18px;
+}
+.v3 .j-skin-body p {
+  margin: 4px 0 0;
+}
+@media (max-width: 640px) {
+  .v3 .j-skin-list li {
+    grid-template-columns: 44px 1fr;
+  }
+  .v3 .j-skin-list li .j-btn {
+    grid-column: 1 / -1;
   }
 }

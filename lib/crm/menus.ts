@@ -9,7 +9,7 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
   { key: 'attendance', label: '근태체크', path: '/attendance', description: '본인 출근·퇴근 버튼' },
   { key: 'attendance_team', label: '직원근태', path: '/team-attendance', description: '직원 근태 통계 확인, 결근 처리' },
   { key: 'videos', label: '영상등록', path: '/videos', description: '종목명 + 유튜브 주소로 영상 등록' },
-  { key: 'stats', label: '통계', path: '/stats', description: '영상 조회수·재생시간·업로드 현황' },
+  { key: 'stats', label: '영상통계', path: '/stats', description: '영상 조회수·재생시간·업로드 현황' },
   { key: 'settings', label: '설정', path: '/settings', description: '역할부여, 역할설정, 아이디생성' }
 ]
 

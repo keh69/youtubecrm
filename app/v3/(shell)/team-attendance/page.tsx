@@ -1,8 +1,8 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
-import { fmtMinutes, fmtTime, fmtYmdShort, shiftMonth, todayKst } from '@/lib/crm/client/format'
+import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, Stamp, type Msg } from '../../_components/ui'
 
 export default function V3TeamAttendance() {
@@ -13,9 +13,6 @@ export default function V3TeamAttendance() {
   const [msg, setMsg] = useState<Msg>(null)
   const [saving, setSaving] = useState(false)
   if (!allowed) return null
-
-  const [y, m] = team.month.split('-')
-  const isCurrentMonth = team.month >= todayKst().slice(0, 7)
 
   const submitAbsence = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,10 +33,12 @@ export default function V3TeamAttendance() {
     setMsg(res.ok ? { tone: 'ok', text: '결근을 취소했습니다.' } : { tone: 'error', text: res.error || '취소 실패' })
   }
 
+  const t = team.data?.totals
+
   return (
     <>
-      <PageHead kicker="월간 근태 보고" title="직원근태">
-        직원별 출근·지각·결근 횟수와 근무 시간입니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다.
+      <PageHead kicker="주간·월간 근태 보고" title="직원근태">
+        출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다.
       </PageHead>
 
       <section className="j-section" id="v3-absence">
@@ -75,19 +74,58 @@ export default function V3TeamAttendance() {
 
       <section className="j-section">
         <div className="j-section-head">
-          <h2 className="j-h2">
-            {y}년 {Number(m)}월 근태 통계
-          </h2>
+          <div className="j-linkset" role="tablist" aria-label="통계 기간">
+            {TEAM_PERIODS.map((p) => (
+              <button key={p.key} type="button" role="tab" aria-selected={team.period === p.key} className={team.period === p.key ? 'on' : ''} onClick={() => team.setPeriod(p.key)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
           <div className="j-pager">
-            <button type="button" className="j-textbtn" onClick={() => team.setMonth(shiftMonth(team.month, -1))}>
-              ← 이전 달
+            <button type="button" className="j-textbtn" onClick={() => team.shift(-1)}>
+              ◀ 이전
             </button>
             <span aria-hidden="true">·</span>
-            <button type="button" className="j-textbtn" disabled={isCurrentMonth} onClick={() => team.setMonth(shiftMonth(team.month, 1))}>
-              다음 달 →
+            <button type="button" className="j-textbtn" onClick={team.goToday}>
+              {team.period === 'week' ? '이번 주' : '이번 달'}
+            </button>
+            <span aria-hidden="true">·</span>
+            <button type="button" className="j-textbtn" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
+              다음 ▶
             </button>
           </div>
         </div>
+        <h2 className="j-h2">{team.data?.label || '근태 통계'}</h2>
+
+        {t && (
+          <dl className="j-tally">
+            <div>
+              <dt>출근</dt>
+              <dd>{t.present}</dd>
+            </div>
+            <div className="late">
+              <dt>지각</dt>
+              <dd>{t.late}</dd>
+            </div>
+            <div>
+              <dt>퇴근</dt>
+              <dd>{t.checkedOut}</dd>
+            </div>
+            <div className="overtime">
+              <dt>야근</dt>
+              <dd>{t.overtime}</dd>
+            </div>
+            <div className="absent">
+              <dt>결근</dt>
+              <dd>{t.absent}</dd>
+            </div>
+            <div>
+              <dt>총 근무시간</dt>
+              <dd>{fmtMinutes(t.workedMinutes)}</dd>
+            </div>
+          </dl>
+        )}
+
         {team.error && <Note msg={{ tone: 'error', text: team.error }} />}
         {team.loading && !team.data ? (
           <Loading />
@@ -102,6 +140,8 @@ export default function V3TeamAttendance() {
                   <th>소속</th>
                   <th className="num">출근</th>
                   <th className="num">지각</th>
+                  <th className="num">퇴근</th>
+                  <th className="num">야근</th>
                   <th className="num">결근</th>
                   <th className="num">총 근무시간</th>
                 </tr>
@@ -121,12 +161,14 @@ export default function V3TeamAttendance() {
                         <td>{row.user.affiliationName || '-'}</td>
                         <td className="num">{row.summary.present}</td>
                         <td className="num late">{row.summary.late}</td>
+                        <td className="num">{row.summary.checkedOut}</td>
+                        <td className="num overtime">{row.summary.overtime}</td>
                         <td className="num absent">{row.summary.absent}</td>
                         <td className="num">{fmtMinutes(row.summary.workedMinutes)}</td>
                       </tr>
                       {isOpen && (
                         <tr className="j-detail">
-                          <td colSpan={6}>
+                          <td colSpan={8}>
                             <table className="j-table inner">
                               <thead>
                                 <tr>
@@ -152,6 +194,11 @@ export default function V3TeamAttendance() {
                                       <td className="num nowrap">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                       <td>
                                         <Stamp record={r} />
+                                        {dayBadges(r).map((b) => (
+                                          <span key={b.key} className={`j-mark ${b.key}`}>
+                                            {b.label}
+                                          </span>
+                                        ))}
                                         {r?.status === 'absent' && <small className="j-reason"> {r.absenceReason}</small>}
                                       </td>
                                       <td className="right nowrap">

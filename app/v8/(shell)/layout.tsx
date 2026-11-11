@@ -1,0 +1,60 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+
+function Shell({ children }: { children: React.ReactNode }) {
+  const { me, logout } = useSession()
+  const nav = useNav()
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="shell">
+      <aside className={`side ${open ? 'open' : ''}`}>
+        <div className="brand">
+          <img src="/logo-ant.png" alt="" width={28} height={28} />
+          <div>
+            <strong>여왕개미미디어</strong>
+            <span>crm v8 · tty1</span>
+          </div>
+        </div>
+        <span className="side-label">$ ls ./menu</span>
+        <nav className="side-nav" aria-label="메뉴">
+          {nav.map((item) => (
+            <Link key={item.key} href={item.href} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={() => setOpen(false)}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="side-user">
+          <div>
+            <strong>{me.name}</strong>
+            <span>uid={me.loginId}</span>
+            <span>{me.roles.map((r) => r.name).join(', ') || '역할 없음'}</span>
+          </div>
+          <button className="btn ghost small" onClick={logout}>
+            로그아웃
+          </button>
+        </div>
+      </aside>
+      <div className="main">
+        <header className="mobile-top">
+          <button className="btn ghost small" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+            ☰ 메뉴
+          </button>
+          <strong>{me.loginId}@crm</strong>
+        </header>
+        {open && <div className="side-dim" onClick={() => setOpen(false)} />}
+        <main className="content">{children}</main>
+      </div>
+    </div>
+  )
+}
+
+export default function V8ShellLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <CrmSessionProvider base="/v8" loading={<div className="boot">불러오는 중…</div>}>
+      <Shell>{children}</Shell>
+    </CrmSessionProvider>
+  )
+}

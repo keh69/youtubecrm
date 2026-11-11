@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
+import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 
 export default function V3Videos() {
@@ -68,6 +68,7 @@ export default function V3Videos() {
                   {added.video.title}
                 </a>
                 <p className="j-byline">
+                  <span className="j-format">{videoFormatLabel(added.video)}</span>
                   <span className="j-tag">{added.video.stockName}</span> 조회수 {fmtNumber(added.video.viewCount)} · {fmtDuration(added.video.durationSeconds)} · 업로드{' '}
                   {fmtDate(added.video.publishedAt)}
                 </p>
@@ -120,6 +121,7 @@ export default function V3Videos() {
                     </div>
                   ) : (
                     <p className="j-byline">
+                      <span className="j-format">{videoFormatLabel(v)}</span>
                       <span className="j-tag">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)}
                     </p>
                   )}

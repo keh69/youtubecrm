@@ -1432,6 +1432,18 @@
   outline: 3px dashed var(--blue);
   outline-offset: 3px;
 }
+.v4 .tab-no {
+  display: inline-block;
+  min-width: 2ch;
+  margin-right: 4px;
+  padding: 1px 6px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background: #fff;
+  color: #000;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
 
 .v4 .tbl-assign {
   min-width: 760px;
@@ -1824,4 +1836,210 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ───────── 직원근태: 주간/월간 · 합계 · 지각/야근 배지 ───────── */
+.v4 .team-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.v4 .att-totals {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.v4 .att-total {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--line);
+  border-radius: 4px;
+  box-shadow: var(--sh-xs);
+  background: #fff;
+}
+.v4 .att-total span {
+  font-weight: 900;
+  font-size: 13px;
+}
+.v4 .att-total strong {
+  font-family: var(--head);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.v4 .att-total.c-ok {
+  background: var(--mint);
+}
+.v4 .att-total.c-late {
+  background: var(--orange);
+}
+.v4 .att-total.c-out {
+  background: var(--blue-soft);
+}
+.v4 .att-total.c-over {
+  background: #b9a2ff;
+}
+.v4 .att-total.c-absent {
+  background: var(--pink);
+}
+.v4 .att-total.c-time {
+  background: var(--yellow);
+}
+.v4 .att-total.c-time strong {
+  font-size: 22px;
+}
+.v4 .count.c-out {
+  background: var(--blue-soft);
+}
+.v4 .count.c-over {
+  background: #b9a2ff;
+}
+.v4 .day-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 2px solid #000;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.v4 .day-badge.db-late {
+  background: var(--orange);
+}
+.v4 .day-badge.db-overtime {
+  background: #6b4dff;
+  color: #fff;
+}
+
+/* ───────── 영상 형식 태그(롱폼/숏폼) ───────── */
+.v4 .fmt-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 2px solid #000;
+  border-radius: 3px;
+  box-shadow: 2px 2px 0 #000;
+  font-family: var(--head);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.v4 .fmt-tag.f-long {
+  background: var(--blue);
+  color: #fff;
+}
+.v4 .fmt-tag.f-short {
+  background: var(--yellow);
+}
+
+/* ───────── 영상통계: 표 형태 영상 목록 ───────── */
+.v4 .vtbl {
+  min-width: 860px;
+}
+.v4 .vrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+}
+.v4 .vrow-thumb {
+  flex: 0 0 auto;
+  display: block;
+  width: 104px;
+  border: 2px solid #000;
+  border-radius: 3px;
+  background: #000;
+  overflow: hidden;
+}
+.v4 .vrow-thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.v4 .vrow-thumb:hover img {
+  opacity: 0.85;
+}
+
+@media (max-width: 959px) {
+  .v4 .att-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 759px) {
+  .v4 .att-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .v4 .att-total strong {
+    font-size: 24px;
+  }
+  .v4 .vrow-thumb {
+    width: 80px;
+  }
+}
+
+/* 역할 순서 끌어서 바꾸기 */
+.v4 .drag-col {
+  width: 32px;
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+  font-weight: 900;
+}
+.v4 .drag-row:hover .drag-col {
+  background: var(--yellow);
+}
+.v4 .drag-row.dragging td {
+  background: var(--yellow-soft);
+  opacity: 0.75;
+}
+
+/* 스킨 */
+.v4 .skin-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.v4 .skin-card {
+  border: var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.v4 .skin-card.bg-yellow-soft {
+  background: var(--yellow-soft);
+}
+.v4 .skin-card.bg-blue-soft {
+  background: var(--blue-soft);
+}
+.v4 .skin-card.on {
+  box-shadow: var(--sh);
+  transform: rotate(-1deg);
+}
+.v4 .skin-card p {
+  margin: 0;
+  flex: 1;
+}
+.v4 .skin-name {
+  font-family: var(--head);
+  font-size: 20px;
 }

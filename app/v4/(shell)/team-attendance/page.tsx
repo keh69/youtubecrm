@@ -1,8 +1,8 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
-import { fmtMinutes, fmtTime, fmtYmdShort, shiftMonth, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
+import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead, Sticker, type MsgState } from '../../_components/ui'
 
 export default function V4TeamAttendance() {
@@ -13,9 +13,6 @@ export default function V4TeamAttendance() {
   const [msg, setMsg] = useState<MsgState>(null)
   const [saving, setSaving] = useState(false)
   if (!allowed) return null
-
-  const [y, m] = team.month.split('-')
-  const isCurrentMonth = team.month >= todayKst().slice(0, 7)
 
   const submitAbsence = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,9 +33,15 @@ export default function V4TeamAttendance() {
     setMsg(res.ok ? { tone: 'ok', text: '결근을 취소했습니다.' } : { tone: 'error', text: res.error || '취소 실패' })
   }
 
+  const t = team.data?.totals
+
   return (
     <>
-      <PageHead title="직원근태" tag="팀 현황" desc="직원별 출근·지각·결근 횟수와 근무 시간입니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
+      <PageHead
+        title="직원근태"
+        tag="팀 현황"
+        desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다."
+      />
 
       <section className="blk bg-pink-soft" id="v4-absence-form">
         <BlockTitle color="pink">결근 처리</BlockTitle>
@@ -74,24 +77,57 @@ export default function V4TeamAttendance() {
       </section>
 
       <section className="blk">
-        <BlockTitle
-          color="yellow"
-          right={
-            <div className="month-nav">
-              <button className="btn white sm" onClick={() => team.setMonth(shiftMonth(team.month, -1))}>
-                ◀ 이전 달
+        <div className="team-bar">
+          <div className="seg" role="tablist" aria-label="통계 기간">
+            {TEAM_PERIODS.map((p) => (
+              <button key={p.key} type="button" role="tab" aria-selected={team.period === p.key} className={team.period === p.key ? 'on' : ''} onClick={() => team.setPeriod(p.key)}>
+                {p.label}
               </button>
-              <span className="month-pill">
-                {y}.{m}
-              </span>
-              <button className="btn white sm" disabled={isCurrentMonth} onClick={() => team.setMonth(shiftMonth(team.month, 1))}>
-                다음 달 ▶
-              </button>
+            ))}
+          </div>
+          <div className="month-nav">
+            <button className="btn white sm" onClick={() => team.shift(-1)}>
+              ◀ 이전
+            </button>
+            <button className="btn yellow sm" onClick={team.goToday}>
+              {team.period === 'week' ? '이번 주' : '이번 달'}
+            </button>
+            <button className="btn white sm" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
+              다음 ▶
+            </button>
+          </div>
+        </div>
+        <BlockTitle color="yellow">{team.data?.label || '근태 통계'}</BlockTitle>
+
+        {t && (
+          <div className="att-totals">
+            <div className="att-total c-ok">
+              <span>출근</span>
+              <strong>{t.present}</strong>
             </div>
-          }
-        >
-          {y}년 {Number(m)}월 근태 통계
-        </BlockTitle>
+            <div className="att-total c-late">
+              <span>지각</span>
+              <strong>{t.late}</strong>
+            </div>
+            <div className="att-total c-out">
+              <span>퇴근</span>
+              <strong>{t.checkedOut}</strong>
+            </div>
+            <div className="att-total c-over">
+              <span>야근</span>
+              <strong>{t.overtime}</strong>
+            </div>
+            <div className="att-total c-absent">
+              <span>결근</span>
+              <strong>{t.absent}</strong>
+            </div>
+            <div className="att-total c-time">
+              <span>총 근무시간</span>
+              <strong>{fmtMinutes(t.workedMinutes)}</strong>
+            </div>
+          </div>
+        )}
+
         {team.error && <Msg tone="error">{team.error}</Msg>}
         {team.loading && !team.data ? (
           <Loading />
@@ -106,6 +142,8 @@ export default function V4TeamAttendance() {
                   <th>소속</th>
                   <th className="num">출근</th>
                   <th className="num">지각</th>
+                  <th className="num">퇴근</th>
+                  <th className="num">야근</th>
                   <th className="num">결근</th>
                   <th className="num">총 근무시간</th>
                 </tr>
@@ -131,13 +169,19 @@ export default function V4TeamAttendance() {
                           <span className="count c-late">{row.summary.late}</span>
                         </td>
                         <td className="num">
+                          <span className="count c-out">{row.summary.checkedOut}</span>
+                        </td>
+                        <td className="num">
+                          <span className="count c-over">{row.summary.overtime}</span>
+                        </td>
+                        <td className="num">
                           <span className="count c-absent">{row.summary.absent}</span>
                         </td>
                         <td className="num strong">{fmtMinutes(row.summary.workedMinutes)}</td>
                       </tr>
                       {isOpen && (
                         <tr className="detail-row">
-                          <td colSpan={6}>
+                          <td colSpan={8}>
                             <div className="detail-box">
                               <div className="detail-title">{row.user.name} · 날짜별 출퇴근</div>
                               <div className="tbl-wrap inner">
@@ -166,6 +210,11 @@ export default function V4TeamAttendance() {
                                           <td className="num">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                           <td>
                                             <Sticker tone={statusTone(r)}>{statusLabel(r)}</Sticker>
+                                            {dayBadges(r).map((b) => (
+                                              <span key={b.key} className={`day-badge db-${b.key}`}>
+                                                {b.label}
+                                              </span>
+                                            ))}
                                             {r?.status === 'absent' && <span className="reason">{r.absenceReason}</span>}
                                           </td>
                                           <td className="right">

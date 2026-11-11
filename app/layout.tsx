@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { BUILD_VERSION } from '@/lib/generated-version'
 import { VersionSwitcher } from '@/components/version-switcher'
+import { ImpersonationBar } from '@/components/impersonation-bar'
 
 // 루트 레이아웃은 비워 둔다. 화면 모양(헤더, 메뉴, 색, 글꼴)은 v1~v5 각 버전 레이아웃이 전부 정한다.
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body>
         {children}
+        <ImpersonationBar />
         <VersionSwitcher buildVersion={BUILD_VERSION} />
       </body>
     </html>

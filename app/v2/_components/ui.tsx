@@ -1,6 +1,6 @@
 'use client'
 
-import { statusLabel, statusTone } from '@/lib/crm/client/format'
+import { statusLabel, statusTone, videoFormatLabel } from '@/lib/crm/client/format'
 import type { DayRecord } from '@/lib/crm/client/types'
 
 // v2 전용 작은 화면 조각들
@@ -42,6 +42,12 @@ export function Note({ msg }: { msg: Msg }) {
 
 export function StatusTag({ record }: { record: DayRecord | null | undefined }) {
   return <span className={`tag tone-${statusTone(record)}`}>{statusLabel(record)}</span>
+}
+
+// 영상 형식 칩: 10분 이상 롱폼, 미만 숏폼
+export function FormatChip({ video }: { video: { durationSeconds: number | null; contentType?: string } }) {
+  const label = videoFormatLabel(video)
+  return <span className={`fmt ${label === '롱폼' ? 'long' : 'short'}`}>{label}</span>
 }
 
 export function Loading() {

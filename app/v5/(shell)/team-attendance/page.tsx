@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
-import { fmtMinutes, fmtTime, fmtYmdShort, shiftMonth, todayKst } from '@/lib/crm/client/format'
+import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 
 export default function V5TeamAttendance() {
@@ -13,9 +13,6 @@ export default function V5TeamAttendance() {
   const [msg, setMsg] = useState<Msg>(null)
   const [saving, setSaving] = useState(false)
   if (!allowed) return null
-
-  const [y, m] = team.month.split('-')
-  const isCurrentMonth = team.month >= todayKst().slice(0, 7)
 
   const submitAbsence = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,9 +33,11 @@ export default function V5TeamAttendance() {
     setMsg(res.ok ? { tone: 'ok', text: '결근을 취소했습니다.' } : { tone: 'error', text: res.error || '취소 실패' })
   }
 
+  const t = team.data?.totals
+
   return (
     <>
-      <PageHead emoji="👥" title="직원근태" desc="직원별 출근·지각·결근 횟수와 근무 시간입니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
+      <PageHead emoji="👥" title="직원근태" desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
 
       <section className="g-glass" id="g-absence-form">
         <h2 className="g-h2">결근 처리</h2>
@@ -71,21 +70,55 @@ export default function V5TeamAttendance() {
 
       <section className="g-glass">
         <div className="g-card-head">
-          <h2 className="g-h2">
-            {y}년 {Number(m)}월 근태 통계
-          </h2>
+          <div className="g-seg" role="tablist" aria-label="통계 기간">
+            {TEAM_PERIODS.map((p) => (
+              <button key={p.key} type="button" role="tab" aria-selected={team.period === p.key} className={team.period === p.key ? 'on' : ''} onClick={() => team.setPeriod(p.key)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
           <div className="g-month-nav">
-            <button className="g-btn ghost sm" onClick={() => team.setMonth(shiftMonth(team.month, -1))}>
-              ‹ 이전 달
+            <button className="g-btn ghost sm" onClick={() => team.shift(-1)}>
+              ◀ 이전
             </button>
-            <span className="g-month-label">
-              {y}.{m}
-            </span>
-            <button className="g-btn ghost sm" disabled={isCurrentMonth} onClick={() => team.setMonth(shiftMonth(team.month, 1))}>
-              다음 달 ›
+            <button className="g-btn ghost sm" onClick={team.goToday}>
+              {team.period === 'week' ? '이번 주' : '이번 달'}
+            </button>
+            <button className="g-btn ghost sm" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
+              다음 ▶
             </button>
           </div>
         </div>
+        <h2 className="g-h2 g-period-title">{team.data?.label || '근태 통계'}</h2>
+
+        {t && (
+          <div className="g-totals">
+            <span className="g-stat ok">
+              <small>출근</small>
+              <b>{t.present}</b>
+            </span>
+            <span className="g-stat late">
+              <small>지각</small>
+              <b>{t.late}</b>
+            </span>
+            <span className="g-stat out">
+              <small>퇴근</small>
+              <b>{t.checkedOut}</b>
+            </span>
+            <span className="g-stat overtime">
+              <small>야근</small>
+              <b>{t.overtime}</b>
+            </span>
+            <span className="g-stat absent">
+              <small>결근</small>
+              <b>{t.absent}</b>
+            </span>
+            <span className="g-stat time">
+              <small>총 근무시간</small>
+              <b>{fmtMinutes(t.workedMinutes)}</b>
+            </span>
+          </div>
+        )}
 
         {team.error && <Note msg={{ tone: 'error', text: team.error }} />}
         {team.loading && !team.data ? (
@@ -115,6 +148,14 @@ export default function V5TeamAttendance() {
                       <span className="g-stat late">
                         <small>지각</small>
                         <b>{row.summary.late}</b>
+                      </span>
+                      <span className="g-stat out">
+                        <small>퇴근</small>
+                        <b>{row.summary.checkedOut}</b>
+                      </span>
+                      <span className="g-stat overtime">
+                        <small>야근</small>
+                        <b>{row.summary.overtime}</b>
                       </span>
                       <span className="g-stat absent">
                         <small>결근</small>
@@ -156,7 +197,14 @@ export default function V5TeamAttendance() {
                                 </td>
                                 <td className="num">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                 <td>
-                                  <StatusPill record={r} />
+                                  <span className="g-badges">
+                                    <StatusPill record={r} />
+                                    {dayBadges(r).map((b) => (
+                                      <span key={b.key} className={`g-pill tone-${b.key}`}>
+                                        {b.label}
+                                      </span>
+                                    ))}
+                                  </span>
                                   {r?.status === 'absent' && <span className="g-muted g-small"> {r.absenceReason}</span>}
                                 </td>
                                 <td className="right">

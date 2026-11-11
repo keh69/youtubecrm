@@ -1,47 +1,30 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { STAT_PRESETS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm/client/format'
+import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
+import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
-
-type Sort = 'date' | 'views' | 'duration'
-
-const SORTS = [
-  ['date', '최신순'],
-  ['views', '조회수순'],
-  ['duration', '길이순']
-] as const
 
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
-  const [sort, setSort] = useState<Sort>('date')
-
-  const videos = useMemo(() => {
-    const list = [...(st.data?.videos || [])]
-    if (sort === 'views') list.sort((a, b) => b.viewCount - a.viewCount)
-    else if (sort === 'duration') list.sort((a, b) => (b.durationSeconds || 0) - (a.durationSeconds || 0))
-    else list.sort((a, b) => (b.publishedAt || b.createdAt).localeCompare(a.publishedAt || a.createdAt))
-    return list
-  }, [st.data, sort])
 
   if (!allowed) return null
+  const videos = st.videos
   const daily = st.data?.daily || []
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
   const labelStep = Math.max(1, Math.ceil(daily.length / 15))
   const dense = daily.length > 31
-  const showOwner = st.who !== 'me' && st.who !== me.id
+  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
     <>
-      <PageHead emoji="📊" title="통계" desc="업로드 날짜 기준입니다. 조회수는 화면을 열 때 유튜브에서 새로 가져옵니다(30분마다)." />
+      <PageHead emoji="📊" title="영상통계" desc="업로드 날짜 기준입니다. 조회수는 화면을 열 때 유튜브에서 새로 가져옵니다(30분마다)." />
 
       <section className="g-glass g-filters">
         {st.canPickPeople && (
           <label className="g-field">
-            <span>누구</span>
+            <span>담당자</span>
             <select className="g-input" value={st.who} onChange={(e) => st.setWho(e.target.value)}>
               <option value="me">나 ({me.name})</option>
               <option value="all">전체 직원</option>
@@ -57,20 +40,26 @@ export default function V5Stats() {
         )}
         <div className="g-field">
           <span>기간</span>
-          <div className="g-seg" role="group" aria-label="기간 빠른 선택">
-            {STAT_PRESETS.map((p) => (
-              <button key={p.key} type="button" className={st.activePreset === p.key ? 'on' : ''} aria-pressed={st.activePreset === p.key} onClick={() => st.applyPreset(p.days)}>
+          <div className="g-seg" role="group" aria-label="기간">
+            {STAT_PERIODS.map((p) => (
+              <button key={p.key} type="button" className={st.period === p.key ? 'on' : ''} aria-pressed={st.period === p.key} onClick={() => st.setPeriod(p.key)}>
                 {p.label}
               </button>
             ))}
           </div>
         </div>
+        <label className="g-field">
+          <span>특정날짜</span>
+          <input className="g-input g-date" type="date" value={st.date} max={todayKst()} onChange={(e) => st.setDate(e.target.value)} />
+        </label>
         <div className="g-field">
-          <span>직접 선택</span>
-          <div className="g-range">
-            <input className="g-input" type="date" aria-label="시작" value={st.from} onChange={(e) => e.target.value && st.setRange(e.target.value, st.to)} />
-            <span className="g-muted">~</span>
-            <input className="g-input" type="date" aria-label="끝" value={st.to} onChange={(e) => e.target.value && st.setRange(st.from, e.target.value)} />
+          <span>정렬</span>
+          <div className="g-seg" role="group" aria-label="정렬">
+            {STAT_SORTS.map((o) => (
+              <button key={o.key} type="button" className={st.sort === o.key ? 'on' : ''} aria-pressed={st.sort === o.key} onClick={() => st.setSort(o.key)}>
+                {o.label}
+              </button>
+            ))}
           </div>
         </div>
         {st.loading && st.data && <span className="g-spinner g-filters-spin" aria-label="새로 불러오는 중" />}
@@ -83,7 +72,7 @@ export default function V5Stats() {
           <span className="g-kpi-icon" aria-hidden="true">
             🎞️
           </span>
-          <small>올린 영상</small>
+          <small>올린 영상 · {rangeText}</small>
           <strong>{fmtNumber(st.data?.summary.videoCount)}개</strong>
         </div>
         <div className="g-kpi k2">
@@ -102,11 +91,9 @@ export default function V5Stats() {
         </div>
       </section>
 
-      <section className="g-glass">
-        <h2 className="g-h2">일자별 올린 개수</h2>
-        {st.loading && !st.data ? (
-          <Loading />
-        ) : (
+      {daily.length > 1 && (
+        <section className="g-glass">
+          <h2 className="g-h2">일자별 올린 개수</h2>
           <div className="g-chart-wrap">
             <div className={`g-chart ${dense ? 'dense' : ''}`} role="img" aria-label="일자별 업로드 개수 막대">
               {daily.map((d, i) => (
@@ -120,17 +107,17 @@ export default function V5Stats() {
               ))}
             </div>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {st.data && st.data.perPerson.length > 0 && (
         <section className="g-glass">
-          <h2 className="g-h2">직원별</h2>
+          <h2 className="g-h2">담당자별</h2>
           <div className="g-table-wrap">
             <table className="g-table">
               <thead>
                 <tr>
-                  <th>직원</th>
+                  <th>담당자</th>
                   <th className="num">영상</th>
                   <th className="num">총 조회수</th>
                   <th className="num">총 재생시간</th>
@@ -165,52 +152,62 @@ export default function V5Stats() {
       <section className="g-glass">
         <div className="g-card-head">
           <h2 className="g-h2">영상 ({fmtNumber(videos.length)})</h2>
-          <div className="g-seg" role="group" aria-label="정렬">
-            {SORTS.map(([k, label]) => (
-              <button key={k} type="button" className={sort === k ? 'on' : ''} aria-pressed={sort === k} onClick={() => setSort(k)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <span className="g-muted g-small">{STAT_SORTS.find((o) => o.key === st.sort)?.label}</span>
         </div>
         {st.loading && !st.data ? (
           <Loading />
         ) : videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
-          <ul className="g-vgrid">
-            {videos.map((v) => (
-              <li key={v.id}>
-                <a href={v.url} target="_blank" rel="noreferrer" className="g-thumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="g-dur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="g-vcard-body">
-                  <div className="g-meta-chips">
-                    <span className="g-chip accent">{v.stockName}</span>
-                    {showOwner && v.ownerName && <span className="g-chip">{v.ownerName}</span>}
-                  </div>
-                  <a href={v.url} target="_blank" rel="noreferrer" className="g-vtitle">
-                    {v.title}
-                  </a>
-                  <dl className="g-vmeta">
-                    <div>
-                      <dt>조회수</dt>
-                      <dd>{fmtNumber(v.viewCount)}</dd>
-                    </div>
-                    <div>
-                      <dt>재생시간</dt>
-                      <dd>{fmtDuration(v.durationSeconds)}</dd>
-                    </div>
-                    <div>
-                      <dt>올린 날짜</dt>
-                      <dd>{fmtDate(v.publishedAt || v.createdAt)}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="g-table-wrap">
+            <table className="g-table g-vtable">
+              <thead>
+                <tr>
+                  <th>영상</th>
+                  <th>담당자</th>
+                  <th>형식</th>
+                  <th>종목</th>
+                  <th className="num">조회수</th>
+                  <th className="num">재생시간</th>
+                  <th>올린 날짜</th>
+                </tr>
+              </thead>
+              <tbody>
+                {videos.map((v) => {
+                  const fmt = videoFormatLabel(v)
+                  return (
+                    <tr key={v.id}>
+                      <td>
+                        <div className="g-vcell">
+                          <a href={v.url} target="_blank" rel="noreferrer" className="g-thumb" aria-label={`${v.title} 유튜브에서 보기`}>
+                            <img src={v.thumbnailUrl} alt="" loading="lazy" />
+                          </a>
+                          <a href={v.url} target="_blank" rel="noreferrer" className="g-vtitle">
+                            {v.title}
+                          </a>
+                        </div>
+                      </td>
+                      <td className="nowrap">
+                        <span className="g-who">
+                          <span className="g-avatar xs">{(v.ownerName || '-').slice(0, 1)}</span>
+                          {v.ownerName || '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
+                      </td>
+                      <td>
+                        <span className="g-chip accent">{v.stockName}</span>
+                      </td>
+                      <td className="num">{fmtNumber(v.viewCount)}</td>
+                      <td className="num">{fmtDuration(v.durationSeconds)}</td>
+                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </>

@@ -18,6 +18,7 @@ export type CrmProfile = {
   custom_role_code: string | null
   employment_status: string
   affiliation_role_id?: string | null
+  skin?: string | null
 }
 
 export type CrmContext = {
@@ -62,7 +63,7 @@ export const MIGRATION_HINT = 'DB 업데이트가 필요합니다. supabase/sql/
 export async function loadProfileByAuthId(db: Admin, authUserId: string): Promise<CrmProfile | null> {
   const full = await db
     .from(TABLES.crmUsers)
-    .select('id, name, login_id, email, role_type, custom_role_code, employment_status, affiliation_role_id')
+    .select('id, name, login_id, email, role_type, custom_role_code, employment_status, affiliation_role_id, skin')
     .eq('auth_user_id', authUserId)
     .maybeSingle()
   if (!full.error) return (full.data as CrmProfile) || null
@@ -79,7 +80,7 @@ export async function loadProfileByAuthId(db: Admin, authUserId: string): Promis
 // 사용자 → 역할 목록. user_roles 가 비어 있으면(마이그레이션 전) 예전 직급 컬럼을 역할로 본다.
 export async function loadRolesForUsers(db: Admin, users: Array<Pick<CrmProfile, 'id' | 'role_type' | 'custom_role_code'>>) {
   const [{ data: roleRows, error: rolesError }, { data: links, error: linksError }] = await Promise.all([
-    db.from(TABLES.roles).select('id, code, name').order('created_at', { ascending: true }),
+    db.from(TABLES.roles).select('id, code, name').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true }),
     users.length
       ? db.from(TABLES.userRoles).select('user_id, role_id').in('user_id', users.map((u) => u.id))
       : Promise.resolve({ data: [] as Array<{ user_id: string; role_id: string }>, error: null })

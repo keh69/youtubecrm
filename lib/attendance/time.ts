@@ -74,8 +74,19 @@ export function getAutoCheckoutIso(ymd: string) {
   return getKstIsoAtTime(ymd, 23, 59, 0)
 }
 
+// 지각 기준: 오전 9시 정각 이후 출근
 export function getLateThresholdIso(ymd: string) {
-  return getKstIsoAtTime(ymd, 10, 5, 0)
+  return getKstIsoAtTime(ymd, 9, 0, 0)
+}
+
+// 야근 기준: 저녁 7시 이후 퇴근(자동 퇴근 제외는 호출하는 쪽에서 판단)
+export function getOvertimeThresholdIso(ymd: string) {
+  return getKstIsoAtTime(ymd, 19, 0, 0)
+}
+
+export function isOvertimeCheckOut(checkOutAt: string | null, workDate: string) {
+  if (!checkOutAt) return false
+  return new Date(checkOutAt).getTime() > new Date(getOvertimeThresholdIso(workDate)).getTime()
 }
 
 export function isLateCheckIn(checkInAt: string | null, workDate: string) {

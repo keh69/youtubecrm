@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
+import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, PageHead } from '../../_components/ui'
 
 export default function V5Videos() {
@@ -26,6 +26,10 @@ export default function V5Videos() {
   }
 
   const added = reg.lastAdded
+  const formatTag = (v: { durationSeconds: number | null; contentType?: string }) => {
+    const label = videoFormatLabel(v)
+    return <span className={`g-format ${label === '롱폼' ? 'long' : 'short'}`}>{label}</span>
+  }
 
   return (
     <>
@@ -60,6 +64,7 @@ export default function V5Videos() {
               <p className="g-msg ok">{added.updated ? '이미 등록한 영상이라 정보를 새로 고쳤습니다.' : '등록했습니다.'}</p>
               <strong className="g-added-title">{added.video.title}</strong>
               <div className="g-meta-chips">
+                {formatTag(added.video)}
                 <span className="g-chip accent">{added.video.stockName}</span>
                 <span className="g-chip">조회수 {fmtNumber(added.video.viewCount)}</span>
                 <span className="g-chip">{fmtDuration(added.video.durationSeconds)}</span>
@@ -115,6 +120,7 @@ export default function V5Videos() {
                     </div>
                   ) : (
                     <div className="g-meta-chips">
+                      {formatTag(v)}
                       <span className="g-chip accent">{v.stockName}</span>
                       <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
                       <span className="g-chip">업로드 {fmtDate(v.publishedAt)}</span>

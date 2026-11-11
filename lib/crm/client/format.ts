@@ -59,24 +59,36 @@ export function fmtNumber(n: number | null | undefined) {
   return new Intl.NumberFormat('ko-KR').format(Number(n || 0))
 }
 
-// 근태 상태 표시 이름
+// 근태 상태 표시 이름: 미출근 / 근무중 / 퇴근 / 결근. 지각·야근은 여기서 표시하지 않는다
+// (직원 본인 화면에는 지각을 띄우지 않는다. 직원근태 화면은 dayBadges 로 따로 표시).
 export function statusLabel(record: { status: string; checkInAt: string | null; checkOutAt: string | null } | null | undefined) {
   if (!record) return '미출근'
   if (record.status === 'absent') return '결근'
   if (record.status === 'vacation') return '휴가'
   if (record.status === 'early_leave') return '조퇴'
   if (!record.checkInAt) return '미출근'
-  const late = record.status === 'late'
-  if (record.checkOutAt) return late ? '지각·퇴근' : '퇴근'
-  return late ? '지각·근무중' : '근무중'
+  return record.checkOutAt ? '퇴근' : '근무중'
 }
 
 // 상태 색 분류: 버전마다 색은 다르게 칠하되 분류는 같게 쓴다.
-export function statusTone(record: { status: string; checkInAt: string | null; checkOutAt: string | null } | null | undefined): 'none' | 'ok' | 'late' | 'absent' | 'working' {
+export function statusTone(record: { status: string; checkInAt: string | null; checkOutAt: string | null } | null | undefined): 'none' | 'ok' | 'absent' | 'working' {
   if (!record || (!record.checkInAt && record.status !== 'absent')) return 'none'
   if (record.status === 'absent') return 'absent'
-  if (!record.checkOutAt) return record.status === 'late' ? 'late' : 'working'
-  return record.status === 'late' ? 'late' : 'ok'
+  return record.checkOutAt ? 'ok' : 'working'
+}
+
+// 직원근태(관리자) 화면 전용 표시: 09:00 이후 출근 = 지각, 19:00 이후 퇴근 = 야근
+export function dayBadges(record: { late?: boolean; overtime?: boolean } | null | undefined): Array<{ key: 'late' | 'overtime'; label: string }> {
+  const out: Array<{ key: 'late' | 'overtime'; label: string }> = []
+  if (record?.late) out.push({ key: 'late', label: '지각' })
+  if (record?.overtime) out.push({ key: 'overtime', label: '야근' })
+  return out
+}
+
+// 영상 형식: 10분(600초) 이상 롱폼, 미만 숏폼. 길이를 모르면 서버가 정한 값.
+export function videoFormatLabel(video: { durationSeconds: number | null; contentType?: string }) {
+  if (typeof video.durationSeconds === 'number') return video.durationSeconds >= 600 ? '롱폼' : '숏폼'
+  return video.contentType === 'shortform' ? '숏폼' : '롱폼'
 }
 
 export function todayKst() {
@@ -88,6 +100,17 @@ export function addDays(ymd: string, days: number) {
   const date = new Date(Date.UTC(y, m - 1, d, 12))
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
+}
+
+// 그 날짜가 들어 있는 주의 월요일 / 그 달의 1일
+export function weekStart(ymd: string) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay() // 0=일
+  return addDays(ymd, -((dow + 6) % 7))
+}
+
+export function monthStart(ymd: string) {
+  return `${ymd.slice(0, 7)}-01`
 }
 
 export function shiftMonth(month: string, delta: number) {

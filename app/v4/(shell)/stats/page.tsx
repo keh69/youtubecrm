@@ -1,44 +1,27 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { STAT_PRESETS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm/client/format'
+import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
+import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
-
-type Sort = 'date' | 'views' | 'duration'
-
-const SORTS = [
-  ['date', '최신순'],
-  ['views', '조회수순'],
-  ['duration', '길이순']
-] as const
 
 export default function V4Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
-  const [sort, setSort] = useState<Sort>('date')
-
-  const videos = useMemo(() => {
-    const list = [...(st.data?.videos || [])]
-    if (sort === 'views') list.sort((a, b) => b.viewCount - a.viewCount)
-    else if (sort === 'duration') list.sort((a, b) => (b.durationSeconds || 0) - (a.durationSeconds || 0))
-    else list.sort((a, b) => (b.publishedAt || b.createdAt).localeCompare(a.publishedAt || a.createdAt))
-    return list
-  }, [st.data, sort])
-
   if (!allowed) return null
+
   const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
-  const showOwner = st.who !== 'me' && st.who !== me.id
+  const videos = st.videos
+  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
     <>
-      <PageHead title="통계" tag="숫자 쾅!" desc="업로드 날짜 기준입니다. 조회수는 화면을 열 때 유튜브에서 새로 가져옵니다(30분마다)." />
+      <PageHead title="영상통계" tag="숫자 쾅!" desc="업로드 날짜 기준입니다. 조회수는 화면을 열 때 유튜브에서 새로 가져옵니다(30분마다)." />
 
       <section className="blk filters">
         {st.canPickPeople && (
           <label className="field">
-            <span>누구</span>
+            <span>담당자</span>
             <select value={st.who} onChange={(e) => st.setWho(e.target.value)}>
               <option value="me">나 ({me.name})</option>
               <option value="all">전체 직원</option>
@@ -55,21 +38,27 @@ export default function V4Stats() {
         <div className="field">
           <span>기간</span>
           <div className="seg">
-            {STAT_PRESETS.map((p) => (
-              <button key={p.key} type="button" className={st.activePreset === p.key ? 'on' : ''} aria-pressed={st.activePreset === p.key} onClick={() => st.applyPreset(p.days)}>
+            {STAT_PERIODS.map((p) => (
+              <button key={p.key} type="button" className={st.period === p.key ? 'on' : ''} aria-pressed={st.period === p.key} onClick={() => st.setPeriod(p.key)}>
                 {p.label}
               </button>
             ))}
           </div>
         </div>
         <label className="field">
-          <span>시작</span>
-          <input type="date" value={st.from} onChange={(e) => e.target.value && st.setRange(e.target.value, st.to)} />
+          <span>특정날짜</span>
+          <input type="date" value={st.date} max={todayKst()} onChange={(e) => e.target.value && st.setDate(e.target.value)} />
         </label>
-        <label className="field">
-          <span>끝</span>
-          <input type="date" value={st.to} onChange={(e) => e.target.value && st.setRange(st.from, e.target.value)} />
-        </label>
+        <div className="field">
+          <span>정렬</span>
+          <div className="seg">
+            {STAT_SORTS.map((o) => (
+              <button key={o.key} type="button" className={st.sort === o.key ? 'on' : ''} aria-pressed={st.sort === o.key} onClick={() => st.setSort(o.key)}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {st.loading && st.data && <span className="refreshing">새로 고치는 중…</span>}
       </section>
 
@@ -77,7 +66,7 @@ export default function V4Stats() {
 
       <section className="kpis">
         <div className="blk kpi bg-yellow">
-          <span>올린 영상</span>
+          <span>올린 영상 · {rangeText}</span>
           <strong>
             {fmtNumber(st.data?.summary.videoCount)}
             <small>개</small>
@@ -93,11 +82,9 @@ export default function V4Stats() {
         </div>
       </section>
 
-      <section className="blk">
-        <BlockTitle color="mint">일자별 올린 개수</BlockTitle>
-        {st.loading && !st.data ? (
-          <Loading />
-        ) : (
+      {(st.data?.daily.length || 0) > 1 && (
+        <section className="blk">
+          <BlockTitle color="mint">일자별 올린 개수</BlockTitle>
           <div className="chart-wrap">
             <div className="chart" role="img" aria-label="일자별 업로드 개수 막대">
               {st.data?.daily.map((d) => (
@@ -111,17 +98,17 @@ export default function V4Stats() {
               ))}
             </div>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {st.data && st.data.perPerson.length > 0 && (
         <section className="blk">
-          <BlockTitle color="blue">직원별</BlockTitle>
+          <BlockTitle color="blue">담당자별</BlockTitle>
           <div className="tbl-wrap">
             <table className="tbl">
               <thead>
                 <tr>
-                  <th>직원</th>
+                  <th>담당자</th>
                   <th className="num">영상</th>
                   <th className="num">총 조회수</th>
                   <th className="num">총 재생시간</th>
@@ -149,18 +136,7 @@ export default function V4Stats() {
       )}
 
       <section className="blk">
-        <BlockTitle
-          color="pink"
-          right={
-            <div className="seg">
-              {SORTS.map(([k, label]) => (
-                <button key={k} type="button" className={sort === k ? 'on' : ''} aria-pressed={sort === k} onClick={() => setSort(k)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          }
-        >
+        <BlockTitle color="pink">
           영상 ({fmtNumber(videos.length)})
         </BlockTitle>
         {st.loading && !st.data ? (
@@ -168,39 +144,47 @@ export default function V4Stats() {
         ) : videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
-          <ul className="vcards stats">
-            {videos.map((v) => (
-              <li key={v.id} className="vcard">
-                <a href={v.url} target="_blank" rel="noreferrer" className="vthumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="vdur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="vbody">
-                  <a href={v.url} target="_blank" rel="noreferrer" className="vtitle">
-                    {v.title}
-                  </a>
-                  <div className="meta-row">
-                    <span className="chip">{v.stockName}</span>
-                    {showOwner && v.ownerName ? <span className="owner">{v.ownerName}</span> : null}
-                  </div>
-                </div>
-                <div className="vviews">
-                  <span>조회수</span>
-                  <strong>{fmtNumber(v.viewCount)}</strong>
-                </div>
-                <dl className="vmeta">
-                  <div>
-                    <dt>재생시간</dt>
-                    <dd>{fmtDuration(v.durationSeconds)}</dd>
-                  </div>
-                  <div>
-                    <dt>올린 날짜</dt>
-                    <dd>{fmtDate(v.publishedAt || v.createdAt)}</dd>
-                  </div>
-                </dl>
-              </li>
-            ))}
-          </ul>
+          <div className="tbl-wrap">
+            <table className="tbl vtbl">
+              <thead>
+                <tr>
+                  <th>영상</th>
+                  <th>담당자</th>
+                  <th>형식</th>
+                  <th>종목</th>
+                  <th className="num">조회수</th>
+                  <th className="num">재생시간</th>
+                  <th>올린 날짜</th>
+                </tr>
+              </thead>
+              <tbody>
+                {videos.map((v) => (
+                  <tr key={v.id}>
+                    <td>
+                      <div className="vrow">
+                        <a href={v.url} target="_blank" rel="noreferrer" className="vrow-thumb">
+                          <img src={v.thumbnailUrl} alt="" loading="lazy" />
+                        </a>
+                        <a href={v.url} target="_blank" rel="noreferrer" className="vtitle">
+                          {v.title}
+                        </a>
+                      </div>
+                    </td>
+                    <td className="nowrap">{v.ownerName ? <span className="owner">{v.ownerName}</span> : '-'}</td>
+                    <td className="nowrap">
+                      <span className={`fmt-tag ${videoFormatLabel(v) === '롱폼' ? 'f-long' : 'f-short'}`}>{videoFormatLabel(v)}</span>
+                    </td>
+                    <td>
+                      <span className="chip">{v.stockName}</span>
+                    </td>
+                    <td className="num strong">{fmtNumber(v.viewCount)}</td>
+                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
+                    <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </>

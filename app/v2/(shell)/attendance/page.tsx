@@ -27,7 +27,7 @@ export default function V2Attendance() {
       <PageHead
         code="ATT-01"
         title="근태체크"
-        desc="출근할 때와 퇴근할 때 버튼을 한 번씩 눌러 주세요. 10:05 이후 출근은 지각, 퇴근을 안 누르면 23:59에 자동 퇴근됩니다."
+        desc="출근할 때와 퇴근할 때 버튼을 한 번씩 눌러 주세요. 퇴근을 안 누르면 23:59에 자동 퇴근됩니다."
       />
 
       {att.error && <Note msg={{ tone: 'error', text: att.error }} />}

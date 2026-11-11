@@ -757,9 +757,6 @@
 .v5 .g-ring.tone-ok .g-ring-fill {
   stroke: var(--ok);
 }
-.v5 .g-ring.tone-late .g-ring-fill {
-  stroke: var(--late);
-}
 .v5 .g-ring-center {
   position: absolute;
   inset: 34px;
@@ -904,9 +901,6 @@
 }
 .v5 .g-history li.tone-working .g-daybadge {
   background: var(--accent-soft);
-}
-.v5 .g-history li.tone-late .g-daybadge {
-  background: rgba(240, 160, 60, 0.18);
 }
 .v5 .g-history li.tone-absent .g-daybadge {
   background: rgba(239, 90, 122, 0.15);
@@ -1481,6 +1475,12 @@
   color: #fff;
   box-shadow: 0 4px 12px rgba(124, 92, 255, 0.35);
 }
+.v5 .g-tab-no {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+  margin-right: 2px;
+}
 .v5 .g-tabs-wrap + .g-msg,
 .v5 .g-tabs-wrap ~ .g-msg {
   margin: 0 0 16px;
@@ -1618,6 +1618,86 @@
 }
 .v5 .g-switch input:disabled + span {
   opacity: 0.55;
+}
+
+/* ── 지각/야근 표시 · 기간 합계 (직원근태) ── */
+.v5 .g-pill.tone-overtime {
+  background: linear-gradient(135deg, #8f74ff, #6a4ce0);
+  color: #fff;
+}
+.v5 .g-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.v5 .g-period-title {
+  margin-top: 4px;
+}
+.v5 .g-totals {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.v5 .g-totals .g-stat {
+  min-width: 0;
+  padding: 10px 6px;
+  border-radius: 20px;
+}
+.v5 .g-totals .g-stat b {
+  font-size: 22px;
+}
+.v5 .g-stat.out {
+  background: rgba(64, 160, 220, 0.13);
+}
+.v5 .g-stat.out b {
+  color: #2a7fb3;
+}
+.v5 .g-stat.overtime {
+  background: rgba(106, 76, 224, 0.16);
+}
+.v5 .g-stat.overtime b {
+  color: #5532c4;
+}
+
+/* ── 영상 형식(롱폼/숏폼) 태그 ── */
+.v5 .g-format {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-family: var(--head);
+  font-size: 12.5px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.v5 .g-format.long {
+  background: linear-gradient(135deg, #7c5cff, #5a47c7);
+  color: #fff;
+}
+.v5 .g-format.short {
+  background: linear-gradient(135deg, #ffb48f, #ff7f9f);
+  color: #fff;
+}
+
+/* ── 영상통계 표 ── */
+.v5 .g-date {
+  width: 170px;
+}
+.v5 .g-vtable .g-vcell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+}
+.v5 .g-vtable .g-thumb {
+  width: 108px;
+  border-radius: 12px;
+}
+.v5 .g-vtable .g-vtitle {
+  font-size: 14px;
 }
 
 /* ── 반응형 ── */
@@ -1773,6 +1853,15 @@
     width: 100%;
     justify-content: space-between;
   }
+  .v5 .g-card-head > .g-seg {
+    width: 100%;
+  }
+  .v5 .g-card-head > .g-seg button {
+    flex: 1 0 auto;
+  }
+  .v5 .g-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .v5 .g-person {
     padding: 12px;
   }
@@ -1780,7 +1869,7 @@
     order: 3;
     flex: 1 0 100%;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .v5 .g-stat {
     min-width: 0;
@@ -1829,6 +1918,12 @@
   }
   .v5 .g-filters > .g-field:first-child {
     flex: none;
+  }
+  .v5 .g-date {
+    width: 100%;
+  }
+  .v5 .g-vtable .g-thumb {
+    width: 88px;
   }
   .v5 .g-range .g-input {
     width: auto;
@@ -1907,4 +2002,53 @@
     transition: none !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* 역할 순서 끌어서 바꾸기 */
+.v5 .drag-col {
+  width: 28px;
+  color: var(--muted);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+}
+.v5 .drag-row:hover .drag-col {
+  color: var(--accent);
+}
+.v5 .drag-row.dragging td {
+  background: var(--accent-soft);
+  opacity: 0.65;
+}
+
+/* 스킨 */
+.v5 .g-skin-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.v5 .g-skin-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.v5 .g-skin-card.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+}
+.v5 .g-skin-card strong {
+  font-family: var(--head);
+  font-size: 18px;
+}
+.v5 .g-skin-card p {
+  margin: 0;
+  flex: 1;
 }

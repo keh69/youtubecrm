@@ -19,7 +19,10 @@ export async function POST(request: Request) {
     const body = bodySchema.parse(await request.json())
     await assertRoleNameFree(ctx, body.name)
     const code = `r_${crypto.randomBytes(5).toString('hex')}`
-    const { data, error } = await ctx.db.from(TABLES.roles).insert({ code, name: body.name }).select('id, code, name').single()
+    // 새 역할은 맨 아래에 붙인다.
+    const { data: last } = await ctx.db.from(TABLES.roles).select('sort_order').order('sort_order', { ascending: false, nullsFirst: false }).limit(1).maybeSingle()
+    const sortOrder = typeof last?.sort_order === 'number' ? last.sort_order + 1 : 0
+    const { data, error } = await ctx.db.from(TABLES.roles).insert({ code, name: body.name, sort_order: sortOrder }).select('id, code, name').single()
     if (error) throw error
     await saveRoleMenus(ctx, code, body.menus ?? DEFAULT_MENUS_FOR_NEW_ROLE)
     await audit(ctx, 'create_role', 'role', data.id, { name: body.name })

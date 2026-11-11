@@ -15,6 +15,8 @@
   --ok-dim: rgba(74, 222, 128, 0.12);
   --late: #fbbf24;
   --late-dim: rgba(251, 191, 36, 0.12);
+  --ot: #c084fc;
+  --ot-dim: rgba(192, 132, 252, 0.13);
   --bad: #f87171;
   --bad-dim: rgba(248, 113, 113, 0.12);
   --radius: 4px;
@@ -302,9 +304,16 @@
   color: var(--accent);
   background: var(--accent-dim);
 }
-.v2 .tag.tone-late {
+/* 직원근태 전용 표시: 지각(09:00 이후 출근) / 야근(19:00 이후 퇴근) */
+.v2 .tag.flag-late {
   color: var(--late);
   background: var(--late-dim);
+  border-style: dashed;
+}
+.v2 .tag.flag-overtime {
+  color: var(--ot);
+  background: var(--ot-dim);
+  border-style: dashed;
 }
 .v2 .tag.tone-absent {
   color: var(--bad);
@@ -324,6 +333,9 @@
 }
 .v2 .c-absent {
   color: var(--bad);
+}
+.v2 .c-overtime {
+  color: var(--ot);
 }
 
 /* ───────── 부팅 / 로그인 ───────── */
@@ -793,6 +805,9 @@
 .v2 .mini-stats .sect {
   color: var(--muted);
 }
+.v2 .mini-stats.six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
 
 /* ───────── 근태체크 콘솔 ───────── */
 .v2 .console {
@@ -814,9 +829,6 @@
 }
 .v2 .console.tone-working {
   --tone: var(--accent);
-}
-.v2 .console.tone-late {
-  --tone: var(--late);
 }
 .v2 .console.tone-absent {
   --tone: var(--bad);
@@ -1032,6 +1044,29 @@
 }
 .v2 .vtitle:hover {
   color: var(--accent);
+}
+/* 영상 형식: 롱폼 / 숏폼 */
+.v2 .fmt {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.v2 .fmt.long {
+  color: var(--ok);
+  background: var(--ok-dim);
+}
+.v2 .fmt.short {
+  color: var(--ot);
+  background: var(--ot-dim);
+}
+.v2 .tbl td.owner {
+  font-weight: 600;
 }
 .v2 .inline-edit {
   display: inline-flex;
@@ -1345,6 +1380,9 @@
   .v2 .top-clock {
     display: none;
   }
+  .v2 .mini-stats.six {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -1460,7 +1498,8 @@
     font-size: 20px;
     text-align: right;
   }
-  .v2 .mini-stats {
+  .v2 .mini-stats,
+  .v2 .mini-stats.six {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .v2 .added {
@@ -1490,5 +1529,64 @@
   }
   .v2 .form-actions .key {
     width: 100%;
+  }
+}
+
+/* 역할 순서 끌어서 바꾸기 */
+.v2 .drag-col {
+  width: 28px;
+  color: var(--muted);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+  font-family: var(--mono);
+}
+.v2 .drag-row:hover .drag-col {
+  color: var(--accent);
+}
+.v2 .drag-row.dragging td {
+  background: var(--accent-dim);
+  opacity: 0.6;
+  outline: 1px dashed var(--accent);
+}
+
+/* 스킨 */
+.v2 .skin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.v2 .skin-item {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.v2 .skin-item:last-child {
+  border-bottom: 0;
+}
+.v2 .skin-item.on {
+  background: var(--accent-dim);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.v2 .skin-key {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+}
+.v2 .skin-body p {
+  margin: 2px 0 0;
+}
+@media (max-width: 640px) {
+  .v2 .skin-item {
+    grid-template-columns: 40px 1fr;
+  }
+  .v2 .skin-item .key {
+    grid-column: 1 / -1;
   }
 }

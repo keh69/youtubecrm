@@ -72,3 +72,51 @@ export async function assertCanSeeUser(ctx: CrmContext, userId: string) {
     throw new HttpError(403, '이 직원의 정보를 볼 권한이 없습니다.')
   }
 }
+
+export type Subordinate = ScopedUser & { email: string; phone: string; roles: string[]; isSuperAdmin: boolean }
+
+// 내 소속 하부 직원(나 제외): 관리자라도 "소속" 연결을 따라 내려간 사람만.
+// 예) 나 = '관리자' 역할 → 소속이 '관리자'인 사람 → 그 사람이 가진 역할(예: A팀장)에 소속된 사람 … 끝까지.
+export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> {
+  const { db } = ctx
+  const { data, error } = await db
+    .from(TABLES.crmUsers)
+    .select('id, name, login_id, email, phone, role_type, custom_role_code, employment_status, affiliation_role_id')
+    .order('name', { ascending: true })
+  if (error) throw error
+  const rows = (data || []) as any[]
+  const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
+  const roleName = new Map(allRoles.map((r: RoleRow) => [r.id, r.name]))
+
+  const under = new Set<string>()
+  const queue = [ctx.profile.id]
+  const seenRoles = new Set<string>()
+  while (queue.length) {
+    const userId = queue.shift()!
+    for (const role of rolesByUser.get(userId) || []) {
+      if (seenRoles.has(role.id)) continue
+      seenRoles.add(role.id)
+      for (const u of rows) {
+        if (u.affiliation_role_id === role.id && u.id !== ctx.profile.id && !under.has(u.id)) {
+          under.add(u.id)
+          queue.push(u.id)
+        }
+      }
+    }
+  }
+
+  return rows
+    .filter((u) => under.has(u.id))
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      loginId: u.login_id,
+      email: u.email,
+      phone: u.phone || '',
+      affiliationRoleId: u.affiliation_role_id || null,
+      affiliationName: u.affiliation_role_id ? roleName.get(u.affiliation_role_id) || null : null,
+      active: u.employment_status === 'active',
+      roles: (rolesByUser.get(u.id) || []).map((r) => r.name),
+      isSuperAdmin: (rolesByUser.get(u.id) || []).some((r) => r.code === 'super_admin')
+    }))
+}

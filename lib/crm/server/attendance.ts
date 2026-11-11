@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstYmd, isLateCheckIn } from '@/lib/attendance/time'
+import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstYmd, isLateCheckIn, isOvertimeCheckOut } from '@/lib/attendance/time'
 import { HttpError, MIGRATION_HINT, isMissingSchema, type Admin, type CrmContext } from '@/lib/crm/server/context'
 
 export type DayRecord = {
@@ -10,11 +10,16 @@ export type DayRecord = {
   workedMinutes: number
   absenceReason: string | null
   autoCheckout: boolean
+  late: boolean // 09:00 이후 출근
+  overtime: boolean // 19:00 이후 퇴근(자동 퇴근 제외)
 }
 
 function toRecord(row: any): DayRecord {
-  const autoCheckout = Boolean(row.check_out_at && row.check_out_at === getAutoCheckoutIso(row.work_date))
+  const autoCheckout = Boolean(row.check_out_at && new Date(row.check_out_at).getTime() === new Date(getAutoCheckoutIso(row.work_date)).getTime())
+  const absent = row.attendance_status === 'absent'
   return {
+    late: !absent && isLateCheckIn(row.check_in_at || null, row.work_date),
+    overtime: !absent && !autoCheckout && isOvertimeCheckOut(row.check_out_at || null, row.work_date),
     workDate: row.work_date,
     status: row.attendance_status || 'not_started',
     checkInAt: row.check_in_at || null,

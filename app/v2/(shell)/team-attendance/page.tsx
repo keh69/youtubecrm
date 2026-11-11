@@ -1,8 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
-import { fmtMinutes, fmtTime, fmtYmdShort, shiftMonth, todayKst } from '@/lib/crm/client/format'
+import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, Panel, StatusTag, type Msg } from '../../_components/ui'
 
 export default function V2TeamAttendance() {
@@ -14,9 +14,6 @@ export default function V2TeamAttendance() {
   const [saving, setSaving] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
   if (!allowed) return null
-
-  const [y, m] = team.month.split('-')
-  const isCurrentMonth = team.month >= todayKst().slice(0, 7)
 
   const submitAbsence = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,14 +34,11 @@ export default function V2TeamAttendance() {
     setMsg(res.ok ? { tone: 'ok', text: '결근을 취소했습니다.' } : { tone: 'error', text: res.error || '취소 실패' })
   }
 
-  const totals = team.data?.rows.reduce(
-    (a, r) => ({ present: a.present + r.summary.present, late: a.late + r.summary.late, absent: a.absent + r.summary.absent }),
-    { present: 0, late: 0, absent: 0 }
-  )
+  const totals = team.data?.totals
 
   return (
     <>
-      <PageHead code="ATT-02" title="직원근태" desc="직원별 출근·지각·결근 횟수와 근무 시간입니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
+      <PageHead code="ATT-02" title="직원근태" desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
 
       <div ref={formRef} className="anchor">
         <Panel label="결근 처리" className="panel-cmd">
@@ -77,44 +71,56 @@ export default function V2TeamAttendance() {
       </div>
 
       <Panel
-        label={
-          <>
-            <span className="mono">
-              {y}.{m}
-            </span>{' '}
-            {y}년 {Number(m)}월 근태 통계
-          </>
-        }
+        label={team.data?.label || '근태 통계'}
         right={
-          <div className="stepper">
-            <button className="key ghost sm" onClick={() => team.setMonth(shiftMonth(team.month, -1))}>
-              ◀ 이전 달
-            </button>
-            <span className="mono stepper-val">{team.month}</span>
-            <button className="key ghost sm" disabled={isCurrentMonth} onClick={() => team.setMonth(shiftMonth(team.month, 1))}>
-              다음 달 ▶
-            </button>
-          </div>
+          <>
+            <div className="seg" role="tablist" aria-label="통계 기간">
+              {TEAM_PERIODS.map((p) => (
+                <button key={p.key} type="button" role="tab" aria-selected={team.period === p.key} className={team.period === p.key ? 'on' : ''} onClick={() => team.setPeriod(p.key)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="stepper">
+              <button className="key ghost sm" onClick={() => team.shift(-1)}>
+                ◀ 이전
+              </button>
+              <button className="key ghost sm" onClick={team.goToday}>
+                {team.period === 'week' ? '이번 주' : '이번 달'}
+              </button>
+              <button className="key ghost sm" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
+                다음 ▶
+              </button>
+            </div>
+          </>
         }
       >
         {team.error && <Note msg={{ tone: 'error', text: team.error }} />}
-        {totals && team.data && team.data.rows.length > 0 && (
-          <div className="mini-stats">
-            <div>
-              <span className="sect">직원</span>
-              <strong className="mono">{team.data.rows.length}</strong>
-            </div>
+        {totals && (
+          <div className="mini-stats six">
             <div className="c-ok">
-              <span className="sect">출근 합계</span>
+              <span className="sect">출근</span>
               <strong className="mono">{totals.present}</strong>
             </div>
             <div className="c-late">
-              <span className="sect">지각 합계</span>
+              <span className="sect">지각</span>
               <strong className="mono">{totals.late}</strong>
             </div>
+            <div>
+              <span className="sect">퇴근</span>
+              <strong className="mono">{totals.checkedOut}</strong>
+            </div>
+            <div className="c-overtime">
+              <span className="sect">야근</span>
+              <strong className="mono">{totals.overtime}</strong>
+            </div>
             <div className="c-absent">
-              <span className="sect">결근 합계</span>
+              <span className="sect">결근</span>
               <strong className="mono">{totals.absent}</strong>
+            </div>
+            <div>
+              <span className="sect">총 근무시간</span>
+              <strong className="mono">{fmtMinutes(totals.workedMinutes)}</strong>
             </div>
           </div>
         )}
@@ -131,6 +137,8 @@ export default function V2TeamAttendance() {
                   <th>소속</th>
                   <th className="num">출근</th>
                   <th className="num">지각</th>
+                  <th className="num">퇴근</th>
+                  <th className="num">야근</th>
                   <th className="num">결근</th>
                   <th className="num">총 근무시간</th>
                 </tr>
@@ -147,12 +155,14 @@ export default function V2TeamAttendance() {
                       <td>{row.user.affiliationName || '-'}</td>
                       <td className="num c-ok">{row.summary.present}</td>
                       <td className={`num ${row.summary.late ? 'c-late' : ''}`}>{row.summary.late}</td>
+                      <td className="num">{row.summary.checkedOut}</td>
+                      <td className={`num ${row.summary.overtime ? 'c-overtime' : ''}`}>{row.summary.overtime}</td>
                       <td className={`num ${row.summary.absent ? 'c-absent' : ''}`}>{row.summary.absent}</td>
                       <td className="num">{fmtMinutes(row.summary.workedMinutes)}</td>
                     </tr>,
                     isOpen && (
                       <tr key={`${row.user.id}-detail`} className="drill">
-                        <td colSpan={6}>
+                        <td colSpan={8}>
                           <div className="drill-box">
                             <div className="sect">
                               {row.user.name} · 날짜별 출퇴근
@@ -182,6 +192,11 @@ export default function V2TeamAttendance() {
                                       <td className="mono">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                       <td>
                                         <StatusTag record={r} />
+                                        {dayBadges(r).map((b) => (
+                                          <span key={b.key} className={`tag flag-${b.key}`}>
+                                            {b.label}
+                                          </span>
+                                        ))}
                                         {r?.status === 'absent' && <span className="muted small"> {r.absenceReason}</span>}
                                       </td>
                                       <td className="right">

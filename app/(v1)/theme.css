@@ -763,3 +763,120 @@
     align-items: flex-start;
   }
 }
+
+/* 직원근태: 지각/야근 표시, 기간 합계 */
+.v1 .tone-late {
+  background: var(--warn-weak);
+  color: var(--warn);
+}
+.v1 .tone-overtime {
+  background: #f1ecff;
+  color: #6d3fd6;
+}
+.v1 .kpis.six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+.v1 .kpi-mini {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.v1 .kpi-mini span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.v1 .kpi-mini strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.v1 .kpi-mini.warn strong {
+  color: var(--warn);
+}
+.v1 .kpi-mini.bad strong {
+  color: var(--bad);
+}
+.v1 .kpi-mini.accent strong {
+  color: #6d3fd6;
+}
+
+/* 영상: 형식(롱폼/숏폼), 영상통계 표 */
+.v1 .chip.format {
+  background: var(--dark);
+  color: #fff;
+}
+.v1 .vtable .vcell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+}
+.v1 .vtable .thumb {
+  width: 96px;
+  flex-shrink: 0;
+}
+.v1 .vtable .video-title {
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .v1 .kpis.six {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 역할 순서 끌기 */
+.v1 .drag-col {
+  width: 28px;
+  color: var(--muted);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+}
+.v1 .drag-row:hover .drag-col {
+  color: var(--accent);
+}
+.v1 .drag-row.dragging td {
+  background: var(--accent-weak);
+  opacity: 0.7;
+}
+
+/* 스킨 */
+.v1 .skin-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.v1 .skin-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+}
+.v1 .skin-card.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-weak);
+}
+.v1 .skin-card p {
+  margin: 0;
+}
+.v1 .skin-key {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* 설정 탭 번호 */
+.v1 .tab-no {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  margin-right: 2px;
+}

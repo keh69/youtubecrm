@@ -2,22 +2,14 @@
 
 import { useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
-import { EMPTY_ACCOUNT, useMenuGuard, useSession, useSettings } from '@/lib/crm/client/hooks'
+import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
-import { Loading, Note, PageHead, Panel, type Msg } from '../../_components/ui'
-
-type Tab = 'assign' | 'roles' | 'create'
-
-const TABS = [
-  ['assign', '역할부여', '01'],
-  ['roles', '역할설정', '02'],
-  ['create', '아이디생성', '03']
-] as const
+import { Empty, Loading, Note, PageHead, Panel, type Msg } from '../../_components/ui'
 
 export default function V2Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const [tab, setTab] = useState<Tab>('assign')
+  const [tab, setTab] = useState<SettingsTab>('employees')
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
 
@@ -40,19 +32,19 @@ export default function V2Settings() {
       )}
 
       <div className="ctabs" role="tablist">
-        {TABS.map(([k, label, no]) => (
+        {SETTINGS_TABS.map((t) => (
           <button
-            key={k}
+            key={t.key}
             role="tab"
-            aria-selected={tab === k}
-            className={tab === k ? 'on' : ''}
+            aria-selected={tab === t.key}
+            className={tab === t.key ? 'on' : ''}
             onClick={() => {
-              setTab(k)
+              setTab(t.key)
               setMsg(null)
             }}
           >
-            <span className="mono">{no}</span>
-            {label}
+            <span className="mono">{t.no}</span>
+            {t.label}
           </button>
         ))}
       </div>
@@ -61,10 +53,63 @@ export default function V2Settings() {
       {s.error && <Note msg={{ tone: 'error', text: s.error }} />}
       {s.loading && !s.data && <Loading />}
 
+      {tab === 'employees' && <EmployeesTab />}
       {s.data && tab === 'assign' && <AssignTab s={s} report={report} />}
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
     </>
+  )
+}
+
+/* ── 01 사원목록: 내 소속 하부 사원 + 그 아이디로 바로 로그인 ── */
+function EmployeesTab() {
+  const emp = useEmployees()
+  return (
+    <Panel label="내 소속 하부 사원" right={<span className="count mono">{emp.items.length}</span>}>
+      <p className="hint">{EMPLOYEE_TABS_NOTE}</p>
+      {emp.error && <Note msg={{ tone: 'error', text: emp.error }} />}
+      {emp.loading ? (
+        <Loading />
+      ) : emp.items.length === 0 ? (
+        <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 내 역할로 정해 주세요.</Empty>
+      ) : (
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>아이디</th>
+                <th>이름</th>
+                <th>소속</th>
+                <th>역할</th>
+                <th>전화번호</th>
+                <th>이메일</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {emp.items.map((u) => (
+                <tr key={u.id} className={u.active ? '' : 'inactive'}>
+                  <td className="nowrap">
+                    <strong className="mono">{u.loginId}</strong>
+                    {!u.active && <span className="tag tone-absent">사용중지</span>}
+                  </td>
+                  <td className="nowrap">{u.name}</td>
+                  <td>{u.affiliationName || '-'}</td>
+                  <td>{u.roles.join(', ') || '-'}</td>
+                  <td className="nowrap mono">{u.phone || '-'}</td>
+                  <td>{u.email}</td>
+                  <td className="right">
+                    <button className="key accent sm" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
+                      {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Panel>
   )
 }
 
@@ -222,6 +267,7 @@ function AccountEditor({ user, isMe, s, report }: { user: SettingsUser; isMe: bo
 /* ── 역할설정 ── */
 function RolesTab({ s, report }: { s: S; report: Report }) {
   const [name, setName] = useState('')
+  const drag = useDragReorder(s.data!.roles, async (ids) => report(await s.reorderRoles(ids), '역할 순서를 저장했습니다.'))
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null)
 
   const toggle = async (role: SettingsRole, key: MenuKey) => {
@@ -250,11 +296,12 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
       </Panel>
 
       <Panel label="역할별로 볼 수 있는 메뉴">
-        <p className="hint">체크한 메뉴만 보입니다. 여러 역할을 가진 사람은 모든 역할의 메뉴를 합쳐서 봅니다.</p>
+        <p className="hint">체크한 메뉴만 보입니다. 여러 역할을 가진 사람은 모든 역할의 메뉴를 합쳐서 봅니다. 왼쪽 ⠿ 부분을 마우스로 끌어 놓으면 역할 순서가 바뀌고 바로 저장됩니다.</p>
         <div className="tbl-wrap">
           <table className="tbl matrix">
             <thead>
               <tr>
+                <th className="drag-col" aria-label="순서" />
                 <th>역할</th>
                 {MENUS.map((m) => (
                   <th key={m.key} className="center" title={m.description}>
@@ -266,8 +313,11 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
               </tr>
             </thead>
             <tbody>
-              {s.data!.roles.map((r) => (
-                <tr key={r.id} className={r.locked ? 'locked' : ''}>
+              {drag.items.map((r) => (
+                <tr key={r.id} {...drag.rowProps(r.id)} className={`drag-row${r.locked ? ' locked' : ''}${drag.draggingId === r.id ? ' dragging' : ''}`}>
+                  <td className="drag-col" title="끌어서 순서 바꾸기" aria-hidden="true">
+                    ⠿
+                  </td>
                   <td className="nowrap">
                     {renaming?.id === r.id ? (
                       <span className="inline-edit">

@@ -1,53 +1,70 @@
 'use client'
 
-// v1~v5 가 모두 같이 쓰는 화면 로직(데이터 불러오기, 버튼 동작).
+// v1~v11 이 모두 같이 쓰는 화면 로직(데이터 불러오기, 버튼 동작).
 // 버전별 페이지는 이 훅들이 돌려주는 값으로 "모양"만 다르게 그린다.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { MENUS, firstAllowedPath, type MenuKey } from '@/lib/crm/menus'
-import { api, getToken, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
-import { addDays, todayKst } from '@/lib/crm/client/format'
-import type { AccountPatch, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, Video } from '@/lib/crm/client/types'
+import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
+import { SKINS, pathWithoutSkin, skinBase, skinOfPath, type SkinKey } from '@/lib/crm/skins'
+import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
+import type { AccountPatch, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
 
 export type ActionResult = { ok: boolean; error?: string }
 
 /* ───────────────────────── 세션 ───────────────────────── */
 
-type SessionValue = { me: Me; base: string; logout: () => Promise<void> }
+type SessionValue = { me: Me; base: string; logout: () => Promise<void>; refreshMe: () => Promise<void> }
 const SessionContext = createContext<SessionValue | null>(null)
 
+// 로그인한 사람이 처음 들어갈 주소: 그 사람이 고른 스킨의, 볼 수 있는 첫 메뉴
+export function homeFor(me: Pick<Me, 'menus' | 'skin'>) {
+  return firstAllowedPath(skinBase(me.skin), me.menus)
+}
+
 // 버전별 (shell) 레이아웃에서 감싼다. 로그인 안 했으면 그 버전의 로그인 화면으로 보낸다.
+// 최고관리자가 아니면 자기가 고른 스킨 주소로 옮겨 준다(같은 메뉴 유지).
 export function CrmSessionProvider({ base, children, loading = null }: { base: string; children: React.ReactNode; loading?: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [me, setMe] = useState<Me | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    setLoginPath(`${base}/login`)
-    let alive = true
-    ;(async () => {
+  const load = useCallback(
+    async (force = false) => {
       if (!(await getToken())) {
         router.replace(`${base}/login`)
         return
       }
-      const res = await api<Me>('/api/auth/me')
-      if (!alive) return
-      if (res.ok) setMe(res.data)
-      else if (res.status === 403) {
+      const res = await getMeCached<Me>(force)
+      if (res.ok) {
+        setMe(res.data)
+        setError('')
+      } else if (res.status === 403) {
         await doLogout()
         setError(res.error)
       } else setError(res.error)
-    })()
-    return () => {
-      alive = false
-    }
-  }, [base, router])
+    },
+    [base, router]
+  )
+
+  useEffect(() => {
+    setLoginPath(`${base}/login`)
+    void load()
+  }, [base, load])
+
+  const wrongSkin = Boolean(me && !me.isSuperAdmin && skinOfPath(pathname) !== me.skin)
+  useEffect(() => {
+    if (me && wrongSkin) router.replace(`${skinBase(me.skin)}${pathWithoutSkin(pathname)}` || '/')
+  }, [me, wrongSkin, pathname, router])
 
   const logout = useCallback(async () => {
     await doLogout()
     router.replace(`${base}/login`)
   }, [base, router])
+
+  const refreshMe = useCallback(() => load(true), [load])
 
   if (error) {
     return (
@@ -57,8 +74,8 @@ export function CrmSessionProvider({ base, children, loading = null }: { base: s
       </div>
     )
   }
-  if (!me) return <>{loading}</>
-  return <SessionContext.Provider value={{ me, base, logout }}>{children}</SessionContext.Provider>
+  if (!me || wrongSkin) return <>{loading}</>
+  return <SessionContext.Provider value={{ me, base, logout, refreshMe }}>{children}</SessionContext.Provider>
 }
 
 export function useSession() {
@@ -78,15 +95,16 @@ export function useMenuGuard(menu: MenuKey) {
   return allowed
 }
 
-export type NavItem = { key: MenuKey | 'me'; label: string; path: string; description: string; href: string; active: boolean }
+export type NavItem = { key: MenuKey | 'skin' | 'me'; label: string; path: string; description: string; href: string; active: boolean }
 
-// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '내정보'는 누구에게나 보인다.
+// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '스킨', '내정보'는 누구에게나 보인다.
 export function useNav(): NavItem[] {
   const { me, base } = useSession()
   const pathname = usePathname()
   return useMemo(() => {
     const items: Array<Omit<NavItem, 'href' | 'active'>> = [
       ...MENUS.filter((m) => me.menus.includes(m.key)),
+      { key: 'skin', label: '스킨', path: '/skin', description: '화면 디자인 고르기' },
       { key: 'me', label: '내정보', path: '/me', description: '내 정보 확인, 비밀번호 변경' }
     ]
     return items.map((m) => {
@@ -96,15 +114,16 @@ export function useNav(): NavItem[] {
   }, [base, me.menus, pathname])
 }
 
-// 버전 루트(/ 또는 /v2 ...) → 볼 수 있는 첫 메뉴로
+// 버전 루트(/ 또는 /v2 ...) → 그 사람 스킨의 첫 메뉴로
 export function RootRedirect({ base }: { base: string }) {
   const router = useRouter()
   useEffect(() => {
     setLoginPath(`${base}/login`)
     ;(async () => {
       if (!(await getToken())) return router.replace(`${base}/login`)
-      const res = await api<Me>('/api/auth/me')
-      router.replace(res.ok ? firstAllowedPath(base, res.data.menus) : `${base}/login`)
+      const res = await getMeCached<Me>()
+      if (!res.ok) return router.replace(`${base}/login`)
+      router.replace(res.data.isSuperAdmin ? firstAllowedPath(base, res.data.menus) : homeFor(res.data))
     })()
   }, [base, router])
   return null
@@ -112,6 +131,7 @@ export function RootRedirect({ base }: { base: string }) {
 
 /* ───────────────────────── 로그인 ───────────────────────── */
 
+// 로그인하면 그 사람이 저장한 스킨으로 들어간다(최고관리자도 저장한 스킨으로).
 export function useLogin(base: string) {
   const router = useRouter()
   const [loginId, setLoginId] = useState('')
@@ -123,8 +143,8 @@ export function useLogin(base: string) {
   useEffect(() => {
     ;(async () => {
       if (await getToken()) {
-        const res = await api<Me>('/api/auth/me')
-        if (res.ok) router.replace(firstAllowedPath(base, res.data.menus))
+        const res = await getMeCached<Me>()
+        if (res.ok) router.replace(homeFor(res.data))
       }
     })()
   }, [base, router])
@@ -144,13 +164,13 @@ export function useLogin(base: string) {
       setBusy(false)
       return
     }
-    const res = await api<Me>('/api/auth/me')
+    const res = await getMeCached<Me>(true)
     if (!res.ok) {
       setError(res.error)
       setBusy(false)
       return
     }
-    router.replace(firstAllowedPath(base, res.data.menus))
+    router.replace(homeFor(res.data))
   }
 
   return { loginId, setLoginId, password, setPassword, busy, error, submit }
@@ -214,21 +234,44 @@ export function useMyAttendance() {
 
 /* ───────────────────────── 직원근태 (관리자/팀장) ───────────────────────── */
 
+export const TEAM_PERIODS: ReadonlyArray<{ key: TeamPeriod; label: string }> = [
+  { key: 'week', label: '주간' },
+  { key: 'month', label: '월간' }
+]
+
+// 직원근태: 주간/월간 통계. date 는 보고 있는 주/달 안의 아무 날짜.
+// 집계(summary): 출근(지각 포함) / 지각(09:00 이후) / 퇴근 / 야근(19:00 이후) / 결근 / 근무시간
 export function useTeamAttendance() {
-  const [month, setMonth] = useState(() => todayKst().slice(0, 7))
+  const [period, setPeriodState] = useState<TeamPeriod>('month')
+  const [date, setDate] = useState(() => todayKst())
   const [data, setData] = useState<TeamAttendance | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const seq = useRef(0)
 
   const reload = useCallback(async () => {
+    const mySeq = ++seq.current
     setLoading(true)
-    const res = await api<TeamAttendance>(`/api/attendance/team?month=${month}`)
+    const res = await api<TeamAttendance>(`/api/attendance/team?period=${period}&date=${date}`)
+    if (mySeq !== seq.current) return
     if (res.ok) {
       setData(res.data)
       setError('')
     } else setError(res.error)
     setLoading(false)
-  }, [month])
+  }, [period, date])
+
+  const setPeriod = (next: TeamPeriod) => {
+    setPeriodState(next)
+    setDate(todayKst())
+  }
+  // 이전(-1) / 다음(+1) 주 또는 달
+  const shift = (delta: number) => {
+    if (period === 'week') setDate((d) => addDays(weekStart(d), delta * 7))
+    else setDate((d) => `${shiftMonth(d.slice(0, 7), delta)}-01`)
+  }
+  const goToday = () => setDate(todayKst())
+  const canGoNext = data ? !data.isCurrent : false
 
   useEffect(() => {
     void reload()
@@ -246,7 +289,7 @@ export function useTeamAttendance() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { month, setMonth, data, loading, error, reload, markAbsent, cancelAbsence }
+  return { period, setPeriod, date, shift, goToday, canGoNext, data, loading, error, reload, markAbsent, cancelAbsence }
 }
 
 /* ───────────────────────── 영상등록 ───────────────────────── */
@@ -319,16 +362,44 @@ export function useVideoRegister() {
 
 /* ───────────────────────── 통계 ───────────────────────── */
 
-export const STAT_PRESETS = [
-  { key: '7', label: '최근 7일', days: 7 },
-  { key: '30', label: '최근 30일', days: 30 },
-  { key: '90', label: '최근 90일', days: 90 }
-] as const
+// 기간: 오늘 / 이번주(월~오늘) / 이번달(1일~오늘) / 특정 날짜(하루). 업로드 날짜 기준.
+export type StatPeriod = 'today' | 'week' | 'month' | 'date'
+export const STAT_PERIODS: ReadonlyArray<{ key: StatPeriod; label: string }> = [
+  { key: 'today', label: '오늘' },
+  { key: 'week', label: '이번주' },
+  { key: 'month', label: '이번달' },
+  { key: 'date', label: '특정날짜' }
+]
+
+// 영상 정렬: 최신순 / 조회순 / 담당자순(담당자 이름 → 같은 담당자 안에서는 조회수 많은 순) / 길이순
+export type StatSort = 'date' | 'views' | 'owner' | 'duration'
+export const STAT_SORTS: ReadonlyArray<{ key: StatSort; label: string }> = [
+  { key: 'date', label: '최신순' },
+  { key: 'views', label: '조회순' },
+  { key: 'owner', label: '담당자순' },
+  { key: 'duration', label: '길이순' }
+]
+
+function periodRange(period: StatPeriod, date: string) {
+  const t = todayKst()
+  if (period === 'today') return { from: t, to: t }
+  if (period === 'week') return { from: weekStart(t), to: t }
+  if (period === 'month') return { from: monthStart(t), to: t }
+  return { from: date, to: date }
+}
 
 export function useStats() {
   const [who, setWho] = useState('me')
-  const [to, setTo] = useState(() => todayKst())
-  const [from, setFrom] = useState(() => addDays(todayKst(), -29))
+  const [period, setPeriod] = useState<StatPeriod>('month')
+  const [date, setDateState] = useState(() => todayKst()) // '특정날짜'일 때 고른 날짜
+  const [sort, setSort] = useState<StatSort>('date')
+  const { from, to } = periodRange(period, date)
+  // 날짜를 고르면 자동으로 '특정날짜' 기간이 된다.
+  const setDate = (ymd: string) => {
+    if (!ymd) return
+    setDateState(ymd)
+    setPeriod('date')
+  }
   const [data, setData] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -350,21 +421,20 @@ export function useStats() {
     void reload()
   }, [reload])
 
-  const setRange = (nextFrom: string, nextTo: string) => {
-    if (nextFrom > nextTo) [nextFrom, nextTo] = [nextTo, nextFrom]
-    setFrom(nextFrom)
-    setTo(nextTo)
-  }
-  const applyPreset = (days: number) => {
-    const t = todayKst()
-    setRange(addDays(t, -(days - 1)), t)
-  }
-  const activePreset = STAT_PRESETS.find((p) => to === todayKst() && from === addDays(to, -(p.days - 1)))?.key || null
+  const videos = useMemo(() => {
+    const list = [...(data?.videos || [])]
+    const uploaded = (v: Video) => v.publishedAt || v.createdAt
+    if (sort === 'views') list.sort((a, b) => b.viewCount - a.viewCount)
+    else if (sort === 'duration') list.sort((a, b) => (b.durationSeconds || 0) - (a.durationSeconds || 0))
+    else if (sort === 'owner') list.sort((a, b) => (a.ownerName || '').localeCompare(b.ownerName || '', 'ko') || b.viewCount - a.viewCount)
+    else list.sort((a, b) => uploaded(b).localeCompare(uploaded(a)))
+    return list
+  }, [data, sort])
 
   // 볼 수 있는 사람이 나 혼자면 사람 선택 UI를 숨긴다.
   const canPickPeople = (data?.people.length || 0) > 1
 
-  return { who, setWho, from, to, setRange, applyPreset, activePreset, data, loading, error, reload, canPickPeople }
+  return { who, setWho, period, setPeriod, date, setDate, from, to, sort, setSort, videos, data, loading, error, reload, canPickPeople }
 }
 
 /* ───────────────────────── 설정 ───────────────────────── */
@@ -405,9 +475,77 @@ export function useSettings() {
     deleteRole: (id: string) => run(`/api/settings/roles/${id}`, 'DELETE'),
     setUserRoles: (userId: string, roleIds: string[]) => run(`/api/settings/users/${userId}/roles`, 'PUT', { roleIds }),
     createAccount: (account: NewAccount) => run('/api/settings/users', 'POST', account),
+    // 역할 순서 저장(끌어서 놓은 뒤). 화면은 먼저 바뀐 순서로 보여 주고, 실패하면 다시 불러온다.
+    reorderRoles: async (roleIds: string[]): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: roleIds.map((id) => d.roles.find((r) => r.id === id)!).filter(Boolean) } : d))
+      return run('/api/settings/roles/order', 'PUT', { roleIds })
+    },
     updateAccount: (id: string, patch: AccountPatch) => run(`/api/settings/users/${id}`, 'PATCH', patch)
   }
 }
+
+/* ───────────────────────── 설정 01 사원목록 ───────────────────────── */
+
+export type Employee = {
+  id: string
+  name: string
+  loginId: string
+  email: string
+  phone: string
+  affiliationName: string | null
+  roles: string[]
+  active: boolean
+  isSuperAdmin: boolean
+}
+
+// 내 소속 하부 사원 목록 + "이 아이디로 로그인"(성공하면 그 사원의 스킨 첫 화면으로 새로 연다)
+export function useEmployees() {
+  const { me } = useSession()
+  const [items, setItems] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const reload = useCallback(async () => {
+    const res = await api<{ items: Employee[] }>('/api/settings/employees')
+    if (res.ok) {
+      setItems(res.data.items)
+      setError('')
+    } else setError(res.error)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    void reload()
+  }, [reload])
+
+  const loginAs = async (userId: string): Promise<ActionResult> => {
+    if (busyId) return { ok: false }
+    setBusyId(userId)
+    const err = await impersonate(userId, me.name)
+    if (err) {
+      setBusyId(null)
+      setError(err)
+      return { ok: false, error: err }
+    }
+    const res = await getMeCached<Me>(true)
+    window.location.assign(res.ok ? homeFor(res.data) : '/login')
+    return { ok: true }
+  }
+
+  return { items, loading, error, reload, loginAs, busyId }
+}
+
+// 설정 화면 탭(모든 스킨 공통 순서·번호)
+export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create'
+export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label: string }> = [
+  { key: 'employees', no: '01', label: '사원목록' },
+  { key: 'assign', no: '02', label: '역할부여' },
+  { key: 'roles', no: '03', label: '역할설정' },
+  { key: 'create', no: '04', label: '아이디생성' }
+]
+
+export const EMPLOYEE_TABS_NOTE = '내 소속 하부에 있는 사원만 보입니다. "이 아이디로 로그인"을 누르면 그 사원 화면으로 바로 들어가고, 오른쪽 위 "관리자로 복귀"로 돌아옵니다.'
 
 export const EMPTY_ACCOUNT: NewAccount = { loginId: '', password: '', name: '', email: '', phone: '', affiliationRoleId: null }
 
@@ -450,19 +588,91 @@ export function useChangePassword() {
   return { current, setCurrent, next, setNext, confirm, setConfirm, busy, error, done, submit }
 }
 
-/* ───────────────────────── 버전 전환 (비교용) ───────────────────────── */
+/* ───────────────────────── 끌어서 순서 바꾸기 ───────────────────────── */
 
-export const VERSIONS = [
-  { key: 'v1', base: '' },
-  { key: 'v2', base: '/v2' },
-  { key: 'v3', base: '/v3' },
-  { key: 'v4', base: '/v4' },
-  { key: 'v5', base: '/v5' }
-] as const
+// 표의 행(tr)이나 목록 항목을 마우스로 끌어서 순서를 바꾼다.
+//   const drag = useDragReorder(roles, (ids) => s.reorderRoles(ids))
+//   drag.items.map((r) => <tr key={r.id} {...drag.rowProps(r.id)} className={drag.draggingId === r.id ? 'dragging' : ''}>)
+// 놓는 순간(onDragEnd) 순서가 바뀌었으면 onCommit(새 id 순서)를 한 번 부른다.
+export function useDragReorder<T extends { id: string }>(source: T[], onCommit: (ids: string[]) => void | Promise<unknown>) {
+  const [order, setOrder] = useState<string[] | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const startOrder = useRef<string[]>([])
+  const ids = order ?? source.map((x) => x.id)
+  const byId = new Map(source.map((x) => [x.id, x]))
+  const items = ids.map((id) => byId.get(id)).filter(Boolean) as T[]
+
+  useEffect(() => {
+    if (!draggingId) setOrder(null) // 끌기가 끝나면 서버 순서(source)를 따른다
+  }, [source, draggingId])
+
+  const rowProps = (id: string) => ({
+    draggable: true,
+    'aria-grabbed': draggingId === id,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', id)
+      startOrder.current = source.map((x) => x.id)
+      setOrder(startOrder.current)
+      setDraggingId(id)
+    },
+    onDragOver: (e: React.DragEvent) => {
+      if (!draggingId) return
+      e.preventDefault()
+      if (id === draggingId) return
+      setOrder((cur) => {
+        const list = [...(cur ?? startOrder.current)]
+        const from = list.indexOf(draggingId)
+        const to = list.indexOf(id)
+        if (from < 0 || to < 0) return cur
+        list.splice(from, 1)
+        list.splice(to, 0, draggingId)
+        return list
+      })
+    },
+    onDrop: (e: React.DragEvent) => e.preventDefault(),
+    onDragEnd: () => {
+      const finalIds = order ?? startOrder.current
+      setDraggingId(null)
+      if (finalIds.join() !== startOrder.current.join()) void onCommit(finalIds)
+      else setOrder(null)
+    }
+  })
+
+  return { items, rowProps, draggingId }
+}
+
+/* ───────────────────────── 스킨 ───────────────────────── */
+
+// 스킨 메뉴: 목록 + 현재 내 스킨 + 적용(저장 후 같은 메뉴의 그 스킨 화면으로 이동)
+export function useSkins() {
+  const { me, refreshMe } = useSession()
+  const router = useRouter()
+  const [busy, setBusy] = useState<SkinKey | null>(null)
+  const [error, setError] = useState('')
+  const apply = async (key: SkinKey): Promise<ActionResult> => {
+    if (busy) return { ok: false }
+    setBusy(key)
+    setError('')
+    const res = await api('/api/me/skin', { method: 'PUT', body: { skin: key } })
+    if (!res.ok) {
+      setBusy(null)
+      setError(res.error)
+      return { ok: false, error: res.error }
+    }
+    await refreshMe()
+    router.replace(`${skinBase(key)}/skin`)
+    setBusy(null)
+    return { ok: true }
+  }
+  return { skins: SKINS, current: me.skin, apply, busy, error }
+}
+
+/* ───────────────────────── 하단 버전·스킨 전환 (최고관리자 전용) ───────────────────────── */
 
 export function useVersionLinks() {
   const pathname = usePathname()
-  const current = VERSIONS.find((v) => v.base && (pathname === v.base || pathname.startsWith(`${v.base}/`))) || VERSIONS[0]
-  const rest = current.base ? pathname.slice(current.base.length) || '' : pathname === '/' ? '' : pathname
-  return VERSIONS.map((v) => ({ key: v.key, href: `${v.base}${rest}` || '/', active: v.key === current.key }))
+  const current = skinOfPath(pathname)
+  const rest = pathWithoutSkin(pathname)
+  return SKINS.map((s) => ({ key: s.key, name: s.name, href: `${s.base}${rest}` || '/', active: s.key === current }))
 }
