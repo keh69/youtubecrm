@@ -3285,3 +3285,8 @@ html:root .v5 .g-matrix td {
   padding-left: 10px;
   padding-right: 10px;
 }
+
+/* 영상등록: [영상등록] 버튼은 항상 줄의 오른쪽 끝 */
+.v5 .g-register .g-row-form > .g-register-btn {
+  margin-left: auto;
+}

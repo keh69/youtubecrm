@@ -67,8 +67,8 @@ export default function V5Videos() {
             <span>유튜브 영상 주소</span>
             <input className="g-input" value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="g-btn primary" disabled={reg.busy}>
-            {reg.busy ? '추가 중…' : '＋ 추가'}
+          <button className="g-btn primary g-register-btn" disabled={reg.busy}>
+            {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && (
