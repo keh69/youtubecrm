@@ -106,7 +106,8 @@ export type SettingsUser = {
   name: string
   email: string
   phone: string
-  affiliationRoleId: string | null
+  affiliationRoleId: string | null // 예전 역할 소속(호환용)
+  affiliationUserId: string | null // 소속 아이디(사람)
   roleIds: string[]
   active: boolean
 }
@@ -115,6 +116,7 @@ export type SettingsData = {
   roles: SettingsRole[]
   users: SettingsUser[]
   migrated: boolean
+  affiliationUserReady: boolean // DB에 소속 아이디 칸이 있는지(210 SQL)
   isSuperAdmin: boolean
 }
 
@@ -124,7 +126,8 @@ export type NewAccount = {
   name: string
   email: string
   phone: string
-  affiliationRoleId: string | null
+  affiliationRoleId: string | null // 예전 스킨 호환용
+  affiliationUserId?: string | null // 소속 아이디(사람)
 }
 
 export type AccountPatch = Partial<{
@@ -132,6 +135,7 @@ export type AccountPatch = Partial<{
   email: string
   phone: string
   affiliationRoleId: string | null
+  affiliationUserId: string | null
   password: string
   active: boolean
 }>

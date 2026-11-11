@@ -37,6 +37,10 @@ export default function V5Settings() {
         />
       )}
 
+      {s.data && s.data.migrated && !s.data.affiliationUserReady && (
+        <Note msg={{ tone: 'error', text: 'DB 업데이트가 필요합니다. supabase/sql/simple/210_affiliation_user.sql 을 Supabase SQL Editor에서 실행해 주세요. (그 전에는 아이디 소속이 저장되지 않습니다)' }} role="alert" />
+      )}
+
       <div className="g-tabs-wrap">
         <div className="g-tabs" role="tablist" aria-label="설정 메뉴">
           {st.tabs.map((t) => (
@@ -143,6 +147,49 @@ function EmployeesTab() {
 type S = ReturnType<typeof useSettings>
 type Report = (res: { ok: boolean; error?: string }, okText: string) => boolean
 
+/* ── 소속 선택칸: 역할별로 그 역할이 적용된 아이디만 보여 준다(적용된 아이디가 없는 역할은 안 보임) ──
+   고른 아이디(사람) 밑으로 소속된다. 자기 자신은 고를 수 없다. */
+function AffiliationSelect({
+  s,
+  value,
+  legacyRoleId,
+  excludeId,
+  onChange,
+  className
+}: {
+  s: S
+  value: string | null
+  legacyRoleId?: string | null
+  excludeId?: string
+  onChange: (userId: string | null) => void
+  className: string
+}) {
+  const { roles, users } = s.data!
+  const groups = roles
+    .map((r) => ({ role: r, people: users.filter((u) => u.active && u.id !== excludeId && u.roleIds.includes(r.id)) }))
+    .filter((g) => g.people.length > 0)
+  const legacy = !value && legacyRoleId ? roles.find((r) => r.id === legacyRoleId) : undefined
+  return (
+    <select className={className} value={value || (legacy ? 'legacy' : '')} onChange={(e) => e.target.value !== 'legacy' && onChange(e.target.value || null)}>
+      <option value="">소속 없음</option>
+      {legacy && (
+        <option value="legacy" disabled>
+          (예전 방식) 역할 &lsquo;{legacy.name}&rsquo; — 사람을 다시 골라 주세요
+        </option>
+      )}
+      {groups.map((g) => (
+        <optgroup key={g.role.id} label={g.role.name}>
+          {g.people.map((u) => (
+            <option key={`${g.role.id}-${u.id}`} value={u.id}>
+              {u.name} ({u.loginId})
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  )
+}
+
 /* ── 역할부여: 아이디별 역할 추가/제거 + 소속 + 계정 정보 ── */
 function AssignTab({ s, report }: { s: S; report: Report }) {
   const { me } = useSession()
@@ -151,7 +198,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
   return (
     <section className="g-glass">
       <p className="g-hint">
-        💡 <strong>소속</strong>에 역할(예: A팀장)을 정하면, 그 역할을 가진 사람이 로그인했을 때 이 직원의 영상·통계·근태를 볼 수 있습니다. 위로 계속 이어집니다(팀원 → 팀장 → 관리자).
+        💡 <strong>소속</strong>에서 사람(아이디)을 고르면 그 사람 밑으로 들어가, 그 사람이 로그인했을 때 이 직원의 영상·통계·근태를 볼 수 있습니다. 위로 계속 이어집니다(팀원 → 팀장 → 관리자). 소속 목록에는 역할별로 그 역할이 적용된 아이디만 나옵니다.
       </p>
       <ul className="g-accounts">
         {s.data!.users.map((u) => {
@@ -175,18 +222,14 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
                 </div>
                 <label className="g-account-aff">
                   <small className="g-label">소속</small>
-                  <select
+                  <AffiliationSelect
+                    s={s}
                     className="g-input sm"
-                    value={u.affiliationRoleId || ''}
-                    onChange={async (e) => report(await s.updateAccount(u.id, { affiliationRoleId: e.target.value || null }), `${u.name}님의 소속을 저장했습니다.`)}
-                  >
-                    <option value="">소속 없음</option>
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                    value={u.affiliationUserId}
+                    legacyRoleId={u.affiliationRoleId}
+                    excludeId={u.id}
+                    onChange={async (id) => report(await s.updateAccount(u.id, { affiliationUserId: id }), `${u.name}님의 소속을 저장했습니다.`)}
+                  />
                 </label>
                 <button className="g-btn ghost sm g-account-toggle" aria-expanded={open} onClick={() => setEditId(open ? null : u.id)}>
                   {open ? '닫기' : '정보 수정'}
@@ -456,14 +499,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
           </label>
           <label className="g-field">
             <span>소속</span>
-            <select className="g-input" value={form.affiliationRoleId || ''} onChange={(e) => setForm((f) => ({ ...f, affiliationRoleId: e.target.value || null }))}>
-              <option value="">소속 없음</option>
-              {s.data!.roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+            <AffiliationSelect s={s} className="g-input" value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
           </label>
         </div>
         <div className="g-editor-actions">

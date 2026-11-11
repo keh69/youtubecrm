@@ -6,6 +6,7 @@ import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
 import { assertAffiliationColumn, audit, internalEmailFor, requireSettingsTab } from '@/lib/crm/server/settings'
+import { assertAffiliationTarget } from '@/lib/crm/server/scope'
 
 const bodySchema = z.object({
   loginId: z
@@ -19,6 +20,8 @@ const bodySchema = z.object({
   // 이메일은 선택: 비우면 내부용 주소를 대신 붙인다.
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional().default(''),
   phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
+  // 소속: 역할이 있는 아이디(사람)를 고른다. affiliationRoleId 는 예전 스킨 호환용(역할 소속).
+  affiliationUserId: z.string().uuid().nullable().optional(),
   affiliationRoleId: z.string().uuid().nullable().optional()
 })
 
@@ -29,6 +32,7 @@ export async function POST(request: Request) {
     requireSettingsTab(ctx, 'create')
     const body = bodySchema.parse(await request.json())
     await assertAffiliationColumn(ctx) // 마이그레이션 전에는 계정 생성을 막는다(역할 데이터가 섞이지 않게).
+    if (body.affiliationUserId) await assertAffiliationTarget(ctx, body.affiliationUserId)
 
     const { data: dupId } = await ctx.db.from(TABLES.crmUsers).select('id').ilike('login_id', escapeLikePattern(body.loginId)).maybeSingle()
     if (dupId) throw new HttpError(409, '이미 사용 중인 아이디입니다.')
@@ -52,7 +56,8 @@ export async function POST(request: Request) {
       role_type: 'staff',
       employment_status: 'active'
     }
-    if (body.affiliationRoleId) profile.affiliation_role_id = body.affiliationRoleId
+    if (body.affiliationUserId) profile.affiliation_user_id = body.affiliationUserId
+    else if (body.affiliationRoleId) profile.affiliation_role_id = body.affiliationRoleId
 
     const { data: user, error: profileError } = await ctx.db.from(TABLES.crmUsers).insert(profile).select('id').single()
     if (profileError || !user) {
@@ -63,7 +68,7 @@ export async function POST(request: Request) {
     const { data: staffRole } = await ctx.db.from(TABLES.roles).select('id').eq('code', 'staff').maybeSingle()
     if (staffRole) await ctx.db.from(TABLES.userRoles).insert({ user_id: user.id, role_id: staffRole.id, granted_by: ctx.profile.id })
 
-    await audit(ctx, 'create_user', 'crm_user', user.id, { login_id: body.loginId, name: body.name, affiliation_role_id: body.affiliationRoleId || null })
+    await audit(ctx, 'create_user', 'crm_user', user.id, { login_id: body.loginId, name: body.name, affiliation_user_id: body.affiliationUserId || null, affiliation_role_id: body.affiliationUserId ? null : body.affiliationRoleId || null })
     return NextResponse.json({ ok: true, id: user.id })
   } catch (e) {
     return handleError(e, '아이디 생성 실패')

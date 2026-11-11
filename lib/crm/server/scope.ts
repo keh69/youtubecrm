@@ -2,67 +2,96 @@ import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, isMissingSchema, loadRolesForUsers, type CrmContext, type RoleRow } from '@/lib/crm/server/context'
 import { publicEmail } from '@/lib/crm/server/settings'
 
+type Admin = CrmContext['db']
+
 export type ScopedUser = {
   id: string
   name: string
   loginId: string
+  affiliationUserId: string | null
   affiliationRoleId: string | null
   affiliationName: string | null
   active: boolean
 }
 
+export const AFFILIATION_USER_HINT = 'DB 업데이트가 필요합니다. supabase/sql/simple/210_affiliation_user.sql 을 Supabase SQL Editor에서 실행해 주세요.'
+
+// 직원 행 읽기: 소속 칸(affiliation_user_id, affiliation_role_id)이 아직 없는 DB에서도 동작하게 단계적으로 시도한다.
+// userColumn=false 면 '아이디 소속' 칸이 아직 없는 것(210 SQL 실행 전).
+export async function selectUserRows(db: Admin, baseColumns: string, orderBy: string): Promise<{ rows: any[]; userColumn: boolean; roleColumn: boolean }> {
+  const tries: Array<{ extra: string; userColumn: boolean; roleColumn: boolean }> = [
+    { extra: ', affiliation_role_id, affiliation_user_id', userColumn: true, roleColumn: true },
+    { extra: ', affiliation_role_id', userColumn: false, roleColumn: true },
+    { extra: '', userColumn: false, roleColumn: false }
+  ]
+  for (const t of tries) {
+    const { data, error } = await db.from(TABLES.crmUsers).select(baseColumns + t.extra).order(orderBy, { ascending: true })
+    if (!error) {
+      const rows = ((data || []) as any[]).map((u) => ({ affiliation_role_id: null, affiliation_user_id: null, ...u }))
+      return { rows, userColumn: t.userColumn, roleColumn: t.roleColumn }
+    }
+    if (!isMissingSchema(error)) throw error
+  }
+  return { rows: [], userColumn: false, roleColumn: false }
+}
+
+// 소속 연결을 따라 rootId 아래에 있는 사람 전부(rootId 제외).
+// - 아이디 소속(affiliation_user_id)이 있으면 그 사람 밑.
+// - 아이디 소속이 없고 예전 역할 소속(affiliation_role_id)만 있으면, 그 역할을 가진 사람 밑으로 본다(옮기기 전 데이터 호환).
+export function collectUnder(rows: any[], rolesByUser: Map<string, RoleRow[]>, rootId: string) {
+  const under = new Set<string>()
+  const queue = [rootId]
+  const seenRoles = new Set<string>()
+  while (queue.length) {
+    const parentId = queue.shift()!
+    const newRoles = new Set<string>()
+    for (const r of rolesByUser.get(parentId) || []) {
+      if (!seenRoles.has(r.id)) {
+        seenRoles.add(r.id)
+        newRoles.add(r.id)
+      }
+    }
+    for (const u of rows) {
+      if (u.id === rootId || under.has(u.id)) continue
+      const linked = u.affiliation_user_id ? u.affiliation_user_id === parentId : Boolean(u.affiliation_role_id && newRoles.has(u.affiliation_role_id))
+      if (linked) {
+        under.add(u.id)
+        queue.push(u.id)
+      }
+    }
+  }
+  return under
+}
+
+// 화면에 보일 소속 이름: 아이디 소속이면 그 사람 이름, 예전 역할 소속이면 역할 이름
+export function affiliationNameOf(u: any, nameById: Map<string, string>, roleName: Map<string, string>) {
+  if (u.affiliation_user_id) return nameById.get(u.affiliation_user_id) || null
+  if (u.affiliation_role_id) return roleName.get(u.affiliation_role_id) || null
+  return null
+}
+
 // 내가 볼 수 있는 직원 목록.
 // - 총관리자(super_admin): 전체 직원
-// - 그 외(관리자 포함): 나 자신 + "소속"이 내가 가진 역할인 직원 + 그 직원들이 가진 역할에 소속된 직원 ... (아래로 계속)
-//   예) 나 = 'A팀장' 역할 보유 → 소속이 'A팀장'인 팀원 전부. 팀원 중 누가 'B파트장' 역할도 있으면 그 밑 직원까지.
+// - 그 외(관리자 포함): 나 자신 + 나에게 소속된 직원 + 그 직원에게 소속된 직원 ... (아래로 계속)
 export async function loadVisibleUsers(ctx: CrmContext): Promise<ScopedUser[]> {
   const { db } = ctx
-  let rows: any[] = []
-  const full = await db
-    .from(TABLES.crmUsers)
-    .select('id, name, login_id, role_type, custom_role_code, employment_status, affiliation_role_id')
-    .order('name', { ascending: true })
-  if (full.error) {
-    if (!isMissingSchema(full.error)) throw full.error
-    const basic = await db
-      .from(TABLES.crmUsers)
-      .select('id, name, login_id, role_type, custom_role_code, employment_status')
-      .order('name', { ascending: true })
-    if (basic.error) throw basic.error
-    rows = (basic.data || []).map((u: any) => ({ ...u, affiliation_role_id: null }))
-  } else {
-    rows = full.data || []
-  }
-
+  const { rows } = await selectUserRows(db, 'id, name, login_id, role_type, custom_role_code, employment_status', 'name')
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
   const roleName = new Map(allRoles.map((r: RoleRow) => [r.id, r.name]))
+  const nameById = new Map(rows.map((u) => [u.id, u.name]))
   const toScoped = (u: any): ScopedUser => ({
     id: u.id,
     name: u.name,
     loginId: u.login_id,
+    affiliationUserId: u.affiliation_user_id || null,
     affiliationRoleId: u.affiliation_role_id || null,
-    affiliationName: u.affiliation_role_id ? roleName.get(u.affiliation_role_id) || null : null,
+    affiliationName: affiliationNameOf(u, nameById, roleName),
     active: u.employment_status === 'active'
   })
 
   if (ctx.isSuperAdmin) return rows.map(toScoped)
-
-  const visible = new Set<string>([ctx.profile.id])
-  const queue = [ctx.profile.id]
-  const seenRoles = new Set<string>()
-  while (queue.length) {
-    const userId = queue.shift()!
-    for (const role of rolesByUser.get(userId) || []) {
-      if (seenRoles.has(role.id)) continue
-      seenRoles.add(role.id)
-      for (const u of rows) {
-        if (u.affiliation_role_id === role.id && !visible.has(u.id)) {
-          visible.add(u.id)
-          queue.push(u.id)
-        }
-      }
-    }
-  }
+  const visible = collectUnder(rows, rolesByUser, ctx.profile.id)
+  visible.add(ctx.profile.id)
   return rows.filter((u) => visible.has(u.id)).map(toScoped)
 }
 
@@ -77,34 +106,13 @@ export async function assertCanSeeUser(ctx: CrmContext, userId: string) {
 export type Subordinate = ScopedUser & { email: string; phone: string; roles: string[]; isSuperAdmin: boolean }
 
 // 내 소속 하부 직원(나 제외): 관리자라도 "소속" 연결을 따라 내려간 사람만.
-// 예) 나 = '관리자' 역할 → 소속이 '관리자'인 사람 → 그 사람이 가진 역할(예: A팀장)에 소속된 사람 … 끝까지.
 export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> {
   const { db } = ctx
-  const { data, error } = await db
-    .from(TABLES.crmUsers)
-    .select('id, name, login_id, email, phone, role_type, custom_role_code, employment_status, affiliation_role_id')
-    .order('name', { ascending: true })
-  if (error) throw error
-  const rows = (data || []) as any[]
+  const { rows } = await selectUserRows(db, 'id, name, login_id, email, phone, role_type, custom_role_code, employment_status', 'name')
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
   const roleName = new Map(allRoles.map((r: RoleRow) => [r.id, r.name]))
-
-  const under = new Set<string>()
-  const queue = [ctx.profile.id]
-  const seenRoles = new Set<string>()
-  while (queue.length) {
-    const userId = queue.shift()!
-    for (const role of rolesByUser.get(userId) || []) {
-      if (seenRoles.has(role.id)) continue
-      seenRoles.add(role.id)
-      for (const u of rows) {
-        if (u.affiliation_role_id === role.id && u.id !== ctx.profile.id && !under.has(u.id)) {
-          under.add(u.id)
-          queue.push(u.id)
-        }
-      }
-    }
-  }
+  const nameById = new Map(rows.map((u) => [u.id, u.name]))
+  const under = collectUnder(rows, rolesByUser, ctx.profile.id)
 
   return rows
     .filter((u) => under.has(u.id))
@@ -114,10 +122,36 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
       loginId: u.login_id,
       email: publicEmail(u.email),
       phone: u.phone || '',
+      affiliationUserId: u.affiliation_user_id || null,
       affiliationRoleId: u.affiliation_role_id || null,
-      affiliationName: u.affiliation_role_id ? roleName.get(u.affiliation_role_id) || null : null,
+      affiliationName: affiliationNameOf(u, nameById, roleName),
       active: u.employment_status === 'active',
       roles: (rolesByUser.get(u.id) || []).map((r) => r.name),
       isSuperAdmin: (rolesByUser.get(u.id) || []).some((r) => r.code === 'super_admin')
     }))
+}
+
+// 소속으로 고를 수 있는 아이디인지 검사: 있는 아이디 + 사용 중 + 역할이 1개 이상.
+// forUserId 가 있으면(소속 변경) 자기 자신이나 자기 밑에 있는 사람을 소속으로 고를 수 없다(빙빙 도는 연결 방지).
+export async function assertAffiliationTarget(ctx: CrmContext, targetId: string, forUserId?: string) {
+  const { db } = ctx
+  const { rows, userColumn } = await selectUserRows(db, 'id, name, role_type, custom_role_code, employment_status', 'name')
+  if (!userColumn) throw new HttpError(409, AFFILIATION_USER_HINT)
+  const target = rows.find((u) => u.id === targetId)
+  if (!target) throw new HttpError(400, '소속으로 고른 아이디를 찾을 수 없습니다.')
+  if (target.employment_status !== 'active') throw new HttpError(400, '사용 중지된 아이디에는 소속시킬 수 없습니다.')
+  const { rolesByUser } = await loadRolesForUsers(db, rows)
+  if (!(rolesByUser.get(targetId) || []).length) throw new HttpError(400, '역할이 없는 아이디에는 소속시킬 수 없습니다.')
+  if (forUserId) {
+    if (targetId === forUserId) throw new HttpError(400, '자기 자신에게 소속시킬 수 없습니다.')
+    if (collectUnder(rows, rolesByUser, forUserId).has(targetId)) {
+      throw new HttpError(400, `${target.name}님은 이 직원 밑에 있는 사람이라 소속으로 고를 수 없습니다.`)
+    }
+  }
+}
+
+export async function hasAffiliationUserColumn(db: Admin) {
+  const { error } = await db.from(TABLES.crmUsers).select('affiliation_user_id').limit(1)
+  if (error && !isMissingSchema(error)) throw error
+  return !error
 }

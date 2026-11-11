@@ -1,6 +1,7 @@
 import { TABLES } from '@/lib/supabase/tables'
 import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
+import { selectUserRows } from '@/lib/crm/server/scope'
 
 export function requireSettings(ctx: CrmContext) {
   requireMenu(ctx, 'settings')
@@ -30,24 +31,10 @@ export function isSystemRole(code: string) {
 
 export async function loadSettingsOverview(ctx: CrmContext) {
   const { db } = ctx
-  let migrated = true
-  let userRows: any[] = []
-  const full = await db
-    .from(TABLES.crmUsers)
-    .select('id, login_id, name, email, phone, role_type, custom_role_code, employment_status, affiliation_role_id, joined_at')
-    .order('joined_at', { ascending: true })
-  if (full.error) {
-    if (!isMissingSchema(full.error)) throw full.error
-    migrated = false
-    const basic = await db
-      .from(TABLES.crmUsers)
-      .select('id, login_id, name, email, phone, role_type, custom_role_code, employment_status, joined_at')
-      .order('joined_at', { ascending: true })
-    if (basic.error) throw basic.error
-    userRows = (basic.data || []).map((u: any) => ({ ...u, affiliation_role_id: null }))
-  } else {
-    userRows = full.data || []
-  }
+  const sel = await selectUserRows(db, 'id, login_id, name, email, phone, role_type, custom_role_code, employment_status, joined_at', 'joined_at')
+  const userRows = sel.rows
+  const migrated = sel.roleColumn
+  const affiliationUserReady = sel.userColumn // 210 SQL(아이디 소속 칸) 실행 여부
 
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, userRows)
   const menuMap = await loadMenuMap(db, allRoles.map((r) => r.code))
@@ -62,7 +49,12 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
     settingsTabs: subMap.get(r.code) || [],
     holderCount: userRows.filter((u) => (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
-    memberCount: userRows.filter((u) => u.affiliation_role_id === r.id).length
+    // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)
+    memberCount: userRows.filter((u) =>
+      u.affiliation_user_id
+        ? (rolesByUser.get(u.affiliation_user_id) || []).some((x) => x.id === r.id)
+        : u.affiliation_role_id === r.id
+    ).length
   }))
 
   const users = userRows.map((u) => ({
@@ -72,11 +64,12 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     email: publicEmail(u.email),
     phone: u.phone || '',
     affiliationRoleId: u.affiliation_role_id || null,
+    affiliationUserId: u.affiliation_user_id || null,
     roleIds: (rolesByUser.get(u.id) || []).map((r) => r.id),
     active: u.employment_status === 'active'
   }))
 
-  return { roles, users, migrated, isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE) }
+  return { roles, users, migrated, affiliationUserReady, isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE) }
 }
 
 export async function assertRoleNameFree(ctx: CrmContext, name: string, exceptId?: string) {

@@ -5,6 +5,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
 import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettingsTab } from '@/lib/crm/server/settings'
+import { assertAffiliationTarget, hasAffiliationUserColumn } from '@/lib/crm/server/scope'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -13,7 +14,8 @@ const patchSchema = z.object({
   // 빈칸이면 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문).
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional(),
   phone: z.string().trim().max(20).regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional(),
-  affiliationRoleId: z.string().uuid().nullable().optional(),
+  affiliationUserId: z.string().uuid().nullable().optional(), // 소속 아이디(사람)
+  affiliationRoleId: z.string().uuid().nullable().optional(), // 예전 스킨 호환용(역할 소속)
   password: passwordSchema.optional(),
   active: z.boolean().optional()
 })
@@ -35,6 +37,8 @@ export async function PATCH(request: Request, context: Params) {
       await assertSuperAdminRemains(ctx, { userId: id, active: false })
     }
     if (body.affiliationRoleId !== undefined) await assertAffiliationColumn(ctx)
+    if (body.affiliationUserId) await assertAffiliationTarget(ctx, body.affiliationUserId, id)
+    else if (body.affiliationUserId === null) await assertAffiliationColumn(ctx)
 
     const authPatch: Record<string, unknown> = {}
     if (body.email && body.email.toLowerCase() !== String(target.email).toLowerCase()) {
@@ -53,7 +57,14 @@ export async function PATCH(request: Request, context: Params) {
     if (body.name !== undefined) patch.name = body.name
     if (body.email) patch.email = body.email
     if (body.phone !== undefined) patch.phone = body.phone || null
-    if (body.affiliationRoleId !== undefined) patch.affiliation_role_id = body.affiliationRoleId
+    if (body.affiliationUserId !== undefined) {
+      // 아이디 소속으로 정하면 예전 역할 소속은 지운다
+      if (await hasAffiliationUserColumn(ctx.db)) patch.affiliation_user_id = body.affiliationUserId
+      patch.affiliation_role_id = null
+    } else if (body.affiliationRoleId !== undefined) {
+      patch.affiliation_role_id = body.affiliationRoleId
+      if (await hasAffiliationUserColumn(ctx.db)) patch.affiliation_user_id = null
+    }
     if (body.active !== undefined) patch.employment_status = body.active ? 'active' : 'inactive'
     const { error } = await ctx.db.from(TABLES.crmUsers).update(patch).eq('id', id)
     if (error) throw error
