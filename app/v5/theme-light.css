@@ -2593,3 +2593,18 @@ html:has(.v5) .imp-bar * {
     padding: 0;
   }
 }
+
+/* ───────── 화면 흔들림 방지 (2026-11-11) ─────────
+   근태체크처럼 내용이 길어 스크롤바가 생기는 화면으로 오가면 화면 폭이 바뀌어
+   가운데 정렬된 상단 메뉴·표가 옆으로 밀렸다. 스크롤바 자리를 늘 비워 둬서 위치를 고정한다.
+   매초 바뀌는 시계·근무시간 숫자도 글자 폭을 같게 해서 흔들리지 않게 한다. */
+html:has(.v5) {
+  scrollbar-gutter: stable;
+}
+.v5 .g-att-clock strong,
+.v5 .g-att-summary dd,
+.v5 .g-ring-value,
+.v5 .g-timechip b,
+.v5 .g-history-worked {
+  font-variant-numeric: tabular-nums;
+}
