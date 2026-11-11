@@ -13,7 +13,7 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
   { key: 'settings', label: '설정', path: '/settings', description: '역할부여, 역할설정, 아이디생성' }
 ]
 
-// 시스템 역할: 삭제할 수 없고, 이 역할을 가진 사람은 모든 직원 데이터를 본다.
+// 관리자급 역할: 이 역할을 가진 사람은 남이 등록한 영상도 고칠 수 있다. 삭제가 막힌 것은 총 관리자뿐(isSystemRole).
 export const ADMIN_ROLE_CODES = ['super_admin', 'admin'] as const
 // 총 관리자는 잠금 방지를 위해 메뉴 권한을 항상 전부 가진다(설정 화면에서 못 끈다).
 export const LOCKED_ROLE_CODE = 'super_admin'

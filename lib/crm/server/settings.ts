@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { ADMIN_ROLE_CODES, AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
 
@@ -39,8 +39,9 @@ export async function saveRoleAffiliationVisible(ctx: CrmContext, code: string, 
   if (error) throw error
 }
 
+// 지울 수 없는 기본 역할: 총 관리자만(잠금 방지). '관리자'는 2026-11-11부터 다른 역할처럼 삭제할 수 있다.
 export function isSystemRole(code: string) {
-  return (ADMIN_ROLE_CODES as readonly string[]).includes(code)
+  return code === LOCKED_ROLE_CODE
 }
 
 export async function loadSettingsOverview(ctx: CrmContext) {

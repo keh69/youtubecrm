@@ -44,7 +44,7 @@ export async function PATCH(request: Request, context: Params) {
   }
 }
 
-// 역할 삭제 (총 관리자/관리자 역할은 삭제 불가). 이 역할을 소속으로 둔 직원은 소속이 비워진다.
+// 역할 삭제 (총 관리자 역할만 삭제 불가). 이 역할을 가진 사람은 역할이 빠진다. 이 역할을 소속으로 둔 직원은 소속이 비워진다.
 export async function DELETE(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
