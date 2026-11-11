@@ -2608,3 +2608,85 @@ html:has(.v5) {
 .v5 .g-history-worked {
   font-variant-numeric: tabular-nums;
 }
+
+/* ───────── 상단 메뉴바 3차 수정 (2026-11-11): 크기·글씨 한 단계 더 작게(약 12%) ─────────
+   넓은 화면(761px 이상)에만 적용. 휴대폰 크기는 이미 작게 맞춰져 있어 그대로 둔다.
+   앞쪽 규칙보다 확실히 이기도록 선택자 앞에 html 을 붙였다. */
+@media (min-width: 761px) {
+  html:root[data-theme='light'] .v5 .g-navpill,
+  html:root:not([data-theme='light']) .v5 .g-navpill {
+    gap: 10px;
+    padding: 7px 7px 7px 12px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand,
+  html:root:not([data-theme='light']) .v5 .g-brand {
+    font-size: 14px;
+    gap: 7px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand img,
+  html:root:not([data-theme='light']) .v5 .g-brand img {
+    width: 24px;
+    height: 24px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu,
+  html:root:not([data-theme='light']) .v5 .g-menu {
+    gap: 5px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu a,
+  html:root:not([data-theme='light']) .v5 .g-menu a {
+    padding: 6px 13px;
+    font-size: 13px;
+  }
+  html:root[data-theme='light'] .v5 .g-avatar,
+  html:root:not([data-theme='light']) .v5 .g-avatar {
+    width: 33px;
+    height: 33px;
+    font-size: 14px;
+  }
+  html:root[data-theme='light'] .v5 .g-user,
+  html:root:not([data-theme='light']) .v5 .g-user {
+    gap: 7px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text,
+  html:root:not([data-theme='light']) .v5 .g-user-text {
+    max-width: 120px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text strong,
+  html:root:not([data-theme='light']) .v5 .g-user-text strong {
+    font-size: 12.5px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text small,
+  html:root:not([data-theme='light']) .v5 .g-user-text small {
+    font-size: 10px;
+  }
+  html:root[data-theme='light'] .v5 .g-theme,
+  html:root:not([data-theme='light']) .v5 .g-theme {
+    height: 27px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  html:root[data-theme='light'] .v5 .g-navpill .g-btn,
+  html:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+    font-size: 11px;
+    padding: 6px 11px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu a,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu a {
+    gap: 9px;
+    min-width: 160px;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu b,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu b {
+    font-size: 12.5px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu small,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu small {
+    font-size: 10.5px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-ico,
+  html:root:not([data-theme='light']) .v5 .g-dd-ico {
+    font-size: 15px;
+  }
+}
