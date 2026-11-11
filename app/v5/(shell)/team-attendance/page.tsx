@@ -10,18 +10,36 @@ export default function V5TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
   const [openUser, setOpenUser] = useState<string | null>(null)
-  const [form, setForm] = useState({ userId: '', workDate: todayKst(), reason: '' })
+  const [form, setForm] = useState({ userId: '', workDate: todayKst(), time: '', reason: '' })
   const [msg, setMsg] = useState<Msg>(null)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
   if (!allowed) return null
 
-  const submitAbsence = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // 고른 직원·날짜의 지금 기록(보고 있는 기간 안일 때만 알 수 있다. 기간 밖이면 서버가 판단)
+  const rec = form.userId ? team.data?.rows.find((r) => r.user.id === form.userId)?.records[form.workDate] : undefined
+  const hasIn = Boolean(rec?.checkInAt)
+  const hasOut = Boolean(rec?.checkOutAt && !rec?.autoCheckout)
+  const closed = rec?.status === 'absent' || rec?.status === 'vacation'
+
+  // 근태처리 버튼: 시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)
+  const DEFAULT_TIME = { in: '09:00', in_late: '09:30', out: '18:00', out_overtime: '21:00' } as const
+  const LABEL = { in: '출근', in_late: '출근(지각)', out: '퇴근', out_overtime: '퇴근(야근)' } as const
+  const nowHm = () => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
+  const apply = async (action: keyof typeof DEFAULT_TIME) => {
+    if (!form.userId) return setMsg({ tone: 'error', text: '직원을 선택해 주세요.' })
+    const time = form.time || (form.workDate === todayKst() ? nowHm() : DEFAULT_TIME[action])
+    setSaving(action)
+    const res = await team.applyDay(form.userId, form.workDate, action, time)
+    setSaving(null)
+    setMsg(res.ok ? { tone: 'ok', text: `${fmtYmdShort(form.workDate)} ${LABEL[action]} ${time} 으로 처리했습니다.` } : { tone: 'error', text: res.error || '처리하지 못했습니다.' })
+  }
+
+  const submitAbsence = async () => {
     if (!form.userId) return setMsg({ tone: 'error', text: '직원을 선택해 주세요.' })
     if (!form.reason.trim()) return setMsg({ tone: 'error', text: '결근 사유를 입력해 주세요.' })
-    setSaving(true)
+    setSaving('absent')
     const res = await team.markAbsent(form.userId, form.workDate, form.reason.trim())
-    setSaving(false)
+    setSaving(null)
     if (res.ok) {
       setMsg({ tone: 'ok', text: '결근으로 처리했습니다.' })
       setForm((f) => ({ ...f, reason: '' }))
@@ -41,8 +59,9 @@ export default function V5TeamAttendance() {
       <PageHead emoji="👥" title="직원근태 > 근태통계" desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
 
       <section className="g-glass" id="g-absence-form">
-        <h2 className="g-h2">결근 처리</h2>
-        <form className="g-row-form" onSubmit={submitAbsence}>
+        <h2 className="g-h2">근태처리</h2>
+        <p className="g-muted g-small">직원과 날짜를 고르고 버튼을 누르면 바로 적용됩니다. 이미 출근(퇴근) 기록이 있으면 출근(퇴근)은 적용되지 않고, 출근 기록이 있는 날은 결근 처리되지 않습니다. 이미 있는 기록을 고치려면 아래 달력에서 날짜를 오른쪽 클릭하세요.</p>
+        <form className="g-row-form" onSubmit={(e) => e.preventDefault()}>
           <label className="g-field">
             <span>직원</span>
             <select className="g-input" value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })}>
@@ -58,14 +77,37 @@ export default function V5TeamAttendance() {
             <span>날짜</span>
             <input className="g-input" type="date" value={form.workDate} max={todayKst()} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
           </label>
+          <label className="g-field">
+            <span>시간 (선택)</span>
+            <input className="g-input" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} aria-describedby="g-time-hint" />
+          </label>
           <label className="g-field grow">
-            <span>결근 사유</span>
+            <span>결근 사유 (결근 처리할 때)</span>
             <input className="g-input" value={form.reason} maxLength={300} placeholder="예) 무단 결근, 병가 등" onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </label>
-          <button className="g-btn danger" disabled={saving}>
-            {saving ? '처리 중…' : '결근 처리'}
-          </button>
         </form>
+        <p id="g-time-hint" className="g-muted g-small">시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)으로 들어갑니다.</p>
+        <div className="g-apply-btns">
+          {(['in', 'in_late'] as const).map((a) => (
+            <button key={a} type="button" className="g-btn primary" disabled={saving !== null || hasIn || closed} title={hasIn ? '이미 출근 기록이 있습니다' : closed ? '결근·휴무로 처리된 날입니다' : ''} onClick={() => apply(a)}>
+              {saving === a ? '처리 중…' : LABEL[a]}
+            </button>
+          ))}
+          {(['out', 'out_overtime'] as const).map((a) => (
+            <button key={a} type="button" className="g-btn ghost" disabled={saving !== null || (rec !== undefined && !hasIn) || hasOut || closed} title={hasOut ? '이미 퇴근 기록이 있습니다' : rec !== undefined && !hasIn ? '출근 기록이 없습니다' : ''} onClick={() => apply(a)}>
+              {saving === a ? '처리 중…' : LABEL[a]}
+            </button>
+          ))}
+          <button type="button" className="g-btn danger" disabled={saving !== null || hasIn || rec?.status === 'absent'} title={hasIn ? '출근 기록이 있어 결근 처리할 수 없습니다' : ''} onClick={submitAbsence}>
+            {saving === 'absent' ? '처리 중…' : '결근 처리'}
+          </button>
+          {rec && (
+            <span className="g-muted g-small">
+              지금 기록: 출근 {fmtTime(rec.checkInAt)} · 퇴근 {rec.autoCheckout ? '미처리' : fmtTime(rec.checkOutAt)}
+              {closed ? ` · ${rec.status === 'absent' ? '결근' : '휴무'}` : ''}
+            </span>
+          )}
+        </div>
         <Note msg={msg} />
       </section>
 
@@ -216,11 +258,11 @@ export default function V5TeamAttendance() {
                                     <button
                                       className="g-btn soft-danger sm"
                                       onClick={() => {
-                                        setForm({ userId: row.user.id, workDate: d, reason: '' })
+                                        setForm({ userId: row.user.id, workDate: d, time: '', reason: '' })
                                         window.scrollTo({ top: 0, behavior: 'smooth' })
                                       }}
                                     >
-                                      결근 처리
+                                      근태처리
                                     </button>
                                   )}
                                 </td>

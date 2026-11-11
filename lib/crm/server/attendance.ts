@@ -149,6 +149,9 @@ export async function setAbsence(ctx: CrmContext, userId: string, workDate: stri
   const { db, profile } = ctx
   const nowIso = new Date().toISOString()
   const { data: existing } = await db.from(TABLES.attendanceDays).select('*').eq('user_id', userId).eq('work_date', workDate).maybeSingle()
+  // 이미 출근 기록이 있는 날은 결근으로 바꾸지 않는다(고치려면 근태통계 달력의 '수정'을 쓴다)
+  if (existing?.check_in_at) throw new HttpError(409, `이미 출근 기록(${kstHm(existing.check_in_at)})이 있어 결근 처리할 수 없습니다.`)
+  if (existing?.attendance_status === 'absent') throw new HttpError(409, '이미 결근으로 처리된 날입니다.')
   const patch = { attendance_status: 'absent', absence_reason: reason, updated_at: nowIso }
   const res = existing?.id
     ? await db.from(TABLES.attendanceDays).update(patch).eq('id', existing.id).select('*').single()
@@ -299,4 +302,24 @@ export async function deleteDay(ctx: CrmContext, userId: string, workDate: strin
     check_out_at: existing.check_out_at,
     status: existing.attendance_status
   })
+}
+
+const kstHm = (iso: string) => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
+
+/* ───────── 근태통계 > 근태처리 버튼 ─────────
+   출근 / 출근(지각) / 퇴근 / 퇴근(야근) 을 바로 적용한다. 이미 기록이 있으면 덮어쓰지 않고 거절한다.
+   - 출근: 그날 출근 기록이 있거나 결근·휴무로 처리돼 있으면 거절
+   - 퇴근: 출근 기록이 없거나, 이미 퇴근 기록이 있으면 거절(단 23:59 자동 퇴근 = 미처리 는 고칠 수 있다) */
+export async function applyDay(ctx: CrmContext, userId: string, workDate: string, action: 'in' | 'in_late' | 'out' | 'out_overtime', time: string) {
+  const { data: existing } = await ctx.db.from(TABLES.attendanceDays).select('*').eq('user_id', userId).eq('work_date', workDate).maybeSingle()
+  if (action === 'in' || action === 'in_late') {
+    if (existing?.check_in_at) throw new HttpError(409, `이미 출근 기록(${kstHm(existing.check_in_at)})이 있습니다.`)
+    if (existing?.attendance_status === 'absent') throw new HttpError(409, '이미 결근으로 처리된 날입니다. 결근을 먼저 취소해 주세요.')
+    if (existing?.attendance_status === 'vacation') throw new HttpError(409, '이미 휴무로 처리된 날입니다.')
+  } else {
+    if (!existing?.check_in_at) throw new HttpError(409, '출근 기록이 없습니다. 출근을 먼저 처리해 주세요.')
+    const auto = existing.check_out_at && new Date(existing.check_out_at).getTime() === new Date(getAutoCheckoutIso(workDate)).getTime()
+    if (existing.check_out_at && !auto) throw new HttpError(409, `이미 퇴근 기록(${kstHm(existing.check_out_at)})이 있습니다.`)
+  }
+  return resolveDay(ctx, userId, workDate, action, time, '근태처리')
 }

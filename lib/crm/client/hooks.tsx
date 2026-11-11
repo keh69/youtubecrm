@@ -297,6 +297,13 @@ export function useTeamAttendance() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
+  // 근태처리 버튼: 출근 / 출근(지각) / 퇴근 / 퇴근(야근) (이미 기록이 있으면 서버가 거절)
+  const applyDay = async (userId: string, workDate: string, action: 'in' | 'in_late' | 'out' | 'out_overtime', time: string): Promise<ActionResult> => {
+    const res = await api('/api/attendance/apply', { method: 'POST', body: { userId, workDate, action, time } })
+    if (res.ok) await reload()
+    return res.ok ? { ok: true } : { ok: false, error: res.error }
+  }
+
   const cancelAbsence = async (userId: string, workDate: string): Promise<ActionResult> => {
     const res = await api('/api/attendance/absence', { method: 'DELETE', body: { userId, workDate } })
     if (res.ok) await reload()
@@ -315,7 +322,7 @@ export function useTeamAttendance() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { period, setPeriod, date, shift, goToday, canGoNext, data, loading, error, reload, markAbsent, cancelAbsence, editDay, deleteDay }
+  return { period, setPeriod, date, shift, goToday, canGoNext, data, loading, error, reload, markAbsent, cancelAbsence, applyDay, editDay, deleteDay }
 }
 
 /* ───────────────────────── 영상등록 ───────────────────────── */

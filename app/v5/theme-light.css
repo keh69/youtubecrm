@@ -3254,3 +3254,12 @@ html:has(.v5) {
 .v5 .g-cal-cell.editable:hover {
   border-color: rgba(124, 92, 255, 0.5);
 }
+
+/* 근태통계 > 근태처리 버튼 줄 */
+.v5 .g-apply-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
