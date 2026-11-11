@@ -147,3 +147,14 @@ a {
     display: none;
   }
 }
+
+/* 모든 스킨 화면 맨 아래 사이트 버전 꼬리말 — 스킨 글자색을 흐리게 따라간다 */
+.site-version {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.6;
+  padding: 10px 16px 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
