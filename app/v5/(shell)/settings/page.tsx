@@ -60,7 +60,7 @@ export default function V5Settings() {
         </div>
       </div>
 
-      {st.tabs.length === 0 && <Note msg={{ tone: 'error', text: '설정 안에서 볼 수 있는 메뉴가 없습니다. 관리자에게 역할설정 > 설정 > 상세에서 켜 달라고 요청해 주세요.' }} />}
+      {st.tabs.length === 0 && <Note msg={{ tone: 'error', text: '설정 안에서 볼 수 있는 메뉴가 없습니다. 관리자에게 역할설정 > 설정 > 상세설정에서 켜 달라고 요청해 주세요.' }} />}
       <Note msg={msg} />
       {s.error && <Note msg={{ tone: 'error', text: s.error }} />}
       {s.loading && !s.data && <Loading />}
@@ -155,7 +155,8 @@ function AffiliationSelect({
   legacyRoleId,
   excludeId,
   onChange,
-  className
+  className,
+  listedOnly = false
 }: {
   s: S
   value: string | null
@@ -163,9 +164,11 @@ function AffiliationSelect({
   excludeId?: string
   onChange: (userId: string | null) => void
   className: string
+  listedOnly?: boolean // 아이디 생성: 상세설정 '하부'가 켜진 역할의 아이디만
 }) {
   const { roles, users } = s.data!
   const groups = roles
+    .filter((r) => !listedOnly || r.affiliationVisible !== false)
     .map((r) => ({ role: r, people: users.filter((u) => u.active && u.id !== excludeId && u.roleIds.includes(r.id)) }))
     .filter((g) => g.people.length > 0)
   const legacy = !value && legacyRoleId ? roles.find((r) => r.id === legacyRoleId) : undefined
@@ -245,20 +248,25 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
 }
 
 function RoleChips({ user, roles, onChange }: { user: SettingsUser; roles: SettingsRole[]; onChange: (ids: string[]) => void }) {
+  // 역할은 아이디마다 1개만: 역할이 없을 때만 [＋ 역할 추가]가 보인다.
+  // 총 관리자는 [역할 추가]와 × 버튼을 모두 숨긴다(실수로 빼지 않게).
   const owned = roles.filter((r) => user.roleIds.includes(r.id))
   const rest = roles.filter((r) => !user.roleIds.includes(r.id))
+  const isSuper = owned.some((r) => r.locked)
   return (
     <div className="g-chips">
       {owned.length === 0 && <span className="g-muted g-small">역할 없음</span>}
       {owned.map((r) => (
         <span key={r.id} className="g-chip role">
           {r.name}
-          <button aria-label={`${r.name} 역할 제거`} onClick={() => onChange(user.roleIds.filter((id) => id !== r.id))}>
-            ×
-          </button>
+          {!isSuper && (
+            <button aria-label={`${r.name} 역할 제거`} onClick={() => onChange(user.roleIds.filter((id) => id !== r.id))}>
+              ×
+            </button>
+          )}
         </span>
       ))}
-      {rest.length > 0 && (
+      {owned.length === 0 && rest.length > 0 && (
         <select className="g-chip-add" value="" onChange={(e) => e.target.value && onChange([...user.roleIds, e.target.value])} aria-label="역할 추가">
           <option value="">＋ 역할 추가</option>
           {rest.map((r) => (
@@ -420,7 +428,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${m.label}`} />
                         <span aria-hidden="true" />
                       </label>
-                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} />}
+                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                     </td>
                   ))}
                   <td className="num">
@@ -499,7 +507,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
           </label>
           <label className="g-field">
             <span>소속</span>
-            <AffiliationSelect s={s} className="g-input" value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
+            <AffiliationSelect s={s} listedOnly className="g-input" value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
           </label>
         </div>
         <div className="g-editor-actions">

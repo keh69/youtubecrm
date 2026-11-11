@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     requireSettingsTab(ctx, 'create')
     const body = bodySchema.parse(await request.json())
     await assertAffiliationColumn(ctx) // 마이그레이션 전에는 계정 생성을 막는다(역할 데이터가 섞이지 않게).
-    if (body.affiliationUserId) await assertAffiliationTarget(ctx, body.affiliationUserId)
+    if (body.affiliationUserId) await assertAffiliationTarget(ctx, body.affiliationUserId, undefined, true)
 
     const { data: dupId } = await ctx.db.from(TABLES.crmUsers).select('id').ilike('login_id', escapeLikePattern(body.loginId)).maybeSingle()
     if (dupId) throw new HttpError(409, '이미 사용 중인 아이디입니다.')

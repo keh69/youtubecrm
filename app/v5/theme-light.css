@@ -2690,3 +2690,10 @@ html:has(.v5) {
     font-size: 15px;
   }
 }
+
+/* ───────── 역할부여 줄 맞춤 (2026-11-11) ─────────
+   역할·소속 칸은 위에 작은 제목이 있어 실제 버튼이 아래쪽에 있다. [정보 수정]도 아래쪽에 붙여 같은 줄에 맞춘다. */
+:root[data-theme='light'] .v5 .g-account > .g-account-toggle,
+:root:not([data-theme='light']) .v5 .g-account > .g-account-toggle {
+  align-self: end;
+}

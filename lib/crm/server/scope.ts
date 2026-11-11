@@ -1,6 +1,6 @@
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, isMissingSchema, loadRolesForUsers, type CrmContext, type RoleRow } from '@/lib/crm/server/context'
-import { publicEmail } from '@/lib/crm/server/settings'
+import { loadAffiliationHiddenCodes, publicEmail } from '@/lib/crm/server/settings'
 
 type Admin = CrmContext['db']
 
@@ -133,7 +133,8 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
 
 // 소속으로 고를 수 있는 아이디인지 검사: 있는 아이디 + 사용 중 + 역할이 1개 이상.
 // forUserId 가 있으면(소속 변경) 자기 자신이나 자기 밑에 있는 사람을 소속으로 고를 수 없다(빙빙 도는 연결 방지).
-export async function assertAffiliationTarget(ctx: CrmContext, targetId: string, forUserId?: string) {
+// listedOnly: 아이디 생성처럼 상세설정 '하부'가 켜진 역할의 아이디만 고를 수 있는 곳
+export async function assertAffiliationTarget(ctx: CrmContext, targetId: string, forUserId?: string, listedOnly = false) {
   const { db } = ctx
   const { rows, userColumn } = await selectUserRows(db, 'id, name, role_type, custom_role_code, employment_status', 'name')
   if (!userColumn) throw new HttpError(409, AFFILIATION_USER_HINT)
@@ -141,7 +142,12 @@ export async function assertAffiliationTarget(ctx: CrmContext, targetId: string,
   if (!target) throw new HttpError(400, '소속으로 고른 아이디를 찾을 수 없습니다.')
   if (target.employment_status !== 'active') throw new HttpError(400, '사용 중지된 아이디에는 소속시킬 수 없습니다.')
   const { rolesByUser } = await loadRolesForUsers(db, rows)
-  if (!(rolesByUser.get(targetId) || []).length) throw new HttpError(400, '역할이 없는 아이디에는 소속시킬 수 없습니다.')
+  const targetRoles = rolesByUser.get(targetId) || []
+  if (!targetRoles.length) throw new HttpError(400, '역할이 없는 아이디에는 소속시킬 수 없습니다.')
+  if (listedOnly) {
+    const hidden = await loadAffiliationHiddenCodes(db)
+    if (!targetRoles.some((r) => !hidden.has(r.code))) throw new HttpError(400, `${target.name}님의 역할은 소속 목록에 나오지 않도록 설정되어 있습니다(상세설정 > 하부).`)
+  }
   if (forUserId) {
     if (targetId === forUserId) throw new HttpError(400, '자기 자신에게 소속시킬 수 없습니다.')
     if (collectUnder(rows, rolesByUser, forUserId).has(targetId)) {

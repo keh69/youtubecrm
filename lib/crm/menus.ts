@@ -53,6 +53,9 @@ export const SETTINGS_SUBS = [
 ] as const
 export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
 export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
+// 역할설정 > 상세설정 > '하부': 켜져 있으면 아이디 생성의 소속 목록에 이 역할의 아이디가 나온다(행이 없으면 켜짐).
+export const AFFILIATION_MENU_KEY = 'aff_member'
+
 export function isSettingsSubKey(v: string): v is SettingsSubKey {
   return (SETTINGS_SUB_KEYS as string[]).includes(v)
 }

@@ -493,6 +493,13 @@ export function useSettings() {
       if (!res.ok) await reload()
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },
+    // 상세설정 '하부' 켜기/끄기 저장
+    saveRoleAffiliation: async (id: string, affiliationVisible: boolean): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, affiliationVisible } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { affiliationVisible } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
     saveRoleMenus: async (id: string, menus: MenuKey[]): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, menus } : r)) } : d))
       const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { menus } })

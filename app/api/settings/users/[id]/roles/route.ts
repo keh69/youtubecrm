@@ -38,6 +38,8 @@ export async function PUT(request: Request, context: Params) {
 
     const toRemove = [...current].filter((r) => !roleIds.includes(r as string))
     const toAdd = roleIds.filter((r) => !current.has(r))
+    // 아이디마다 역할은 1개만: 새로 더하는데 결과가 2개 이상이면 막는다(예전에 여러 개였던 사람은 빼기만 가능)
+    if (toAdd.length && roleIds.length > 1) throw new HttpError(400, '역할은 아이디마다 1개만 줄 수 있습니다. 지금 역할을 먼저 빼 주세요.')
     if (toRemove.length) {
       const { error } = await ctx.db.from(TABLES.userRoles).delete().eq('user_id', id).in('role_id', toRemove)
       if (error) throw error

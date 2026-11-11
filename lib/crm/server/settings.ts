@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
 
@@ -25,6 +25,20 @@ export async function saveRoleSettingsTabs(ctx: CrmContext, code: string, tabs: 
   if (error) throw error
 }
 
+// 상세설정 '하부'가 꺼진 역할 code 목록(아이디 생성의 소속 목록에서 이 역할의 아이디를 뺀다)
+export async function loadAffiliationHiddenCodes(db: CrmContext['db']) {
+  const { data, error } = await db.from(TABLES.roleMenuPermissions).select('role_type, can_view').eq('menu_key', AFFILIATION_MENU_KEY)
+  if (error) throw error
+  return new Set((data || []).filter((r: any) => !r.can_view).map((r: any) => r.role_type as string))
+}
+
+export async function saveRoleAffiliationVisible(ctx: CrmContext, code: string, visible: boolean) {
+  const { error } = await ctx.db
+    .from(TABLES.roleMenuPermissions)
+    .upsert([{ role_type: code, menu_key: AFFILIATION_MENU_KEY, can_view: visible, updated_at: new Date().toISOString() }], { onConflict: 'role_type,menu_key' })
+  if (error) throw error
+}
+
 export function isSystemRole(code: string) {
   return (ADMIN_ROLE_CODES as readonly string[]).includes(code)
 }
@@ -39,6 +53,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, userRows)
   const menuMap = await loadMenuMap(db, allRoles.map((r) => r.code))
   const subMap = await loadSettingsSubMap(db, allRoles.map((r) => r.code))
+  const affHidden = await loadAffiliationHiddenCodes(db)
 
   const roles = allRoles.map((r) => ({
     id: r.id,
@@ -48,6 +63,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     locked: r.code === LOCKED_ROLE_CODE,
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
     settingsTabs: subMap.get(r.code) || [],
+    affiliationVisible: !affHidden.has(r.code),
     holderCount: userRows.filter((u) => (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)
     memberCount: userRows.filter((u) =>
