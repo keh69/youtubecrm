@@ -77,7 +77,7 @@ export default function V5Signup() {
           </>
         ) : (
           <form onSubmit={submit} className="g-signup-form">
-            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;직원&rsquo; 역할을 받습니다.</p>
+            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본 역할(역할설정 표 맨 아래 역할, 예: 사원)을 받습니다.</p>
             <div className="g-grid-form">
               <label className="g-field">
                 <span>아이디 (ID) *</span>

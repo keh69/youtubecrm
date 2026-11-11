@@ -7,7 +7,7 @@ import { loadAffiliationHiddenCodes } from '@/lib/crm/server/settings'
 import { selectUserRows } from '@/lib/crm/server/scope'
 import { createCrmAccount, newAccountSchema } from '@/lib/crm/server/accounts'
 
-// 회원가입(로그인 없이 누구나): 설정 > 아이디 만들기와 같은 내용으로 아이디를 만든다. 가입 즉시 '직원' 역할로 로그인할 수 있다.
+// 회원가입(로그인 없이 누구나): 설정 > 아이디 만들기와 같은 내용으로 아이디를 만든다. 가입 즉시 기본 역할(역할설정 표 맨 아래 역할)로 로그인할 수 있다.
 
 // 소속 목록: 역할설정 > 상세설정 '하부'가 켜진 역할별로, 그 역할을 가진 사용 중 아이디(이름·아이디)
 export async function GET() {

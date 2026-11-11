@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin-client'
 import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
-import { handleError } from '@/lib/crm/server/context'
+import { handleError, loadMenuMap, loadRolesForUsers } from '@/lib/crm/server/context'
 import { signInCompat } from '@/lib/crm/server/password'
 
 // 아이디 + 비밀번호 로그인. 아이디→이메일 변환을 서버 안에서만 해서
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const db = createSupabaseAdminClient()
     const { data: user } = await db
       .from(TABLES.crmUsers)
-      .select('id, email, employment_status')
+      .select('id, email, employment_status, role_type, custom_role_code')
       .ilike('login_id', escapeLikePattern(body.loginId))
       .maybeSingle()
 
@@ -32,6 +32,14 @@ export async function POST(request: Request) {
 
     if (user.employment_status !== 'active') {
       return NextResponse.json({ error: '사용이 중지된 계정입니다. 관리자에게 문의해 주세요.' }, { status: 403 })
+    }
+
+    // 역할이 없거나 역할에 켜진 메뉴가 하나도 없으면 들어가도 볼 화면이 없어 로그인 화면으로 되돌아간다. 이유를 알려 준다.
+    const { rolesByUser } = await loadRolesForUsers(db, [user as any])
+    const codes = (rolesByUser.get(user.id) || []).map((r) => r.code)
+    const menuMap = await loadMenuMap(db, codes)
+    if (![...menuMap.values()].some((set) => set.size > 0)) {
+      return NextResponse.json({ error: codes.length ? '내 역할에 볼 수 있는 메뉴가 없습니다. 관리자에게 문의해 주세요.' : '아직 역할이 없습니다. 관리자에게 역할을 받아 주세요.' }, { status: 403 })
     }
 
     const forwarded = request.headers.get('x-forwarded-for') || ''

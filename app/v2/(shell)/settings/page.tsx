@@ -420,7 +420,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
   const set = (k: keyof NewAccount, v: string) => setForm((f) => ({ ...f, [k]: v }))
   return (
     <Panel label="아이디 만들기">
-      <p className="hint">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;직원&rsquo; 역할을 받습니다.</p>
+      <p className="hint">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본 역할(역할설정 표 맨 아래 역할, 예: 사원)을 받습니다.</p>
       <form
         className="grid-form"
         onSubmit={async (e) => {

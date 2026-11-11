@@ -4,6 +4,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, type CrmContext } from '@/lib/crm/server/context'
+import { LOCKED_ROLE_CODE, RETIRED_ROLE_CODE } from '@/lib/crm/menus'
 import { INTERNAL_EMAIL_DOMAIN, assertAffiliationColumn, internalEmailFor } from '@/lib/crm/server/settings'
 import { assertAffiliationTarget } from '@/lib/crm/server/scope'
 import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/deleted'
@@ -52,10 +53,28 @@ export const newAccountSchema = z.object({
 })
 export type NewAccountInput = z.infer<typeof newAccountSchema>
 
-// 아이디 하나 만들기: 로그인 계정 + 직원 정보 + 기본 역할 '직원'. 만든 직원의 id 를 돌려준다.
+// 새 아이디가 받을 기본 역할: 'staff'(직원) 역할이 있으면 그것, 없으면 역할설정 표 맨 아래 역할(총 관리자·퇴사 제외).
+// 예전에는 'staff' 만 찾아서, 그 역할을 지우면 새 아이디가 역할 없이 만들어져 로그인해도 볼 메뉴가 없었다.
+export async function pickDefaultRole(db: Db) {
+  const { data, error } = await db
+    .from(TABLES.roles)
+    .select('id, code, name')
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  const roles = (data || []) as Array<{ id: string; code: string; name: string }>
+  const staff = roles.find((r) => r.code === 'staff')
+  if (staff) return staff
+  const usable = roles.filter((r) => r.code !== LOCKED_ROLE_CODE && r.code !== RETIRED_ROLE_CODE)
+  return usable[usable.length - 1] || null
+}
+
+// 아이디 하나 만들기: 로그인 계정 + 직원 정보 + 기본 역할. 만든 직원의 id 를 돌려준다.
 // grantedBy: 역할을 준 사람(설정에서 만들면 관리자, 회원가입이면 비움)
 export async function createCrmAccount(db: Db, body: NewAccountInput, grantedBy: string | null) {
   await assertAffiliationColumn({ db }) // 마이그레이션 전에는 계정 생성을 막는다(역할 데이터가 섞이지 않게).
+  const defaultRole = await pickDefaultRole(db)
+  if (!defaultRole) throw new HttpError(400, '새 아이디에 줄 역할이 없습니다. 설정 > 역할설정에서 역할을 하나 만들어 주세요.')
   if (body.affiliationUserId) await assertAffiliationTarget({ db }, body.affiliationUserId, undefined, true)
 
   const { data: dupId } = await db.from(TABLES.crmUsers).select('id').ilike('login_id', escapeLikePattern(body.loginId)).maybeSingle()
@@ -94,8 +113,8 @@ export async function createCrmAccount(db: Db, body: NewAccountInput, grantedBy:
     throw profileError || new Error('프로필 생성 실패')
   }
 
-  const { data: staffRole } = await db.from(TABLES.roles).select('id').eq('code', 'staff').maybeSingle()
-  if (staffRole) await db.from(TABLES.userRoles).insert({ user_id: user.id, role_id: staffRole.id, granted_by: grantedBy })
+  const { error: roleError } = await db.from(TABLES.userRoles).insert({ user_id: user.id, role_id: defaultRole.id, granted_by: grantedBy })
+  if (roleError) throw roleError
 
   return user.id as string
 }
