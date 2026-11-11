@@ -27,17 +27,21 @@ function Shell({ children }: { children: React.ReactNode }) {
                 </Link>
               )
               if (!item.sub) return link
+              // 근태체크·영상등록: 마우스를 올리면(또는 키보드로 들어가면) 아래로 '통계' 드롭다운이 펼쳐진다
               return (
-                <span key={item.key} className={`nav-row${item.active ? ' in' : ''}`}>
+                <span key={item.key} className={`g-dd${item.active ? ' in' : ''}`}>
                   {link}
-                  <Link
-                    href={item.sub.href}
-                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                    aria-current={item.sub.active ? 'page' : undefined}
-                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
-                  >
-                    {item.sub.label}
-                  </Link>
+                  <span className="g-dd-menu" role="menu" aria-label={`${item.label} 하위 메뉴`}>
+                    <Link href={item.sub.href} role="menuitem" className={item.sub.active ? 'on' : ''} aria-current={item.sub.active ? 'page' : undefined}>
+                      <span className="g-dd-ico" aria-hidden="true">
+                        📊
+                      </span>
+                      <span>
+                        <b>{item.sub.label}</b>
+                        <small>{item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}</small>
+                      </span>
+                    </Link>
+                  </span>
                 </span>
               )
             })}

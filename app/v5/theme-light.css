@@ -2357,3 +2357,239 @@ html:has(.v5) .imp-bar,
 html:has(.v5) .imp-bar * {
   font-family: 'Pretendard Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji' !important;
 }
+
+
+/* ===== 상단 메뉴바 2차 수정 (2026-11-11): 20% 축소 + 메뉴를 버튼처럼 + 통계는 마우스 올리면 드롭다운 ===== */
+:root[data-theme='light'] .v5 .g-navpill,
+:root:not([data-theme='light']) .v5 .g-navpill {
+  gap: 11px;
+  padding: 8px 8px 8px 14px;
+}
+:root[data-theme='light'] .v5 .g-brand,
+:root:not([data-theme='light']) .v5 .g-brand {
+  font-size: 16px;
+  gap: 8px;
+}
+:root[data-theme='light'] .v5 .g-brand img,
+:root:not([data-theme='light']) .v5 .g-brand img {
+  width: 27px;
+  height: 27px;
+}
+:root[data-theme='light'] .v5 .g-menu,
+:root:not([data-theme='light']) .v5 .g-menu {
+  gap: 6px;
+}
+:root[data-theme='light'] .v5 .g-menu a,
+:root:not([data-theme='light']) .v5 .g-menu a {
+  padding: 7px 15px;
+  font-size: 14.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+:root[data-theme='light'] .v5 .g-avatar,
+:root:not([data-theme='light']) .v5 .g-avatar {
+  width: 37px;
+  height: 37px;
+  font-size: 16px;
+}
+:root[data-theme='light'] .v5 .g-user,
+:root:not([data-theme='light']) .v5 .g-user {
+  gap: 8px;
+}
+:root[data-theme='light'] .v5 .g-user-text,
+:root:not([data-theme='light']) .v5 .g-user-text {
+  max-width: 130px;
+}
+:root[data-theme='light'] .v5 .g-user-text strong,
+:root:not([data-theme='light']) .v5 .g-user-text strong {
+  font-size: 14px;
+}
+:root[data-theme='light'] .v5 .g-user-text small,
+:root:not([data-theme='light']) .v5 .g-user-text small {
+  font-size: 11px;
+}
+:root[data-theme='light'] .v5 .g-theme,
+:root:not([data-theme='light']) .v5 .g-theme {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+}
+:root[data-theme='light'] .v5 .g-navpill .g-btn,
+:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+  font-size: 12px;
+  padding: 7px 13px;
+}
+
+/* 메뉴를 버튼처럼: 바탕·테두리·그림자 */
+:root[data-theme='light'] .v5 .g-menu a:not(.on) {
+  background: #ffffff;
+  border-color: rgba(124, 92, 255, 0.2);
+  color: #2d2a3e;
+  box-shadow: 0 1px 2px rgba(45, 42, 62, 0.08), 0 2px 6px rgba(124, 92, 255, 0.08);
+}
+:root[data-theme='light'] .v5 .g-menu a:not(.on):hover {
+  background: #f5f1ff;
+  border-color: rgba(124, 92, 255, 0.45);
+  color: #2d2a3e;
+}
+:root[data-theme='light'] .v5 .g-menu a.half {
+  background: #efeaff;
+  border-color: rgba(124, 92, 255, 0.5);
+  color: #6a4ce0;
+}
+:root:not([data-theme='light']) .v5 .g-menu a:not(.on) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e8e8ec;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+:root:not([data-theme='light']) .v5 .g-menu a:not(.on):hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+:root:not([data-theme='light']) .v5 .g-menu a.half {
+  background: rgba(167, 139, 250, 0.16);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: #c4b5fd;
+}
+:root[data-theme='light'] .v5 .g-menu a.on,
+:root:not([data-theme='light']) .v5 .g-menu a.on {
+  border-color: transparent;
+}
+
+/* 통계 드롭다운: 근태체크·영상등록에 마우스를 올리면 아래로 펼쳐진다 */
+:root[data-theme='light'] .v5 .g-dd,
+:root:not([data-theme='light']) .v5 .g-dd {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+:root[data-theme='light'] .v5 .g-dd-menu,
+:root:not([data-theme='light']) .v5 .g-dd-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 70;
+  padding-top: 8px; /* 메뉴와 드롭다운 사이 빈틈(마우스가 지나가도 닫히지 않게) */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, -4px) scale(0.94);
+  transform-origin: top center;
+  transition:
+    opacity 0.18s ease,
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0s linear 0.18s;
+}
+:root[data-theme='light'] .v5 .g-dd:hover .g-dd-menu,
+:root:not([data-theme='light']) .v5 .g-dd:hover .g-dd-menu,
+:root[data-theme='light'] .v5 .g-dd:focus-within .g-dd-menu,
+:root:not([data-theme='light']) .v5 .g-dd:focus-within .g-dd-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0) scale(1);
+  transition:
+    opacity 0.18s ease,
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0s;
+}
+:root[data-theme='light'] .v5 .g-dd-menu a,
+:root:not([data-theme='light']) .v5 .g-dd-menu a {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-width: 176px;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  text-align: left;
+  white-space: nowrap;
+}
+:root[data-theme='light'] .v5 .g-dd-menu a > span:last-child,
+:root:not([data-theme='light']) .v5 .g-dd-menu a > span:last-child {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+:root[data-theme='light'] .v5 .g-dd-menu b,
+:root:not([data-theme='light']) .v5 .g-dd-menu b {
+  font-size: 14px;
+  font-weight: 700;
+}
+:root[data-theme='light'] .v5 .g-dd-menu small,
+:root:not([data-theme='light']) .v5 .g-dd-menu small {
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+:root[data-theme='light'] .v5 .g-dd-ico,
+:root:not([data-theme='light']) .v5 .g-dd-ico {
+  font-size: 17px;
+}
+:root[data-theme='light'] .v5 .g-dd-menu a:not(.on) {
+  box-shadow: 0 12px 28px rgba(45, 42, 62, 0.16), 0 2px 6px rgba(124, 92, 255, 0.12);
+}
+:root:not([data-theme='light']) .v5 .g-dd-menu a:not(.on) {
+  background: #1f1f23;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+/* 넓은 화면: 드롭다운이 메뉴 줄 밖으로 펼쳐질 수 있게 */
+@media (min-width: 761px) and (hover: hover) {
+  :root[data-theme='light'] .v5 .g-menu,
+:root:not([data-theme='light']) .v5 .g-menu {
+    overflow: visible;
+  }
+}
+/* 마우스가 없는 기기(휴대폰·태블릿)나 좁은 화면: 올릴 마우스가 없으니 통계를 메뉴 옆 작은 버튼으로 보여 준다 */
+@media (hover: none), (max-width: 760px) {
+  :root[data-theme='light'] .v5 .g-dd,
+:root:not([data-theme='light']) .v5 .g-dd {
+    gap: 4px;
+    align-items: center;
+  }
+  :root[data-theme='light'] .v5 .g-dd-menu,
+:root:not([data-theme='light']) .v5 .g-dd-menu {
+    position: static;
+    padding-top: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+  :root[data-theme='light'] .v5 .g-dd-menu a,
+:root:not([data-theme='light']) .v5 .g-dd-menu a {
+    min-width: 0;
+    padding: 6px 10px !important;
+    gap: 4px;
+  }
+  :root[data-theme='light'] .v5 .g-dd-menu small,
+:root:not([data-theme='light']) .v5 .g-dd-menu small,
+  :root[data-theme='light'] .v5 .g-dd-ico,
+:root:not([data-theme='light']) .v5 .g-dd-ico {
+    display: none;
+  }
+  :root[data-theme='light'] .v5 .g-dd-menu b,
+:root:not([data-theme='light']) .v5 .g-dd-menu b {
+    font-size: 12.5px;
+  }
+  :root[data-theme='light'] .v5 .g-brand,
+:root:not([data-theme='light']) .v5 .g-brand {
+    font-size: 15px;
+  }
+  :root[data-theme='light'] .v5 .g-menu a,
+:root:not([data-theme='light']) .v5 .g-menu a {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  :root[data-theme='light'] .v5 .g-avatar,
+:root:not([data-theme='light']) .v5 .g-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  :root[data-theme='light'] .v5 .g-top .g-theme,
+:root:not([data-theme='light']) .v5 .g-top .g-theme {
+    width: 30px;
+    padding: 0;
+  }
+}
