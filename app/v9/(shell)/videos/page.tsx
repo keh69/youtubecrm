@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridFoot, Ico, RowNoTh, Th } from '../../_ui'
+import { VideoTypePicker } from '@/components/video-type-picker'
 
 export default function V9Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
@@ -50,14 +51,15 @@ export default function V9Videos() {
             </span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <VideoTypePicker value={reg.contentType} onChange={reg.setContentType} warn={reg.error.includes('롱폼')} />
           <label className="field grow">
             <span>
               유튜브 영상 주소 <span className="ty">url</span>
             </span>
             <input value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="btn primary" disabled={reg.busy}>
-            <Ico>+</Ico> {reg.busy ? '추가 중…' : '추가'}
+          <button className="btn primary" disabled={reg.busy} style={{ marginLeft: 'auto' }}>
+            <Ico>+</Ico> {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && (
@@ -82,7 +84,7 @@ export default function V9Videos() {
       </section>
 
       <section className="card">
-        <h2>내가 최근 등록한 영상</h2>
+        <h2>최근 등록 영상</h2>
         {listMsg && <p className="msg ok">{listMsg}</p>}
         {reg.recentLoading ? (
           <p className="muted">불러오는 중…</p>
@@ -142,12 +144,16 @@ export default function V9Videos() {
                       <td className="mono nowrap">{fmtDate(v.publishedAt)}</td>
                       <td className="nowrap owner-cell">{v.ownerName || me.name}</td>
                       <td className="right nowrap">
-                        <button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                          <Ico>✎</Ico> 종목명 수정
+                        {me.canEditVideos && (
+<button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                          <Ico>✎</Ico> 수정
                         </button>
-                        <button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
+)}
+                        {me.canDeleteVideos && (
+<button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
                           <Ico>✕</Ico> 삭제
                         </button>
+)}
                       </td>
                     </tr>
                   ))}

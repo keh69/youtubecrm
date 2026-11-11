@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Prompt } from '../../term'
+import { VideoTypePicker } from '@/components/video-type-picker'
 
 export default function V8Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
@@ -47,12 +48,13 @@ export default function V8Videos() {
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <VideoTypePicker value={reg.contentType} onChange={reg.setContentType} warn={reg.error.includes('롱폼')} />
           <label className="field grow">
             <span>유튜브 영상 주소</span>
             <input value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="btn primary" disabled={reg.busy}>
-            {reg.busy ? '추가 중…' : '추가'}
+          <button className="btn primary" disabled={reg.busy} style={{ marginLeft: 'auto' }}>
+            {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && <p className="msg error" role="alert">{reg.error}</p>}
@@ -71,7 +73,7 @@ export default function V8Videos() {
       </section>
 
       <section className="card">
-        <h2>내가 최근 등록한 영상</h2>
+        <h2>최근 등록 영상</h2>
         {listMsg && <p className="msg ok">{listMsg}</p>}
         {reg.recentLoading ? (
           <p className="muted">불러오는 중…</p>
@@ -101,17 +103,21 @@ export default function V8Videos() {
                     </div>
                   ) : (
                     <p className="muted small">
-                      <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
+                      업로드 {fmtDate(v.publishedAt)} · <span className="chip">{v.stockName}</span> {fmtDuration(v.durationSeconds)} <span className="chip format">{videoFormatLabel(v)}</span> 조회수 {fmtNumber(v.viewCount)} · 등록자 {v.ownerName || me.name}
                     </p>
                   )}
                 </div>
                 <div className="video-actions">
-                  <button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                    종목명 수정
+                  {me.canEditVideos && (
+<button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                    수정
                   </button>
-                  <button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
+)}
+                  {me.canDeleteVideos && (
+<button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
                     삭제
                   </button>
+)}
                 </div>
               </li>
             ))}

@@ -3,15 +3,17 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 
 export default function V4Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
   const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
-  const videos = st.videos
+  const videos = vf.filtered
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
@@ -141,25 +143,28 @@ export default function V4Stats() {
         </BlockTitle>
         {st.loading && !st.data ? (
           <Loading />
-        ) : videos.length === 0 ? (
+        ) : st.videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
+          <>
+          <VideoFilterBar ctl={vf} total={st.videos.length} />
           <div className="tbl-wrap">
             <table className="tbl vtbl">
               <thead>
                 <tr>
+                  <th>올린 날짜</th>
                   <th>영상</th>
-                  <th>담당자</th>
+                  <th className="num">재생시간</th>
                   <th>형식</th>
+                  <th>담당자</th>
                   <th>종목</th>
                   <th className="num">조회수</th>
-                  <th className="num">재생시간</th>
-                  <th>올린 날짜</th>
                 </tr>
               </thead>
               <tbody>
                 {videos.map((v) => (
                   <tr key={v.id}>
+                    <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                     <td>
                       <div className="vrow">
                         <a href={v.url} target="_blank" rel="noreferrer" className="vrow-thumb">
@@ -170,21 +175,22 @@ export default function V4Stats() {
                         </a>
                       </div>
                     </td>
-                    <td className="nowrap">{v.ownerName ? <span className="owner">{v.ownerName}</span> : '-'}</td>
+                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
                     <td className="nowrap">
                       <span className={`fmt-tag ${videoFormatLabel(v) === '롱폼' ? 'f-long' : 'f-short'}`}>{videoFormatLabel(v)}</span>
                     </td>
+                    <td className="nowrap">{v.ownerName ? <span className="owner">{v.ownerName}</span> : '-'}</td>
                     <td>
                       <span className="chip">{v.stockName}</span>
                     </td>
                     <td className="num strong">{fmtNumber(v.viewCount)}</td>
-                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                    <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {videos.length === 0 && <p className="xs-empty">필터에 맞는 영상이 없습니다.</p>}
+          </>
         )}
       </section>
     </>

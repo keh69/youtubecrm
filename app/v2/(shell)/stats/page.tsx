@@ -3,14 +3,16 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 
 export default function V2Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
-  const videos = st.videos
+  const videos = vf.filtered
   const sort = st.sort
   const daily = st.data?.daily || []
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
@@ -147,25 +149,28 @@ export default function V2Stats() {
       >
         {st.loading && !st.data ? (
           <Loading />
-        ) : videos.length === 0 ? (
+        ) : st.videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
+          <>
+          <VideoFilterBar ctl={vf} total={st.videos.length} />
           <div className="tbl-wrap">
             <table className="tbl vids">
               <thead>
                 <tr>
+                  <th className={sort === 'date' ? 'sorted' : ''}>올린 날짜</th>
                   <th>영상</th>
-                  <th className={sort === 'owner' ? 'sorted' : ''}>담당자</th>
+                  <th className={`num ${sort === 'duration' ? 'sorted' : ''}`}>재생시간</th>
                   <th>형식</th>
+                  <th className={sort === 'owner' ? 'sorted' : ''}>담당자</th>
                   <th>종목</th>
                   <th className={`num ${sort === 'views' ? 'sorted' : ''}`}>조회수</th>
-                  <th className={`num ${sort === 'duration' ? 'sorted' : ''}`}>재생시간</th>
-                  <th className={sort === 'date' ? 'sorted' : ''}>올린 날짜</th>
                 </tr>
               </thead>
               <tbody>
                 {videos.map((v) => (
                   <tr key={v.id}>
+                    <td className="mono nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                     <td>
                       <div className="vcell">
                         <a href={v.url} target="_blank" rel="noreferrer" className="vthumb">
@@ -176,21 +181,22 @@ export default function V2Stats() {
                         </a>
                       </div>
                     </td>
-                    <td className="nowrap owner">{v.ownerName || '-'}</td>
+                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
                     <td>
                       <FormatChip video={v} />
                     </td>
+                    <td className="nowrap owner">{v.ownerName || '-'}</td>
                     <td>
                       <span className="sym">{v.stockName}</span>
                     </td>
                     <td className="num">{fmtNumber(v.viewCount)}</td>
-                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                    <td className="mono nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {videos.length === 0 && <p className="xs-empty">필터에 맞는 영상이 없습니다.</p>}
+          </>
         )}
       </Panel>
     </>

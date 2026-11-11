@@ -3,15 +3,17 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridFoot, Ico, RowNoTh, Th } from '../../_ui'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 
 export default function V9Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
   const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
-  const videos = st.videos
+  const videos = vf.filtered
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
@@ -140,28 +142,31 @@ export default function V9Stats() {
         <h2>영상 ({fmtNumber(videos.length)})</h2>
         {st.loading && !st.data ? (
           <p className="muted">불러오는 중…</p>
-        ) : videos.length === 0 ? (
+        ) : st.videos.length === 0 ? (
           <p className="empty">이 기간에 올린 영상이 없습니다.</p>
         ) : (
           <>
+          <>
+          <VideoFilterBar ctl={vf} total={st.videos.length} />
           <div className="table-wrap">
             <table className="table vtable">
               <thead>
                 <tr>
                   <RowNoTh />
+                  <Th name="올린 날짜" type="date" />
                   <Th name="영상" type="text" />
+                  <Th name="재생시간" type="interval" className="num" />
+                  <Th name="형식" type="enum" />
                   <Th name="담당자" type="text" />
                   <Th name="종목" type="text" />
                   <Th name="조회수" type="int" className="num" />
-                  <Th name="재생시간" type="interval" className="num" />
-                  <Th name="형식" type="enum" />
-                  <Th name="올린 날짜" type="date" />
                 </tr>
               </thead>
               <tbody>
                 {videos.map((v, i) => (
                   <tr key={v.id}>
                     <td className="rn">{i + 1}</td>
+                    <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                     <td>
                       <div className="vcell">
                         <a href={v.url} target="_blank" rel="noreferrer" className="thumb">
@@ -172,19 +177,20 @@ export default function V9Stats() {
                         </a>
                       </div>
                     </td>
+                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
+                    <td className="nowrap">{videoFormatLabel(v)}</td>
                     <td className="nowrap">{v.ownerName || '-'}</td>
                     <td>
                       <span className="chip">{v.stockName}</span>
                     </td>
                     <td className="num">{fmtNumber(v.viewCount)}</td>
-                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                    <td className="nowrap">{videoFormatLabel(v)}</td>
-                    <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {videos.length === 0 && <p className="xs-empty">필터에 맞는 영상이 없습니다.</p>}
+          </>
           <GridFoot count={videos.length} note={rangeText} />
           </>
         )}

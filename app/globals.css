@@ -1276,3 +1276,16 @@ html {
   color: #f2f2f2;
   border-color: rgba(255, 255, 255, 0.12);
 }
+
+/* 영상등록 형식 고르기(components/video-type-picker.tsx, 모든 스킨) */
+.xs-type-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.xs-seg.xs-warn {
+  outline: 2px solid #e5484d;
+  outline-offset: 2px;
+}

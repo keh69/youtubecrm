@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
 import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
+import { VideoTypePicker } from '@/components/video-type-picker'
 
 export default function V2Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
@@ -44,12 +45,13 @@ export default function V2Videos() {
             <span className="lbl">종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <VideoTypePicker value={reg.contentType} onChange={reg.setContentType} warn={reg.error.includes('롱폼')} />
           <label className="fld grow">
             <span className="lbl">유튜브 영상 주소</span>
             <input className="mono" value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="key accent" disabled={reg.busy}>
-            {reg.busy ? '추가 중…' : '+ 추가'}
+          <button className="key accent" disabled={reg.busy} style={{ marginLeft: 'auto' }}>
+            {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && (
@@ -103,7 +105,7 @@ export default function V2Videos() {
         )}
       </Panel>
 
-      <Panel label="내가 최근 등록한 영상" right={!reg.recentLoading && <span className="count mono">{reg.recent.length}</span>}>
+      <Panel label="최근 등록 영상" right={!reg.recentLoading && <span className="count mono">{reg.recent.length}</span>}>
         {listMsg && <Note msg={{ tone: 'ok', text: listMsg }} />}
         {reg.recentLoading ? (
           <Loading />
@@ -160,12 +162,16 @@ export default function V2Videos() {
                     <td className="mono">{fmtDate(v.publishedAt)}</td>
                     <td className="nowrap">{v.ownerName || me.name}</td>
                     <td className="right nowrap">
-                      <button className="key ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                        종목명 수정
-                      </button>{' '}
-                      <button className="key ghost sm danger-text" onClick={() => remove(v.id, v.title)}>
+                      {me.canEditVideos && (
+<button className="key ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                        수정
+                      </button>
+)}{' '}
+                      {me.canDeleteVideos && (
+<button className="key ghost sm danger-text" onClick={() => remove(v.id, v.title)}>
                         삭제
                       </button>
+)}
                     </td>
                   </tr>
                 ))}

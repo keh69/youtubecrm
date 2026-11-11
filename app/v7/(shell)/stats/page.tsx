@@ -3,6 +3,7 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats, type StatSort } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridStatus, SqlQuery, sqlStr } from '../../_ui/sql'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 
 const ORDER_BY: Record<StatSort, string> = {
   date: 'published_at DESC',
@@ -15,10 +16,11 @@ export default function V7Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
   const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
-  const videos = st.videos
+  const videos = vf.filtered
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const rangeRaw = st.from === st.to ? st.from : `${st.from} ~ ${st.to}`
   const whoName = st.who === 'me' ? me.name : st.who === 'all' ? null : st.data?.people.find((p) => p.id === st.who)?.name || st.who
@@ -156,28 +158,31 @@ export default function V7Stats() {
         <h2>결과 · 영상 ({fmtNumber(videos.length)})</h2>
         {st.loading && !st.data ? (
           <p className="muted">불러오는 중…</p>
-        ) : videos.length === 0 ? (
+        ) : st.videos.length === 0 ? (
           <p className="empty">이 기간에 올린 영상이 없습니다.</p>
         ) : (
           <>
+            <>
+            <VideoFilterBar ctl={vf} total={st.videos.length} />
             <div className="table-wrap">
               <table className="table vtable">
                 <thead>
                   <tr>
                     <th className="rn">#</th>
+                    <th>올린 날짜</th>
                     <th>영상</th>
+                    <th className="num">재생시간</th>
+                    <th>형식</th>
                     <th>담당자</th>
                     <th>종목</th>
                     <th className="num">조회수</th>
-                    <th className="num">재생시간</th>
-                    <th>형식</th>
-                    <th>올린 날짜</th>
                   </tr>
                 </thead>
                 <tbody>
                   {videos.map((v, i) => (
                     <tr key={v.id}>
                       <td className="rn">{i + 1}</td>
+                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                       <td>
                         <div className="vcell">
                           <a href={v.url} target="_blank" rel="noreferrer" className="thumb">
@@ -188,19 +193,20 @@ export default function V7Stats() {
                           </a>
                         </div>
                       </td>
+                      <td className="num">{fmtDuration(v.durationSeconds)}</td>
+                      <td className="nowrap">{videoFormatLabel(v)}</td>
                       <td className="nowrap">{v.ownerName || '-'}</td>
                       <td>
                         <span className="chip">{v.stockName}</span>
                       </td>
                       <td className="num">{fmtNumber(v.viewCount)}</td>
-                      <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                      <td className="nowrap">{videoFormatLabel(v)}</td>
-                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            {videos.length === 0 && <p className="xs-empty">필터에 맞는 영상이 없습니다.</p>}
+            </>
             <GridStatus rows={videos.length}>
               기간 {rangeRaw} · 정렬 {sortLabel}
             </GridStatus>

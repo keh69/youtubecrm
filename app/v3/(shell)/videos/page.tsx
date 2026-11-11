@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
+import { VideoTypePicker } from '@/components/video-type-picker'
 
 export default function V3Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState<Msg>(null)
   if (!allowed) return null
@@ -46,12 +47,13 @@ export default function V3Videos() {
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <VideoTypePicker value={reg.contentType} onChange={reg.setContentType} warn={reg.error.includes('롱폼')} />
           <label className="j-field grow">
             <span>유튜브 영상 주소</span>
             <input value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="j-btn ink" disabled={reg.busy}>
-            {reg.busy ? '추가 중…' : '추가'}
+          <button className="j-btn ink" disabled={reg.busy} style={{ marginLeft: 'auto' }}>
+            {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && <Note msg={{ tone: 'error', text: reg.error }} alert />}
@@ -88,7 +90,7 @@ export default function V3Videos() {
       <hr className="j-double" />
 
       <section className="j-section">
-        <h2 className="j-h2">내가 최근 등록한 영상</h2>
+        <h2 className="j-h2">최근 등록 영상</h2>
         <Note msg={listMsg} />
         {reg.recentLoading ? (
           <Loading />
@@ -128,17 +130,20 @@ export default function V3Videos() {
                     </div>
                   ) : (
                     <p className="j-byline">
-                      <span className="j-format">{videoFormatLabel(v)}</span>
-                      <span className="j-tag">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
+                      업로드 {fmtDate(v.publishedAt)} · <span className="j-tag">{v.stockName}</span> {fmtDuration(v.durationSeconds)} <span className="j-format">{videoFormatLabel(v)}</span> 조회수 {fmtNumber(v.viewCount)} · 등록자 {v.ownerName || me.name}
                     </p>
                   )}
                   <div className="j-story-actions">
-                    <button type="button" className="j-textbtn" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                      종목명 수정
+                    {me.canEditVideos && (
+<button type="button" className="j-textbtn" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                      수정
                     </button>
-                    <button type="button" className="j-textbtn danger" onClick={() => remove(v.id, v.title)}>
+)}
+                    {me.canDeleteVideos && (
+<button type="button" className="j-textbtn danger" onClick={() => remove(v.id, v.title)}>
                       삭제
                     </button>
+)}
                   </div>
                 </div>
               </li>

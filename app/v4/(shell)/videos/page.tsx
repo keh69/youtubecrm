@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
+import { VideoTypePicker } from '@/components/video-type-picker'
 
 export default function V4Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
@@ -49,12 +50,13 @@ export default function V4Videos() {
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <VideoTypePicker value={reg.contentType} onChange={reg.setContentType} warn={reg.error.includes('롱폼')} />
           <label className="field grow">
             <span>유튜브 영상 주소</span>
             <input value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />
           </label>
-          <button className="btn pink lg" disabled={reg.busy}>
-            {reg.busy ? '추가 중…' : '+ 추가'}
+          <button className="btn pink lg" disabled={reg.busy} style={{ marginLeft: 'auto' }}>
+            {reg.busy ? '등록 중…' : '영상등록'}
           </button>
         </form>
         {reg.error && (
@@ -93,7 +95,7 @@ export default function V4Videos() {
 
       <section className="blk">
         <BlockTitle color="pink" right={!reg.recentLoading && reg.recent.length > 0 ? <span className="count-pill">{reg.recent.length}개</span> : undefined}>
-          내가 최근 등록한 영상
+          최근 등록 영상
         </BlockTitle>
         {listMsg && <Msg tone="ok">{listMsg}</Msg>}
         {reg.recentLoading ? (
@@ -124,10 +126,11 @@ export default function V4Videos() {
                     </div>
                   ) : (
                     <div className="meta-row">
-                      <FormatTag video={v} />
-                      <span className="chip">{v.stockName}</span>
-                      <span>조회수 {fmtNumber(v.viewCount)}</span>
                       <span>업로드 {fmtDate(v.publishedAt)}</span>
+                      <span className="chip">{v.stockName}</span>
+                      <span>{fmtDuration(v.durationSeconds)}</span>
+                      <FormatTag video={v} />
+                      <span>조회수 {fmtNumber(v.viewCount)}</span>
                       <span>
                         등록자 <span className="owner">{v.ownerName || me.name}</span>
                       </span>
@@ -135,12 +138,16 @@ export default function V4Videos() {
                   )}
                 </div>
                 <div className="vactions">
-                  <button className="btn white sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                    종목명 수정
+                  {me.canEditVideos && (
+<button className="btn white sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                    수정
                   </button>
-                  <button className="btn red sm" onClick={() => remove(v.id, v.title)}>
+)}
+                  {me.canDeleteVideos && (
+<button className="btn red sm" onClick={() => remove(v.id, v.title)}>
                     삭제
                   </button>
+)}
                 </div>
               </li>
             ))}
