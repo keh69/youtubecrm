@@ -1,0 +1,107 @@
+/* 전역: 최소한의 초기화만. 버전별 디자인은 각 버전의 theme.css(.v1 ~ .v5 로 범위 제한)에 있다. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* 버전 전환(비교용) — 모든 버전 공통, 화면 오른쪽 아래 작은 알약 */
+.vswitch {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.82);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font: 600 11px/1 system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+  backdrop-filter: blur(6px);
+}
+
+.vswitch a {
+  color: #d4d4d4;
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 999px;
+}
+
+.vswitch a:hover {
+  color: #fff;
+}
+
+.vswitch a[aria-current='page'] {
+  background: #fff;
+  color: #111;
+}
+
+.vswitch-build {
+  color: #8a8a8a;
+  padding: 0 8px 0 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .vswitch {
+    right: 8px;
+    bottom: 8px;
+  }
+  .vswitch-build {
+    display: none;
+  }
+}
+
+@media print {
+  .vswitch {
+    display: none;
+  }
+}
