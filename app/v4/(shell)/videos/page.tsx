@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
 
 export default function V4Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -38,6 +39,12 @@ export default function V4Videos() {
       <section className="blk bg-yellow">
         <BlockTitle color="blue">새 영상 추가</BlockTitle>
         <form className="row-form" onSubmit={reg.submit}>
+          <div className="field">
+            <span>등록자</span>
+            <div className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+              {me.name} <small>(자동)</small>
+            </div>
+          </div>
           <label className="field">
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -73,6 +80,9 @@ export default function V4Videos() {
               <span>조회수 {fmtNumber(added.video.viewCount)}</span>
               <span>{fmtDuration(added.video.durationSeconds)}</span>
               <span>업로드 {fmtDate(added.video.publishedAt)}</span>
+              <span>
+                등록자 <span className="owner">{added.video.ownerName || me.name}</span>
+              </span>
             </div>
           </div>
           <button className="added-close" aria-label="닫기" onClick={reg.clearLastAdded}>
@@ -118,6 +128,9 @@ export default function V4Videos() {
                       <span className="chip">{v.stockName}</span>
                       <span>조회수 {fmtNumber(v.viewCount)}</span>
                       <span>업로드 {fmtDate(v.publishedAt)}</span>
+                      <span>
+                        등록자 <span className="owner">{v.ownerName || me.name}</span>
+                      </span>
                     </div>
                   )}
                 </div>

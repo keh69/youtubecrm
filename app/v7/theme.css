@@ -1524,3 +1524,34 @@
     font-size: 11px;
   }
 }
+
+/* 영상등록: 자동으로 붙는 등록자(읽기 전용 쿼리 파라미터) */
+.v7 .readonly-box {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v7 .readonly-box .ro-op {
+  color: var(--op);
+}
+.v7 .readonly-box .ro-str {
+  color: var(--str);
+}
+.v7 .readonly-box .ro-cm {
+  color: var(--cm);
+  font-style: italic;
+  font-size: 12px;
+}
+@media (max-width: 860px) {
+  .v7 .row-form > .field:has(> .readonly-box) {
+    flex: 1 1 100%;
+  }
+}

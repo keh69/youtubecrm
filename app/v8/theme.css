@@ -1404,3 +1404,31 @@
   text-shadow: none;
   box-shadow: 0 0 10px rgba(255, 176, 0, 0.35);
 }
+
+/* 영상등록: 자동으로 붙는 등록자(프롬프트 한 줄) */
+.v8 .readonly-box {
+  height: var(--field-h);
+  line-height: var(--field-h);
+  padding: 0 8px;
+  border-bottom: 1px dashed var(--line);
+  color: var(--green-dim);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v8 .readonly-box .ro-prompt,
+.v8 .readonly-box .ro-arrow {
+  color: var(--amber);
+  font-weight: 700;
+  text-shadow: var(--glow-amber);
+}
+.v8 .readonly-box .ro-name {
+  color: var(--green);
+  text-shadow: var(--glow);
+}
+.v8 .readonly-box .ro-note {
+  color: var(--dim);
+  font-size: 12px;
+}

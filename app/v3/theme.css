@@ -1539,3 +1539,27 @@
   text-decoration-thickness: 2px;
   text-underline-offset: 7px;
 }
+
+/* ── 영상등록: 등록자(읽기 전용) ── */
+.v3 .j-readonly {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 4px 7px;
+  border-bottom: 1px dotted var(--ink);
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v3 .j-readonly small {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}

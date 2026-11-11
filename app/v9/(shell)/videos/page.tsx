@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridFoot, Ico, RowNoTh, Th } from '../../_ui'
 
 export default function V9Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -35,6 +36,14 @@ export default function V9Videos() {
       <section className="card">
         <h2>새 행 추가 · INSERT</h2>
         <form className="row-form" onSubmit={reg.submit}>
+          <div className="field">
+            <span>
+              등록자 <span className="ty">readonly</span>
+            </span>
+            <div className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+              {me.name} <span className="ro-note">(자동)</span>
+            </div>
+          </div>
           <label className="field">
             <span>
               종목명 <span className="ty">text</span>
@@ -65,7 +74,7 @@ export default function V9Videos() {
               <p className="muted small">
                 <span className="chip format">{videoFormatLabel(reg.lastAdded.video)}</span> {reg.lastAdded.video.stockName} · 조회수{' '}
                 <span className="mono">{fmtNumber(reg.lastAdded.video.viewCount)}</span> · <span className="mono">{fmtDuration(reg.lastAdded.video.durationSeconds)}</span> · 업로드{' '}
-                <span className="mono">{fmtDate(reg.lastAdded.video.publishedAt)}</span>
+                <span className="mono">{fmtDate(reg.lastAdded.video.publishedAt)}</span> · 등록자 {reg.lastAdded.video.ownerName || me.name}
               </p>
             </div>
           </div>
@@ -92,6 +101,7 @@ export default function V9Videos() {
                     <Th name="조회수" type="int" className="num" />
                     <Th name="재생시간" type="interval" className="num" />
                     <Th name="올린 날짜" type="date" />
+                    <Th name="등록자" type="text" />
                     <th />
                   </tr>
                 </thead>
@@ -130,6 +140,7 @@ export default function V9Videos() {
                       <td className="num">{fmtNumber(v.viewCount)}</td>
                       <td className="num">{fmtDuration(v.durationSeconds)}</td>
                       <td className="mono nowrap">{fmtDate(v.publishedAt)}</td>
+                      <td className="nowrap owner-cell">{v.ownerName || me.name}</td>
                       <td className="right nowrap">
                         <button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
                           <Ico>✎</Ico> 종목명 수정

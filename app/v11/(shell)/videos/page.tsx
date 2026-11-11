@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 
 export default function V11Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -39,6 +40,18 @@ export default function V11Videos() {
       <section className="card">
         <h2>새 영상 추가</h2>
         <form className="flag-list" onSubmit={reg.submit}>
+          <div className="flag">
+            <div className="flag-body">
+              <span className="flag-title">등록자</span>
+              <span className="flag-desc">로그인한 사람 이름이 자동으로 붙습니다.</span>
+              <code className="flag-id">#owner</code>
+            </div>
+            <div className="flag-ctl">
+              <span className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+                {me.name} <span className="ro-note">(자동)</span>
+              </span>
+            </div>
+          </div>
           <label className="flag">
             <span className="flag-body">
               <span className="flag-title">종목명</span>
@@ -84,7 +97,7 @@ export default function V11Videos() {
               <strong>{reg.lastAdded.video.title}</strong>
               <p className="muted small">
                 <span className="chip format">{videoFormatLabel(reg.lastAdded.video)}</span> {reg.lastAdded.video.stockName} · 조회수 {fmtNumber(reg.lastAdded.video.viewCount)} ·{' '}
-                {fmtDuration(reg.lastAdded.video.durationSeconds)} · 업로드 {fmtDate(reg.lastAdded.video.publishedAt)}
+                {fmtDuration(reg.lastAdded.video.durationSeconds)} · 업로드 {fmtDate(reg.lastAdded.video.publishedAt)} · 등록자 {reg.lastAdded.video.ownerName || me.name}
               </p>
             </div>
           </div>
@@ -122,7 +135,7 @@ export default function V11Videos() {
                     </div>
                   ) : (
                     <p className="muted small">
-                      <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)}
+                      <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
                     </p>
                   )}
                   <code className="flag-id">#yt-{v.youtubeVideoId}</code>

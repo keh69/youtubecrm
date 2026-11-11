@@ -1,5 +1,6 @@
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, isMissingSchema, loadRolesForUsers, type CrmContext, type RoleRow } from '@/lib/crm/server/context'
+import { publicEmail } from '@/lib/crm/server/settings'
 
 export type ScopedUser = {
   id: string
@@ -111,7 +112,7 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
       id: u.id,
       name: u.name,
       loginId: u.login_id,
-      email: u.email,
+      email: publicEmail(u.email),
       phone: u.phone || '',
       affiliationRoleId: u.affiliation_role_id || null,
       affiliationName: u.affiliation_role_id ? roleName.get(u.affiliation_role_id) || null : null,

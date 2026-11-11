@@ -1161,3 +1161,33 @@
   border-color: var(--accent);
   color: var(--side-bg);
 }
+
+/* ── 영상등록: 등록자(읽기 전용) ── */
+.v6 .readonly-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v6 .readonly-box .ro-note {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+@media (max-width: 860px) {
+  .v6 .row-form:has(.readonly-box) > .field {
+    flex: 1 1 100%;
+  }
+}

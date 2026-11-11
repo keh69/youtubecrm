@@ -2082,3 +2082,26 @@
     box-shadow: var(--sh-xs);
   }
 }
+
+/* ───────── 영상등록: 등록자(읽기 전용) ───────── */
+.v4 .readonly-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 9px 12px;
+  border: var(--bw) dashed #000;
+  border-radius: 4px;
+  background: var(--gray);
+  font-weight: 900;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v4 .readonly-box small {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+}

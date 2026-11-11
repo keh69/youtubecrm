@@ -104,7 +104,7 @@ function EmployeesTab() {
                     <td>{u.affiliationName || '-'}</td>
                     <td>{u.roles.join(', ') || '-'}</td>
                     <td className="nowrap">{u.phone || '-'}</td>
-                    <td>{u.email}</td>
+                    <td>{u.email || '-'}</td>
                     <td className="right">
                       <button className="btn primary small" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
                         {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
@@ -442,7 +442,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
         </label>
         <label className="flag">
           <span className="flag-body">
-            <span className="flag-title">이메일 *</span>
+            <span className="flag-title">이메일 (선택)</span>
             <code className="flag-id">#account-email</code>
           </span>
           <span className="flag-ctl">

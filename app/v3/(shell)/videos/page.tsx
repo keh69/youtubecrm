@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 
 export default function V3Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState<Msg>(null)
@@ -35,6 +36,12 @@ export default function V3Videos() {
 
       <section className="j-section">
         <form className="j-form-row" onSubmit={reg.submit}>
+          <div className="j-field">
+            <span>등록자</span>
+            <div className="j-readonly" title="로그인한 사람 이름이 자동으로 붙습니다">
+              {me.name} <small>(자동)</small>
+            </div>
+          </div>
           <label className="j-field">
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -70,7 +77,7 @@ export default function V3Videos() {
                 <p className="j-byline">
                   <span className="j-format">{videoFormatLabel(added.video)}</span>
                   <span className="j-tag">{added.video.stockName}</span> 조회수 {fmtNumber(added.video.viewCount)} · {fmtDuration(added.video.durationSeconds)} · 업로드{' '}
-                  {fmtDate(added.video.publishedAt)}
+                  {fmtDate(added.video.publishedAt)} · 등록자 {added.video.ownerName || me.name}
                 </p>
               </div>
             </div>
@@ -122,7 +129,7 @@ export default function V3Videos() {
                   ) : (
                     <p className="j-byline">
                       <span className="j-format">{videoFormatLabel(v)}</span>
-                      <span className="j-tag">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)}
+                      <span className="j-tag">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
                     </p>
                   )}
                   <div className="j-story-actions">

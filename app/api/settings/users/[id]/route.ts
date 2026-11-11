@@ -10,7 +10,8 @@ type Params = { params: Promise<{ id: string }> }
 
 const patchSchema = z.object({
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30).optional(),
-  email: z.string().trim().email('이메일 형식이 올바르지 않습니다.').optional(),
+  // 빈칸이면 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문).
+  email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional(),
   phone: z.string().trim().max(20).regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional(),
   affiliationRoleId: z.string().uuid().nullable().optional(),
   password: passwordSchema.optional(),
@@ -50,7 +51,7 @@ export async function PATCH(request: Request, context: Params) {
 
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
     if (body.name !== undefined) patch.name = body.name
-    if (body.email !== undefined) patch.email = body.email
+    if (body.email) patch.email = body.email
     if (body.phone !== undefined) patch.phone = body.phone || null
     if (body.affiliationRoleId !== undefined) patch.affiliation_role_id = body.affiliationRoleId
     if (body.active !== undefined) patch.employment_status = body.active ? 'active' : 'inactive'

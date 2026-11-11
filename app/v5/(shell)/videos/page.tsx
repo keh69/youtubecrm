@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, PageHead } from '../../_components/ui'
 
 export default function V5Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -37,6 +38,12 @@ export default function V5Videos() {
 
       <section className="g-glass g-register">
         <form className="g-row-form" onSubmit={reg.submit}>
+          <div className="g-field">
+            <span>등록자</span>
+            <div className="g-readonly" title="로그인한 사람 이름이 자동으로 붙습니다">
+              {me.name} <small>(자동)</small>
+            </div>
+          </div>
           <label className="g-field">
             <span>종목명</span>
             <input className="g-input" value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -69,6 +76,7 @@ export default function V5Videos() {
                 <span className="g-chip">조회수 {fmtNumber(added.video.viewCount)}</span>
                 <span className="g-chip">{fmtDuration(added.video.durationSeconds)}</span>
                 <span className="g-chip">업로드 {fmtDate(added.video.publishedAt)}</span>
+                <span className="g-chip">등록자 {added.video.ownerName || me.name}</span>
               </div>
             </div>
             <button type="button" className="g-x" aria-label="닫기" onClick={reg.clearLastAdded}>
@@ -124,6 +132,7 @@ export default function V5Videos() {
                       <span className="g-chip accent">{v.stockName}</span>
                       <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
                       <span className="g-chip">업로드 {fmtDate(v.publishedAt)}</span>
+                      <span className="g-chip">등록자 {v.ownerName || me.name}</span>
                     </div>
                   )}
                 </div>

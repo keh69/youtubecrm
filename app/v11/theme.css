@@ -1589,3 +1589,30 @@
   border-color: var(--accent);
   color: #fff;
 }
+
+/* 영상등록: 자동으로 붙는 등록자(읽기 전용 플래그 값) */
+.v11 .readonly-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 240px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+}
+.v11 .readonly-box .ro-note {
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 400;
+}
+@media (max-width: 600px) {
+  .v11 .readonly-box {
+    width: 100%;
+  }
+}

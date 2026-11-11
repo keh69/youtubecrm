@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridStatus, SqlQuery, sqlStr } from '../../_ui/sql'
 
 export default function V7Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -43,6 +44,12 @@ export default function V7Videos() {
       <section className="card">
         <h2>파라미터</h2>
         <form className="row-form" onSubmit={reg.submit}>
+          <div className="field">
+            <span>등록자</span>
+            <div className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+              <span className="ro-op">=</span> <span className="ro-str">'{me.name}'</span> <span className="ro-cm">-- (자동)</span>
+            </div>
+          </div>
           <label className="field">
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -68,7 +75,7 @@ export default function V7Videos() {
               <strong>{reg.lastAdded.video.title}</strong>
               <p className="muted small">
                 <span className="chip format">{videoFormatLabel(reg.lastAdded.video)}</span> {reg.lastAdded.video.stockName} · 조회수 {fmtNumber(reg.lastAdded.video.viewCount)} · {fmtDuration(reg.lastAdded.video.durationSeconds)} · 업로드{' '}
-                {fmtDate(reg.lastAdded.video.publishedAt)}
+                {fmtDate(reg.lastAdded.video.publishedAt)} · 등록자 {reg.lastAdded.video.ownerName || me.name}
               </p>
             </div>
           </div>
@@ -110,7 +117,7 @@ export default function V7Videos() {
                       </div>
                     ) : (
                       <p className="muted small">
-                        <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 <span className="t-num">{fmtNumber(v.viewCount)}</span> · 업로드 {fmtDate(v.publishedAt)}
+                        <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 <span className="t-num">{fmtNumber(v.viewCount)}</span> · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
                       </p>
                     )}
                   </div>

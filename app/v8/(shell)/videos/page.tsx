@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Prompt } from '../../term'
 
 export default function V8Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -36,6 +37,12 @@ export default function V8Videos() {
       <section className="card">
         <h2>영상 추가</h2>
         <form className="row-form" onSubmit={reg.submit}>
+          <div className="field">
+            <span>등록자</span>
+            <div className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+              <span className="ro-prompt">$</span> whoami <span className="ro-arrow">→</span> <span className="ro-name">{me.name}</span> <span className="ro-note">(자동)</span>
+            </div>
+          </div>
           <label className="field">
             <span>종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -56,7 +63,7 @@ export default function V8Videos() {
               <p className="msg ok">{reg.lastAdded.updated ? '이미 등록한 영상이라 정보를 새로 고쳤습니다.' : '등록했습니다.'}</p>
               <strong>{reg.lastAdded.video.title}</strong>
               <p className="muted small">
-                <span className="chip format">{videoFormatLabel(reg.lastAdded.video)}</span> {reg.lastAdded.video.stockName} · 조회수 {fmtNumber(reg.lastAdded.video.viewCount)} · {fmtDuration(reg.lastAdded.video.durationSeconds)} · 업로드 {fmtDate(reg.lastAdded.video.publishedAt)}
+                <span className="chip format">{videoFormatLabel(reg.lastAdded.video)}</span> {reg.lastAdded.video.stockName} · 조회수 {fmtNumber(reg.lastAdded.video.viewCount)} · {fmtDuration(reg.lastAdded.video.durationSeconds)} · 업로드 {fmtDate(reg.lastAdded.video.publishedAt)} · 등록자 {reg.lastAdded.video.ownerName || me.name}
               </p>
             </div>
           </div>
@@ -94,7 +101,7 @@ export default function V8Videos() {
                     </div>
                   ) : (
                     <p className="muted small">
-                      <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)}
+                      <span className="chip format">{videoFormatLabel(v)}</span> <span className="chip">{v.stockName}</span> 조회수 {fmtNumber(v.viewCount)} · 업로드 {fmtDate(v.publishedAt)} · 등록자 {v.ownerName || me.name}
                     </p>
                   )}
                 </div>

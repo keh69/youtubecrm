@@ -49,7 +49,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     id: u.id,
     loginId: u.login_id,
     name: u.name,
-    email: u.email,
+    email: publicEmail(u.email),
     phone: u.phone || '',
     affiliationRoleId: u.affiliation_role_id || null,
     roleIds: (rolesByUser.get(u.id) || []).map((r) => r.id),
@@ -93,4 +93,14 @@ export async function assertAffiliationColumn(ctx: CrmContext) {
 
 export async function audit(ctx: CrmContext, action: string, targetType: string, targetId: string | null, diff: Record<string, unknown>) {
   await ctx.db.from(TABLES.auditLogs).insert({ actor_user_id: ctx.profile.id, action_type: action, target_type: targetType, target_id: targetId, diff_summary: diff })
+}
+
+// 이메일 없이 만든 계정: Supabase 로그인 시스템은 이메일이 꼭 필요해서 화면에 안 보이는 내부용 주소를 붙인다.
+// 로그인은 아이디로 하므로 이 주소는 아무도 쓰지 않는다(메일도 보내지 않음). 화면에는 빈칸으로 보인다.
+export const INTERNAL_EMAIL_DOMAIN = 'noemail.youtubecrm.app'
+export function internalEmailFor(loginId: string) {
+  return `${loginId.toLowerCase()}@${INTERNAL_EMAIL_DOMAIN}`
+}
+export function publicEmail(email: string | null | undefined) {
+  return email && !email.toLowerCase().endsWith(`@${INTERNAL_EMAIL_DOMAIN}`) ? email : ''
 }

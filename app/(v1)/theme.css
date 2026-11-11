@@ -918,3 +918,14 @@
   border-color: var(--accent);
   color: #fff;
 }
+
+/* 영상등록: 자동으로 붙는 등록자 이름 */
+.v1 .readonly-box {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -2086,3 +2086,27 @@
     font-size: 12px;
   }
 }
+
+/* ── 영상등록: 등록자(읽기 전용) ── */
+.v5 .g-readonly {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px dashed rgba(124, 92, 255, 0.35);
+  background: var(--accent-soft);
+  color: #5a47c7;
+  font-family: var(--head);
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v5 .g-readonly small {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}

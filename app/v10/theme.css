@@ -1609,3 +1609,38 @@
   border-color: var(--focus-ring);
   color: #fff;
 }
+
+/* 영상등록: 자동으로 붙는 등록자(편집기 읽기 전용 줄) */
+.v10 .readonly-box {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.v10 .readonly-box .ro-key {
+  color: var(--tk-var);
+}
+.v10 .readonly-box .ro-punc {
+  color: var(--muted);
+}
+.v10 .readonly-box .ro-str {
+  color: var(--tk-string);
+}
+.v10 .readonly-box .ro-cm {
+  color: var(--tk-comment);
+  font-style: italic;
+}
+@media (max-width: 860px) {
+  .v10 .row-form > .field:has(> .readonly-box) {
+    flex: 1 1 100%;
+  }
+}

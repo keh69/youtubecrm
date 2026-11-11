@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMenuGuard, useVideoRegister } from '@/lib/crm/client/hooks'
+import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
 import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
 
 export default function V2Videos() {
   const allowed = useMenuGuard('videos')
+  const { me } = useSession()
   const reg = useVideoRegister()
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
@@ -33,6 +34,12 @@ export default function V2Videos() {
 
       <Panel label="새 영상 입력" className="panel-cmd">
         <form className="cmd-form" onSubmit={reg.submit}>
+          <div className="fld">
+            <span className="lbl">등록자</span>
+            <div className="readonly-box" title="로그인한 사람 이름이 자동으로 붙습니다">
+              {me.name} <span className="ro-note">(자동)</span>
+            </div>
+          </div>
           <label className="fld">
             <span className="lbl">종목명</span>
             <input value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
@@ -83,6 +90,10 @@ export default function V2Videos() {
                   <dt>업로드</dt>
                   <dd className="mono">{fmtDate(added.video.publishedAt)}</dd>
                 </div>
+                <div>
+                  <dt>등록자</dt>
+                  <dd>{added.video.ownerName || me.name}</dd>
+                </div>
               </dl>
             </div>
             <button className="key ghost sm added-close" onClick={reg.clearLastAdded} aria-label="닫기">
@@ -109,6 +120,7 @@ export default function V2Videos() {
                   <th className="num">조회수</th>
                   <th className="num">길이</th>
                   <th>업로드</th>
+                  <th>등록자</th>
                   <th />
                 </tr>
               </thead>
@@ -146,6 +158,7 @@ export default function V2Videos() {
                     <td className="num">{fmtNumber(v.viewCount)}</td>
                     <td className="num">{fmtDuration(v.durationSeconds)}</td>
                     <td className="mono">{fmtDate(v.publishedAt)}</td>
+                    <td className="nowrap">{v.ownerName || me.name}</td>
                     <td className="right nowrap">
                       <button className="key ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
                         종목명 수정
