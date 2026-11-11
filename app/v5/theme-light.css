@@ -2326,3 +2326,21 @@
 :root[data-theme='light'] .v5 .g-att-summary.tone-absent > div:first-child dd {
   color: #d9435f;
 }
+
+/* 상단 메뉴: 선택된 메뉴의 그림자가 메뉴 줄 경계에서 잘려 보이지 않게 안쪽 여유를 준다(바깥 크기는 그대로) */
+:root[data-theme='light'] .v5 .g-menu,
+:root:not([data-theme='light']) .v5 .g-menu {
+  padding: 10px 8px;
+  margin: -10px 0;
+}
+:root:not([data-theme='light']) .v5 .g-menu a.on,
+:root:not([data-theme='light']) .v5 .g-menu a.nav-sub.on {
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.28);
+}
+@media (max-width: 760px) {
+  :root[data-theme='light'] .v5 .g-menu,
+  :root:not([data-theme='light']) .v5 .g-menu {
+    padding: 12px 6px;
+    margin: -10px 0 -8px;
+  }
+}
