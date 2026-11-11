@@ -5,12 +5,13 @@ import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
 import { GridStatus, SqlQuery, sqlStr } from '../../_ui/sql'
 import { TeamCalendar } from '@/components/team-calendar'
+import { AttendanceApplyButtons } from '@/components/attendance-extra'
 
 export default function V7TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
   const [openUser, setOpenUser] = useState<string | null>(null)
-  const [form, setForm] = useState({ userId: '', workDate: todayKst(), reason: '' })
+  const [form, setForm] = useState({ userId: '', workDate: todayKst(), time: '', reason: '' })
   const [msg, setMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
   if (!allowed) return null
@@ -58,7 +59,7 @@ export default function V7TeamAttendance() {
       </div>
 
       <section className="card">
-        <h2>결근 처리</h2>
+        <h2>근태처리</h2>
         <form className="row-form" onSubmit={submitAbsence}>
           <label className="field">
             <span>직원</span>
@@ -75,10 +76,15 @@ export default function V7TeamAttendance() {
             <span>날짜</span>
             <input type="date" value={form.workDate} max={todayKst()} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
           </label>
+          <label className="field">
+            <span>시간 (선택)</span>
+            <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} title="비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)" />
+          </label>
           <label className="field grow">
-            <span>결근 사유</span>
+            <span>결근 사유 (결근 처리할 때)</span>
             <input value={form.reason} maxLength={300} placeholder="예) 무단 결근, 병가 등" onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </label>
+          <AttendanceApplyButtons team={team} userId={form.userId} workDate={form.workDate} time={form.time} btnClass="btn" />
           <button className="btn danger" disabled={saving}>
             {saving ? '처리 중…' : '결근 처리'}
           </button>
@@ -228,11 +234,11 @@ export default function V7TeamAttendance() {
                                             <button
                                               className="btn ghost small"
                                               onClick={() => {
-                                                setForm({ userId: row.user.id, workDate: d, reason: '' })
+                                                setForm({ userId: row.user.id, workDate: d, time: '', reason: '' })
                                                 window.scrollTo({ top: 0, behavior: 'smooth' })
                                               }}
                                             >
-                                              결근 처리
+                                              근태처리
                                             </button>
                                           )}
                                         </td>

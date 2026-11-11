@@ -28,7 +28,7 @@ export default function V7Login() {
         <button className="btn primary block" disabled={busy}>
           {busy ? '로그인 중…' : '로그인'}
         </button>
-        <p className="muted small center">-- 계정은 관리자가 만들어 드립니다.</p>
+        <p className="muted small center">-- 아이디가 없나요? <a href="/v5/signup" className="xs-signup-link">회원가입</a></p>
       </form>
     </main>
   )

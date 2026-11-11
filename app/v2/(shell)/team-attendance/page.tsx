@@ -5,12 +5,13 @@ import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, Panel, StatusTag, type Msg } from '../../_components/ui'
 import { TeamCalendar } from '@/components/team-calendar'
+import { AttendanceApplyButtons } from '@/components/attendance-extra'
 
 export default function V2TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
   const [openUser, setOpenUser] = useState<string | null>(null)
-  const [form, setForm] = useState({ userId: '', workDate: todayKst(), reason: '' })
+  const [form, setForm] = useState({ userId: '', workDate: todayKst(), time: '', reason: '' })
   const [msg, setMsg] = useState<Msg>(null)
   const [saving, setSaving] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
@@ -42,7 +43,7 @@ export default function V2TeamAttendance() {
       <PageHead code="ATT-02" title="직원근태 > 근태통계" desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
 
       <div ref={formRef} className="anchor">
-        <Panel label="결근 처리" className="panel-cmd">
+        <Panel label="근태처리" className="panel-cmd">
           <form className="cmd-form" onSubmit={submitAbsence}>
             <label className="fld">
               <span className="lbl">직원</span>
@@ -59,10 +60,15 @@ export default function V2TeamAttendance() {
               <span className="lbl">날짜</span>
               <input type="date" className="mono" value={form.workDate} max={todayKst()} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
             </label>
+            <label className="fld">
+              <span className="lbl">시간 (선택)</span>
+              <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} title="비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)" />
+            </label>
             <label className="fld grow">
-              <span className="lbl">결근 사유</span>
+              <span className="lbl">결근 사유 (결근 처리할 때)</span>
               <input value={form.reason} maxLength={300} placeholder="예) 무단 결근, 병가 등" onChange={(e) => setForm({ ...form, reason: e.target.value })} />
             </label>
+            <AttendanceApplyButtons team={team} userId={form.userId} workDate={form.workDate} time={form.time} btnClass="key" />
             <button className="key danger" disabled={saving}>
               {saving ? '처리 중…' : '결근 처리'}
             </button>
@@ -208,11 +214,11 @@ export default function V2TeamAttendance() {
                                           <button
                                             className="key ghost sm warn"
                                             onClick={() => {
-                                              setForm({ userId: row.user.id, workDate: d, reason: '' })
+                                              setForm({ userId: row.user.id, workDate: d, time: '', reason: '' })
                                               formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                                             }}
                                           >
-                                            결근 처리
+                                            근태처리
                                           </button>
                                         )}
                                       </td>

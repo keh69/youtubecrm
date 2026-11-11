@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
 import { TeamCalendar } from '@/components/team-calendar'
+import { AttendanceApplyButtons } from '@/components/attendance-extra'
 
 export default function V11TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
   const [openUser, setOpenUser] = useState<string | null>(null)
-  const [form, setForm] = useState({ userId: '', workDate: todayKst(), reason: '' })
+  const [form, setForm] = useState({ userId: '', workDate: todayKst(), time: '', reason: '' })
   const [msg, setMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
   if (!allowed) return null
@@ -50,7 +51,7 @@ export default function V11TeamAttendance() {
       </div>
 
       <section className="card">
-        <h2>결근 처리</h2>
+        <h2>근태처리</h2>
         <form className="flag-list" onSubmit={submitAbsence}>
           <label className="flag">
             <span className="flag-body">
@@ -80,7 +81,16 @@ export default function V11TeamAttendance() {
           </label>
           <label className="flag">
             <span className="flag-body">
-              <span className="flag-title">결근 사유</span>
+              <span className="flag-title">시간 (선택)</span>
+              <code className="flag-id">#apply-time</code>
+            </span>
+            <span className="flag-ctl">
+              <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} title="비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)" />
+            </span>
+          </label>
+          <label className="flag">
+            <span className="flag-body">
+              <span className="flag-title">결근 사유 (결근 처리할 때)</span>
               <code className="flag-id">#absence-reason</code>
             </span>
             <span className="flag-ctl grow">
@@ -93,6 +103,7 @@ export default function V11TeamAttendance() {
               <code className="flag-id">#absence-apply</code>
             </div>
             <div className="flag-ctl">
+              <AttendanceApplyButtons team={team} userId={form.userId} workDate={form.workDate} time={form.time} btnClass="btn" />
               <button className="btn danger" disabled={saving}>
                 {saving ? '처리 중…' : '결근 처리'}
               </button>
@@ -238,11 +249,11 @@ export default function V11TeamAttendance() {
                                         <button
                                           className="btn ghost small"
                                           onClick={() => {
-                                            setForm({ userId: row.user.id, workDate: d, reason: '' })
+                                            setForm({ userId: row.user.id, workDate: d, time: '', reason: '' })
                                             window.scrollTo({ top: 0, behavior: 'smooth' })
                                           }}
                                         >
-                                          결근 처리
+                                          근태처리
                                         </button>
                                       )}
                                     </td>

@@ -1108,3 +1108,17 @@ a {
 html {
   scrollbar-gutter: stable;
 }
+
+.xs-inline {
+  display: inline-block;
+  margin: 0 0 0 6px;
+  font-size: 13px;
+}
+
+/* 로그인 화면의 '회원가입' 링크(모든 스킨) */
+.xs-signup-link {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
