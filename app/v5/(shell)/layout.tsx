@@ -18,11 +18,28 @@ function Shell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <nav className="g-menu" aria-label="메뉴">
-            {nav.map((item) => (
-              <Link key={item.key} href={item.href} className={item.active ? 'on' : ''} aria-current={item.active ? 'page' : undefined}>
-                {item.label}
-              </Link>
-            ))}
+            {nav.map((item) => {
+              const here = item.active && !item.sub?.active
+              const link = (
+                <Link key={item.key} href={item.href} className={here ? 'on' : item.active ? 'half' : ''} aria-current={here ? 'page' : undefined}>
+                  {item.label}
+                </Link>
+              )
+              if (!item.sub) return link
+              return (
+                <span key={item.key} className={`nav-row${item.active ? ' in' : ''}`}>
+                  {link}
+                  <Link
+                    href={item.sub.href}
+                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
+                    aria-current={item.sub.active ? 'page' : undefined}
+                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                  >
+                    {item.sub.label}
+                  </Link>
+                </span>
+              )
+            })}
           </nav>
           <div className="g-user">
             <span className="g-avatar" title={`${me.name} · ${roles}`}>

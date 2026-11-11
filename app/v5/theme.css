@@ -2052,3 +2052,37 @@
   margin: 0;
   flex: 1;
 }
+
+/* 메뉴 옆 [통계] 버튼 (근태체크 → 직원근태, 영상등록 → 영상통계) */
+.v5 .g-menu .nav-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.v5 .g-menu a.half {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.v5 .g-menu a.nav-sub {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+}
+.v5 .g-menu a.nav-sub:hover {
+  background: var(--accent-soft);
+}
+.v5 .g-menu a.nav-sub.on {
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(124, 92, 255, 0.3);
+}
+@media (max-width: 760px) {
+  .v5 .g-menu a.nav-sub {
+    padding: 4px 9px;
+    font-size: 12px;
+  }
+}

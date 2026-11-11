@@ -20,11 +20,27 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <span className="side-label">$ ls ./menu</span>
         <nav className="side-nav" aria-label="메뉴">
-          {nav.map((item) => (
-            <Link key={item.key} href={item.href} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={() => setOpen(false)}>
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const self = item.active && !item.sub?.active
+            return (
+              <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
+                <Link href={item.href} className={self ? 'active' : item.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
+                  {item.label}
+                </Link>
+                {item.sub && (
+                  <Link
+                    href={item.sub.href}
+                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
+                    aria-current={item.sub.active ? 'page' : undefined}
+                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                    onClick={() => setOpen(false)}
+                  >
+                    [{item.sub.label}]
+                  </Link>
+                )}
+              </div>
+            )
+          })}
         </nav>
         <div className="side-user">
           <div>

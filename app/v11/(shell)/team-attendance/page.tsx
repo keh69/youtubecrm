@@ -37,7 +37,7 @@ export default function V11TeamAttendance() {
   return (
     <>
       <div className="page-head">
-        <h1>직원근태</h1>
+        <h1>직원근태 &gt; 근태통계</h1>
         <p className="warn-banner">
           <span className="warn-ico" aria-hidden="true">
             ⚠

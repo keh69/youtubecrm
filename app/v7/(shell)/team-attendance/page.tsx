@@ -52,7 +52,7 @@ export default function V7TeamAttendance() {
   return (
     <>
       <div className="page-head">
-        <h1>직원근태</h1>
+        <h1>직원근태 &gt; 근태통계</h1>
         <SqlQuery file="team_attendance.sql" code={query} />
       </div>
 

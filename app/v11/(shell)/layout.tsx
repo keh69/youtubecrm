@@ -5,10 +5,16 @@ import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const { me, logout } = useSession()
+  const { me, base, logout } = useSession()
   const nav = useNav()
   const [open, setOpen] = useState(false)
   const current = nav.find((n) => n.active)
+  // [통계] 화면(직원근태·영상통계)에 있으면 주소창에는 그 화면의 경로·이름을 띄운다
+  const view = current?.sub?.active
+    ? { path: current.sub.href.slice(base.length), label: current.sub.key === 'attendance_team' ? '직원근태 > 근태통계' : '영상통계' }
+    : current
+      ? { path: current.path, label: current.label }
+      : undefined
   return (
     <div className="shell">
       <aside className={`side ${open ? 'open' : ''}`}>
@@ -20,12 +26,28 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="side-nav" aria-label="메뉴">
-          {nav.map((item) => (
-            <Link key={item.key} href={item.href} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={() => setOpen(false)}>
-              <span className="nav-dot" aria-hidden="true" />
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const self = item.active && !item.sub?.active
+            return (
+              <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
+                <Link href={item.href} className={self ? 'active' : item.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
+                  <span className="nav-dot" aria-hidden="true" />
+                  {item.label}
+                </Link>
+                {item.sub && (
+                  <Link
+                    href={item.sub.href}
+                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
+                    aria-current={item.sub.active ? 'page' : undefined}
+                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.sub.label}
+                  </Link>
+                )}
+              </div>
+            )
+          })}
         </nav>
         <div className="side-user">
           <div>
@@ -50,8 +72,8 @@ function Shell({ children }: { children: React.ReactNode }) {
             <span className="omni-ico" aria-hidden="true">
               ⌕
             </span>
-            <code>crm://flags/{current ? current.path.replace(/^\//, '') : ''}</code>
-            {current && <span className="omni-label">{current.label}</span>}
+            <code>crm://flags/{view ? view.path.replace(/^\//, '') : ''}</code>
+            {view && <span className="omni-label">{view.label}</span>}
           </div>
         </div>
         <main className="content">{children}</main>

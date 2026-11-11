@@ -10,6 +10,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   const nav = useNav()
   const [open, setOpen] = useState(false)
   const current = nav.find((n) => n.active)
+  // [통계] 페이지(직원근태·영상통계)에 있으면 탭에는 부모 메뉴 대신 그 화면 이름을 띄운다
+  const tab = current?.sub?.active
+    ? { label: current.sub.key === 'attendance_team' ? '직원근태 > 근태통계' : '영상통계', key: current.sub.key }
+    : current
+      ? { label: current.label, key: current.key }
+      : undefined
   const roleText = me.roles.map((r) => r.name).join(', ') || '역할 없음'
   return (
     <div className="shell">
@@ -60,20 +66,36 @@ function Shell({ children }: { children: React.ReactNode }) {
               <span className="ty">({nav.length})</span>
             </div>
             <nav className="side-nav" aria-label="메뉴">
-              {nav.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className={item.active ? 'active' : ''}
-                  aria-current={item.active ? 'page' : undefined}
-                  title={item.description}
-                  onClick={() => setOpen(false)}
-                >
-                  <span className="tbl-ico" aria-hidden="true" />
-                  <span className="nav-label">{item.label}</span>
-                  <span className="nav-key">{item.key}</span>
-                </Link>
-              ))}
+              {nav.map((item) => {
+                const self = item.active && !item.sub?.active
+                return (
+                  <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
+                    <Link
+                      href={item.href}
+                      className={self ? 'active' : item.active ? 'parent' : ''}
+                      aria-current={self ? 'page' : undefined}
+                      title={item.description}
+                      onClick={() => setOpen(false)}
+                    >
+                      <span className="tbl-ico" aria-hidden="true" />
+                      <span className="nav-label">{item.label}</span>
+                      <span className="nav-key">{item.key}</span>
+                    </Link>
+                    {item.sub && (
+                      <Link
+                        href={item.sub.href}
+                        className={`nav-sub${item.sub.active ? ' on' : ''}`}
+                        aria-current={item.sub.active ? 'page' : undefined}
+                        title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                        onClick={() => setOpen(false)}
+                      >
+                        <span className="view-ico" aria-hidden="true" />
+                        {item.sub.label}
+                      </Link>
+                    )}
+                  </div>
+                )
+              })}
             </nav>
           </div>
           <div className="side-user">
@@ -100,11 +122,11 @@ function Shell({ children }: { children: React.ReactNode }) {
 
         <div className="main">
           <div className="tabbar" role="presentation">
-            {current ? (
+            {tab ? (
               <span className="doc-tab on">
                 <span className="tbl-ico" aria-hidden="true" />
-                <span>{current.label}</span>
-                <span className="mono ty">{current.key}</span>
+                <span>{tab.label}</span>
+                <span className="mono ty">{tab.key}</span>
                 <span className="tab-x" aria-hidden="true">
                   ×
                 </span>

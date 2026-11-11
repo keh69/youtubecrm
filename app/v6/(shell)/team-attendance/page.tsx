@@ -37,7 +37,7 @@ export default function V6TeamAttendance() {
   return (
     <>
       <div className="page-head">
-        <h1>직원근태</h1>
+        <h1>직원근태 &gt; 근태통계</h1>
         <p className="muted">
           출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다.
         </p>

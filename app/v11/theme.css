@@ -1545,3 +1545,47 @@
 .v11 .tabs button.on .tab-no {
   opacity: 0.9;
 }
+
+/* ── 메뉴 옆 [통계] 버튼 (근태체크 → 직원근태, 영상등록 → 영상통계) ───────── */
+.v11 .nav-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  border-radius: 0 20px 20px 0;
+}
+.v11 .nav-row > a:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.v11 .nav-row.on {
+  background: var(--accent-weak);
+}
+.v11 .side-nav a.parent {
+  color: var(--accent);
+}
+.v11 .side-nav a.parent .nav-dot {
+  border-color: var(--accent);
+}
+.v11 .side-nav a.nav-sub {
+  flex: none;
+  gap: 0;
+  height: 24px;
+  padding: 0 10px;
+  margin-right: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.v11 .side-nav a.nav-sub:hover {
+  background: var(--field);
+  color: var(--accent);
+}
+.v11 .side-nav a.nav-sub.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}

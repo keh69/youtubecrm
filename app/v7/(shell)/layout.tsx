@@ -22,20 +22,40 @@ function Shell({ children }: { children: React.ReactNode }) {
   const dataItems = nav.filter((i) => i.key !== 'skin' && i.key !== 'me')
   const sysItems = nav.filter((i) => i.key === 'skin' || i.key === 'me')
 
-  const item = (i: NavItem) => (
-    <Link key={i.key} href={i.href} className={i.active ? 'active' : ''} aria-current={i.active ? 'page' : undefined} onClick={() => setOpen(false)}>
-      <span className="tw" aria-hidden="true">
-        {i.active ? '▾' : '▸'}
-      </span>
-      <span className="tree-ico" aria-hidden="true">
-        ⊞
-      </span>
-      <span className="tree-label">{i.label}</span>
-      <span className="tree-tbl" aria-hidden="true">
-        {TABLE[i.key]}
-      </span>
-    </Link>
-  )
+  // 메뉴 한 줄 = 테이블 노드 + (있으면) 옆에 붙는 [통계] 뷰 버튼
+  const item = (i: NavItem) => {
+    const self = i.active && !i.sub?.active
+    return (
+      <div key={i.key} className={`tree-row${i.active ? ' on' : ''}`}>
+        <Link href={i.href} className={self ? 'active' : i.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
+          <span className="tw" aria-hidden="true">
+            {i.active ? '▾' : '▸'}
+          </span>
+          <span className="tree-ico" aria-hidden="true">
+            ⊞
+          </span>
+          <span className="tree-label">{i.label}</span>
+          <span className="tree-tbl" aria-hidden="true">
+            {TABLE[i.key]}
+          </span>
+        </Link>
+        {i.sub && (
+          <Link
+            href={i.sub.href}
+            className={`tree-sub${i.sub.active ? ' on' : ''}`}
+            aria-current={i.sub.active ? 'page' : undefined}
+            title={i.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+            onClick={() => setOpen(false)}
+          >
+            <span className="tree-sub-ico" aria-hidden="true">
+              Σ
+            </span>
+            {i.sub.label}
+          </Link>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="shell">

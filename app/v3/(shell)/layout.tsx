@@ -33,11 +33,28 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <hr className="j-double" />
         <nav className="j-nav" aria-label="메뉴">
-          {nav.map((item) => (
-            <Link key={item.key} href={item.href} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined}>
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const here = item.active && !item.sub?.active
+            const link = (
+              <Link key={item.key} href={item.href} className={here ? 'active' : item.active ? 'half' : ''} aria-current={here ? 'page' : undefined}>
+                {item.label}
+              </Link>
+            )
+            if (!item.sub) return link
+            return (
+              <span key={item.key} className={`nav-row${item.active ? ' in' : ''}`}>
+                {link}
+                <Link
+                  href={item.sub.href}
+                  className={`nav-sub${item.sub.active ? ' on' : ''}`}
+                  aria-current={item.sub.active ? 'page' : undefined}
+                  title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                >
+                  {item.sub.label}
+                </Link>
+              </span>
+            )
+          })}
         </nav>
         <hr className="j-rule" />
       </header>

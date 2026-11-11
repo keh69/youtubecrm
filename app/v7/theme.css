@@ -1472,3 +1472,55 @@
 .v7 .tabs button.on .tab-no {
   opacity: 1;
 }
+
+/* ── 메뉴 옆 [통계] 뷰 버튼 (근태체크 → 직원근태, 영상등록 → 영상통계) ────── */
+.v7 .tree-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.v7 .tree-row > a:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.v7 .side-nav a.parent {
+  color: #fff;
+}
+.v7 .side-nav a.parent .tw {
+  color: var(--fn);
+}
+.v7 .side-nav a.tree-sub {
+  flex: none;
+  gap: 3px;
+  padding: 2px 6px;
+  border: 1px solid var(--side-line);
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--side-muted);
+  white-space: nowrap;
+}
+.v7 .tree-sub-ico {
+  color: var(--num);
+  font-weight: 700;
+}
+.v7 .side-nav a.tree-sub:hover {
+  border-color: var(--fn);
+  color: #fff;
+}
+.v7 .side-nav a.tree-sub.on {
+  background: var(--side-active-bg);
+  border-color: var(--kw);
+  color: #fff;
+  font-weight: 600;
+}
+.v7 .side-nav a.tree-sub.on::before {
+  display: none;
+}
+@media (max-width: 860px) {
+  .v7 .side-nav a.tree-sub {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
