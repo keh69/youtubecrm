@@ -236,3 +236,67 @@ export async function resolveDay(ctx: CrmContext, userId: string, workDate: stri
   await audit(db, profile.id, 'resolve_attendance', res.data.id, { user_id: userId, work_date: workDate, action, time })
   return toRecord(res.data)
 }
+
+/* ───────── 근태통계 달력: 하루 근태 고치기·지우기('수정가능' 권한) ─────────
+   kind: normal(출근·퇴근 시간) / absent(결근) / vacation(휴무). 시간은 KST "HH:MM", 비우면 기록 없음. */
+export type DayEdit = { kind: 'normal' | 'absent' | 'vacation'; checkIn: string | null; checkOut: string | null; reason: string }
+
+export async function editDay(ctx: CrmContext, userId: string, workDate: string, edit: DayEdit) {
+  const { db, profile } = ctx
+  const nowIso = new Date().toISOString()
+  const at = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number)
+    return getKstIsoAtTime(workDate, h, m, 0)
+  }
+  let patch: Record<string, unknown>
+  if (edit.kind === 'absent' || edit.kind === 'vacation') {
+    patch = {
+      attendance_status: edit.kind,
+      absence_reason: edit.reason || (edit.kind === 'absent' ? '결근' : '휴무'),
+      check_in_at: null,
+      check_out_at: null,
+      worked_minutes: 0,
+      updated_at: nowIso
+    }
+  } else {
+    if (edit.checkOut && !edit.checkIn) throw new HttpError(400, '퇴근 시간만 넣을 수는 없습니다. 출근 시간도 넣어 주세요.')
+    if (edit.checkOut === '23:59') throw new HttpError(400, '23:59 는 자동 퇴근 시각이라 쓸 수 없습니다. 23:58 까지 적어 주세요.')
+    const inIso = edit.checkIn ? at(edit.checkIn) : null
+    const outIso = edit.checkOut ? at(edit.checkOut) : null
+    if (inIso && outIso && new Date(outIso) <= new Date(inIso)) throw new HttpError(400, '퇴근 시간이 출근 시간보다 빠릅니다.')
+    patch = {
+      attendance_status: inIso ? (isLateCheckIn(inIso, workDate) ? 'late' : 'present') : 'not_started',
+      absence_reason: null,
+      check_in_at: inIso,
+      check_out_at: outIso,
+      worked_minutes: inIso && outIso ? Math.floor(getAttendanceWorkedSeconds(inIso, outIso) / 60) : 0,
+      updated_at: nowIso
+    }
+  }
+  const { data: existing } = await db.from(TABLES.attendanceDays).select('id').eq('user_id', userId).eq('work_date', workDate).maybeSingle()
+  const res = existing?.id
+    ? await db.from(TABLES.attendanceDays).update(patch).eq('id', existing.id).select('*').single()
+    : await db.from(TABLES.attendanceDays).insert({ user_id: userId, work_date: workDate, ...patch }).select('*').single()
+  if (res.error) {
+    if (res.error.code === '23514') throw new HttpError(409, MIGRATION_HINT)
+    throw res.error
+  }
+  await logEvent(db, res.data.id, edit.kind === 'absent' ? 'absent' : edit.kind === 'vacation' ? 'vacation' : 'correction', 'admin', `근태 수정: ${edit.kind} ${edit.checkIn || '-'}~${edit.checkOut || '-'}`)
+  await audit(db, profile.id, 'edit_attendance', res.data.id, { user_id: userId, work_date: workDate, ...edit })
+  return toRecord(res.data)
+}
+
+export async function deleteDay(ctx: CrmContext, userId: string, workDate: string) {
+  const { db, profile } = ctx
+  const { data: existing } = await db.from(TABLES.attendanceDays).select('*').eq('user_id', userId).eq('work_date', workDate).maybeSingle()
+  if (!existing) throw new HttpError(404, '지울 근태 기록이 없습니다.')
+  const { error } = await db.from(TABLES.attendanceDays).delete().eq('id', existing.id)
+  if (error) throw error
+  await audit(db, profile.id, 'delete_attendance', existing.id, {
+    user_id: userId,
+    work_date: workDate,
+    check_in_at: existing.check_in_at,
+    check_out_at: existing.check_out_at,
+    status: existing.attendance_status
+  })
+}

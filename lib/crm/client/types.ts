@@ -10,7 +10,8 @@ export type Me = {
   isAdmin: boolean
   isSuperAdmin: boolean // 최고관리자(총 관리자): 하단 버전·스킨 전환 막대가 보인다
   skin: SkinKey // 이 사람이 고른 스킨(로그인하면 이 스킨 주소로 들어간다)
-  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~05)
+  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~07)
+  canEditAttendance?: boolean // 근태통계 '수정가능': 달력에서 근태 수정·삭제
 }
 
 export type DayRecord = {
@@ -98,6 +99,7 @@ export type SettingsRole = {
   settingsTabs: SettingsSubKey[] // 이 역할이 설정 안에서 볼 수 있는 하부 메뉴(01~05)
   affiliationVisible: boolean // 상세설정 '하부': 아이디 생성 소속 목록에 이 역할의 아이디가 나오는지
   signupRole?: boolean // 상세설정 '회원가입 시 역할': 새 아이디가 받는 역할(삭제 불가)
+  attendanceEdit?: boolean // 근태통계 옆 '수정가능'
   holderCount: number
   memberCount: number
 }

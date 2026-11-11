@@ -1,6 +1,6 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
-import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
+import { ATTENDANCE_EDIT_MENU_KEY, AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { HttpError, MIGRATION_HINT, isMissingSchema, loadAttendanceEditCodes, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
 import { isDeletedRow } from '@/lib/crm/server/deleted'
 import { pickDefaultRole } from '@/lib/crm/server/accounts'
@@ -34,6 +34,14 @@ export async function loadAffiliationHiddenCodes(db: CrmContext['db']) {
   return new Set((data || []).filter((r: any) => !r.can_view).map((r: any) => r.role_type as string))
 }
 
+export async function saveRoleAttendanceEdit(ctx: CrmContext, code: string, on: boolean) {
+  if (code === LOCKED_ROLE_CODE) throw new HttpError(400, '총 관리자는 항상 근태를 고칠 수 있습니다(변경 불가).')
+  const { error } = await ctx.db
+    .from(TABLES.roleMenuPermissions)
+    .upsert([{ role_type: code, menu_key: ATTENDANCE_EDIT_MENU_KEY, can_view: on, updated_at: new Date().toISOString() }], { onConflict: 'role_type,menu_key' })
+  if (error) throw error
+}
+
 export async function saveRoleAffiliationVisible(ctx: CrmContext, code: string, visible: boolean) {
   const { error } = await ctx.db
     .from(TABLES.roleMenuPermissions)
@@ -58,6 +66,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
   const subMap = await loadSettingsSubMap(db, allRoles.map((r) => r.code))
   const affHidden = await loadAffiliationHiddenCodes(db)
   const signupRole = await pickDefaultRole(db) // 지금 실제로 쓰이는 가입역할
+  const attEdit = await loadAttendanceEditCodes(db)
 
   const roles = allRoles.map((r) => ({
     id: r.id,
@@ -68,6 +77,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
     settingsTabs: subMap.get(r.code) || [],
     affiliationVisible: !affHidden.has(r.code),
+    attendanceEdit: r.code === LOCKED_ROLE_CODE || attEdit.has(r.code), // 근태통계 '수정가능'
     signupRole: signupRole?.id === r.id, // 회원가입·아이디 만들기에서 새 아이디가 받는 역할(삭제 불가)
     holderCount: userRows.filter((u) => !isDeletedRow(u) && (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)

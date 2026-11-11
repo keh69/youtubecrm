@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react'
 import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, Stamp, type Msg } from '../../_components/ui'
+import { TeamCalendar } from '@/components/team-calendar'
 
 export default function V3TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
@@ -188,8 +189,7 @@ export default function V3TeamAttendance() {
                                       <td className="nowrap">{fmtYmdShort(d)}</td>
                                       <td className="num">{fmtTime(r?.checkInAt)}</td>
                                       <td className="num nowrap">
-                                        {fmtTime(r?.checkOutAt)}
-                                        {r?.autoCheckout && <small className="j-muted"> (자동)</small>}
+                                        {r?.autoCheckout ? <span className="xs-mini-unresolved">미처리</span> : fmtTime(r?.checkOutAt)}
                                       </td>
                                       <td className="num nowrap">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                       <td>
@@ -235,6 +235,8 @@ export default function V3TeamAttendance() {
           </div>
         )}
       </section>
+      {/* 맨 아래 달력: 날짜별 출근(지각)·퇴근(야근/미처리)과 시간, '수정가능' 권한이면 오른쪽 클릭으로 수정·삭제 */}
+      {team.data && team.data.rows.length > 0 && <TeamCalendar data={team.data} team={team} />}
     </>
   )
 }

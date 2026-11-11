@@ -68,7 +68,7 @@ export function fmtNumber(n: number | null | undefined) {
 export function statusLabel(record: { status: string; checkInAt: string | null; checkOutAt: string | null } | null | undefined) {
   if (!record) return '미출근'
   if (record.status === 'absent') return '결근'
-  if (record.status === 'vacation') return '휴가'
+  if (record.status === 'vacation') return '휴무'
   if (record.status === 'early_leave') return '조퇴'
   if (!record.checkInAt) return '미출근'
   return record.checkOutAt ? '퇴근' : '출근'

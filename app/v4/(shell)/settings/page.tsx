@@ -9,7 +9,7 @@ import { BlockTitle, Empty, Loading, Msg, PageHead, Sticker, type MsgState } fro
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
+import { AttendanceEditToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
 import { isoToDotted } from '@/components/date-input'
 
 // 탭마다 켜졌을 때의 색 (01 사원목록 · 02 역할부여 · 03 역할설정 · 04 아이디생성 · 05 스킨)
@@ -419,6 +419,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         aria-label={`${r.name} - ${m.label}`}
                       />
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
+                      {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num strong">

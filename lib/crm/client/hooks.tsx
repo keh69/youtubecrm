@@ -303,7 +303,19 @@ export function useTeamAttendance() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { period, setPeriod, date, shift, goToday, canGoNext, data, loading, error, reload, markAbsent, cancelAbsence }
+  // 달력에서 하루 근태 고치기·지우기('수정가능' 권한)
+  const editDay = async (body: { userId: string; workDate: string; kind: 'normal' | 'absent' | 'vacation'; checkIn: string | null; checkOut: string | null; reason: string }): Promise<ActionResult> => {
+    const res = await api('/api/attendance/day', { method: 'PUT', body })
+    if (res.ok) await reload()
+    return res.ok ? { ok: true } : { ok: false, error: res.error }
+  }
+  const deleteDay = async (userId: string, workDate: string): Promise<ActionResult> => {
+    const res = await api(`/api/attendance/day?userId=${userId}&workDate=${workDate}`, { method: 'DELETE' })
+    if (res.ok) await reload()
+    return res.ok ? { ok: true } : { ok: false, error: res.error }
+  }
+
+  return { period, setPeriod, date, shift, goToday, canGoNext, data, loading, error, reload, markAbsent, cancelAbsence, editDay, deleteDay }
 }
 
 /* ───────────────────────── 영상등록 ───────────────────────── */
@@ -490,6 +502,13 @@ export function useSettings() {
     saveRoleSettingsTabs: async (id: string, settingsTabs: SettingsSubKey[]): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, settingsTabs } : r)) } : d))
       const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { settingsTabs } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
+    // 근태통계 '수정가능' 켜기/끄기
+    saveRoleAttendanceEdit: async (id: string, attendanceEdit: boolean): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, attendanceEdit } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { attendanceEdit } })
       if (!res.ok) await reload()
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },

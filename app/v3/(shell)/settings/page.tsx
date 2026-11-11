@@ -9,7 +9,7 @@ import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
+import { AttendanceEditToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
 import { isoToDotted } from '@/components/date-input'
 
 export default function V3Settings() {
@@ -400,6 +400,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         aria-label={`${r.name} - ${m.label}`}
                       />
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
+                      {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num">

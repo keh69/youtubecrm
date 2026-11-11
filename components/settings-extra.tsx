@@ -474,3 +474,23 @@ export function UnresolvedPanel() {
     </div>
   )
 }
+
+/* ───────── 역할설정 표: '근태통계' 스위치 옆 '수정가능' 체크칸 ───────── */
+// 켜진 역할은 근태통계 달력에서 날짜를 오른쪽 클릭해 근태를 고치거나 지울 수 있다. 근태통계가 켜진 역할에만 보인다.
+export function AttendanceEditToggle({ role, s, report }: { role: NonNullable<S['data']>['roles'][number]; s: S; report: Report }) {
+  if (!role.menus.includes('attendance_team')) return null
+  const on = Boolean(role.locked || role.attendanceEdit)
+  return (
+    <label className="xs-att-edit" title="켜면 근태통계 달력에서 날짜를 오른쪽 클릭해 근태를 고치거나 지울 수 있습니다">
+      <input
+        type="checkbox"
+        className="rsd-chk"
+        checked={on}
+        disabled={role.locked}
+        onChange={async () => report(await s.saveRoleAttendanceEdit(role.id, !on), `'${role.name}' 근태 수정 권한을 ${on ? '껐' : '켰'}습니다.`)}
+        aria-label={`${role.name} - 근태통계 수정가능`}
+      />
+      수정가능
+    </label>
+  )
+}

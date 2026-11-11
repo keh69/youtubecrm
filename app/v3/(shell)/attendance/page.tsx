@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow } from '@/lib/crm/client/hooks'
 import { fmtMinutes, fmtTimeSec, fmtYmdShort } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, Stamp, type Msg } from '../../_components/ui'
+import { AttendanceSummary } from '@/components/attendance-extra'
 
 export default function V3Attendance() {
   const allowed = useMenuGuard('attendance')
@@ -35,6 +36,7 @@ export default function V3Attendance() {
         <div className="j-clock">
           <span className="j-label">{att.data ? `${fmtYmdShort(att.data.today)} · ` : ''}현재 시각</span>
           <strong className="j-clock-time">{clock}</strong>
+          <AttendanceSummary record={att.today} />
           <Stamp record={t} />
         </div>
 
@@ -83,8 +85,7 @@ export default function V3Attendance() {
                     <em>출근</em> {fmtTimeSec(d.checkInAt)}
                   </span>
                   <span>
-                    <em>퇴근</em> {fmtTimeSec(d.checkOutAt)}
-                    {d.autoCheckout && <small> (자동)</small>}
+                    <em>퇴근</em> {d.autoCheckout ? <span className="xs-mini-unresolved">미처리</span> : d.checkOutAt ? fmtTimeSec(d.checkOutAt) : d.workDate === att.data?.today ? '' : '-'}
                   </span>
                   <span>
                     <em>근무</em> {d.checkInAt ? fmtMinutes(d.workedMinutes) : '-'}

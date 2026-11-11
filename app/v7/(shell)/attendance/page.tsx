@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow, useSession } from '@/lib/crm/client/hooks'
 import { fmtMinutes, fmtTimeSec, fmtYmdShort, statusLabel, statusTone } from '@/lib/crm/client/format'
 import { GridStatus, SqlQuery, sqlStr } from '../../_ui/sql'
+import { AttendanceSummary } from '@/components/attendance-extra'
 
 export default function V7Attendance() {
   const allowed = useMenuGuard('attendance')
@@ -47,6 +48,7 @@ export default function V7Attendance() {
         <div className="att-clock">
           <span className="muted small">{att.data ? `${att.data.today} · ${fmtYmdShort(att.data.today)}` : ''} 현재 시각</span>
           <strong>{clock}</strong>
+          <AttendanceSummary record={att.today} />
           <span className={`badge tone-${statusTone(t)}`}>{statusLabel(t)}</span>
         </div>
         <div className="att-times">
@@ -106,8 +108,7 @@ export default function V7Attendance() {
                       <td>{fmtYmdShort(d.workDate)}</td>
                       <td className="num">{fmtTimeSec(d.checkInAt)}</td>
                       <td className="num">
-                        {fmtTimeSec(d.checkOutAt)}
-                        {d.autoCheckout && <span className="muted small"> (자동)</span>}
+                        {d.autoCheckout ? <span className="xs-mini-unresolved">미처리</span> : d.checkOutAt ? fmtTimeSec(d.checkOutAt) : d.workDate === att.data?.today ? '' : '-'}
                       </td>
                       <td className="num">{d.checkInAt ? fmtMinutes(d.workedMinutes) : '-'}</td>
                       <td>

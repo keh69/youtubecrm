@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow } from '@/lib/crm/client/hooks'
 import { fmtMinutes, fmtTimeSec, fmtYmdShort, statusLabel, statusTone } from '@/lib/crm/client/format'
 import { GridFoot, Ico, Props, RowNoTh, Th } from '../../_ui'
+import { AttendanceSummary } from '@/components/attendance-extra'
 
 export default function V9Attendance() {
   const allowed = useMenuGuard('attendance')
@@ -38,6 +39,7 @@ export default function V9Attendance() {
             rows={[
               { k: '날짜', type: 'date', v: <span className="mono">{att.data ? fmtYmdShort(att.data.today) : '-'}</span> },
               { k: '현재 시각', type: 'time', v: <span className="mono clock">{clock}</span>, strong: true },
+              { k: '요약', type: 'text', v: <AttendanceSummary record={att.today} /> },
               { k: '상태', type: 'enum', v: <span className={`badge tone-${statusTone(t)}`}>{statusLabel(t)}</span> },
               { k: '출근 누른 시간', type: 'timestamp', v: <span className="mono">{fmtTimeSec(t?.checkInAt)}</span> },
               { k: '퇴근 누른 시간', type: 'timestamp', v: <span className="mono">{fmtTimeSec(t?.checkOutAt)}</span> },
@@ -90,8 +92,7 @@ export default function V9Attendance() {
                       <td className="mono">{fmtYmdShort(d.workDate)}</td>
                       <td className="num">{fmtTimeSec(d.checkInAt)}</td>
                       <td className="num">
-                        {fmtTimeSec(d.checkOutAt)}
-                        {d.autoCheckout && <span className="muted small"> (자동)</span>}
+                        {d.autoCheckout ? <span className="xs-mini-unresolved">미처리</span> : d.checkOutAt ? fmtTimeSec(d.checkOutAt) : d.workDate === att.data?.today ? '' : '-'}
                       </td>
                       <td className="num">{d.checkInAt ? fmtMinutes(d.workedMinutes) : '-'}</td>
                       <td>
