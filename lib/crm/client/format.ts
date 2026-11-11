@@ -90,11 +90,13 @@ export function statusTone(record: { status: string; checkInAt: string | null; c
   return record.checkOutAt ? 'ok' : 'working'
 }
 
-// 직원근태(관리자) 화면 전용 표시: 09:00 이후 출근 = 지각, 19:00 이후 퇴근 = 야근
-export function dayBadges(record: { late?: boolean; overtime?: boolean } | null | undefined): Array<{ key: 'late' | 'overtime'; label: string }> {
-  const out: Array<{ key: 'late' | 'overtime'; label: string }> = []
+// 직원근태(관리자) 화면 전용 표시: 09:00 이후 출근 = 지각, 19:00 이후 퇴근 = 야근,
+// 퇴근을 안 눌러 23:59 에 자동 퇴근된 날 = 퇴근(미처리) (야근으로 세지 않는다)
+export function dayBadges(record: { late?: boolean; overtime?: boolean; autoCheckout?: boolean } | null | undefined): Array<{ key: 'late' | 'overtime' | 'unresolved'; label: string }> {
+  const out: Array<{ key: 'late' | 'overtime' | 'unresolved'; label: string }> = []
   if (record?.late) out.push({ key: 'late', label: '지각' })
   if (record?.overtime) out.push({ key: 'overtime', label: '야근' })
+  if (record?.autoCheckout) out.push({ key: 'unresolved', label: '퇴근(미처리)' })
   return out
 }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { CrmSessionProvider, SETTINGS_TAB_EVENT, useNav, useSession, useUnresolvedCount } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -11,8 +11,11 @@ function Shell({ children }: { children: React.ReactNode }) {
   // 통계 드롭다운을 누르면 닫아 둘 메뉴(마우스가 그 메뉴 밖으로 나가면 풀린다)
   const [closedKey, setClosedKey] = useState<string | null>(null)
   const roles = me.roles.map((r) => r.name).join(', ') || '역할 없음'
+  // 설정 > 07 미처리 권한이 있으면 미처리가 남아 있는 동안 상단에 알림이 늘 떠 있다
+  const unresolved = useUnresolvedCount((me.settingsTabs || []).includes('unresolved'))
+  const pending = unresolved ? unresolved.checkIn + unresolved.checkOut : 0
   return (
-    <div className="g-app">
+    <div className={`g-app${pending ? ' has-alert' : ''}`}>
       <header className="g-top">
         <div className="g-navpill">
           <Link href={nav[0]?.href || '/v5'} className="g-brand" aria-label="여왕개미미디어 CRM 처음으로">
@@ -75,6 +78,20 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+      {pending > 0 && (
+        <div className="g-alert-pop" role="alert">
+          <span className="g-alert-dot" aria-hidden="true" />
+          <span>
+            <b>근태 미처리 {pending}건</b>
+            <small>
+              출근미처리 {unresolved!.checkIn}건 · 퇴근미처리 {unresolved!.checkOut}건
+            </small>
+          </span>
+          <Link href="/v5/settings?tab=unresolved" className="g-btn primary sm" onClick={() => window.dispatchEvent(new CustomEvent(SETTINGS_TAB_EVENT, { detail: 'unresolved' }))}>
+            처리하러 가기
+          </Link>
+        </div>
+      )}
       <main className="g-content">{children}</main>
     </div>
   )

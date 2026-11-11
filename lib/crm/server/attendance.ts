@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstYmd, isLateCheckIn, isOvertimeCheckOut } from '@/lib/attendance/time'
+import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstIsoAtTime, getKstYmd, isLateCheckIn, isOvertimeCheckOut } from '@/lib/attendance/time'
 import { HttpError, MIGRATION_HINT, isMissingSchema, type Admin, type CrmContext } from '@/lib/crm/server/context'
 
 export type DayRecord = {
@@ -177,4 +177,62 @@ export async function cancelAbsence(ctx: CrmContext, userId: string, workDate: s
     if (error) throw error
   }
   await audit(db, profile.id, 'cancel_absence', existing.id, { user_id: userId, work_date: workDate, reason: existing.absence_reason || null })
+}
+
+/* ───────── 미처리 처리(설정 > 07 미처리) ─────────
+   관리자가 그날의 출근·퇴근을 정해 준다. 시간은 KST "HH:MM".
+   - in: 출근(09:00 이전) / in_late: 출근(지각, 09:00 이후) / out: 퇴근(19:00 이전) / out_overtime: 퇴근(야근, 19:00 이후)
+   - off: 휴무(쉬는 날) / absent 는 setAbsence 를 쓴다
+   23:59 는 '자동 퇴근(미처리)' 표시와 구별할 수 없어서 쓰지 않는다. */
+export type ResolveAction = 'in' | 'in_late' | 'out' | 'out_overtime' | 'off'
+
+export async function resolveDay(ctx: CrmContext, userId: string, workDate: string, action: ResolveAction, time: string | null, note: string) {
+  const { db, profile } = ctx
+  const nowIso = new Date().toISOString()
+  const { data: existing } = await db.from(TABLES.attendanceDays).select('*').eq('user_id', userId).eq('work_date', workDate).maybeSingle()
+  const at = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number)
+    return getKstIsoAtTime(workDate, h, m, 0)
+  }
+  let patch: Record<string, unknown>
+  let eventType = 'correction'
+
+  if (action === 'off') {
+    patch = { attendance_status: 'vacation', absence_reason: note || '휴무', updated_at: nowIso }
+    eventType = 'vacation'
+  } else {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) throw new HttpError(400, '시간을 09:00 처럼 적어 주세요.')
+    const iso = at(time)
+    if (action === 'in' || action === 'in_late') {
+      const late = isLateCheckIn(iso, workDate)
+      if (action === 'in' && late) throw new HttpError(400, '09:00 이후는 출근(지각)으로 골라 주세요.')
+      if (action === 'in_late' && !late) throw new HttpError(400, '출근(지각)은 09:00 이후 시간이어야 합니다.')
+      const out = existing?.check_out_at || null
+      if (out && new Date(out) <= new Date(iso)) throw new HttpError(400, '출근 시간이 퇴근 시간보다 늦습니다.')
+      patch = {
+        attendance_status: late ? 'late' : 'present',
+        absence_reason: null,
+        check_in_at: iso,
+        worked_minutes: out ? Math.floor(getAttendanceWorkedSeconds(iso, out) / 60) : 0,
+        updated_at: nowIso
+      }
+      eventType = late ? 'late' : 'present'
+    } else {
+      if (!existing?.check_in_at) throw new HttpError(400, '출근 기록이 없습니다. 출근을 먼저 정해 주세요.')
+      if (time === '23:59') throw new HttpError(400, '23:59 는 자동 퇴근 시각이라 쓸 수 없습니다. 23:58 까지 적어 주세요.')
+      const overtime = isOvertimeCheckOut(iso, workDate)
+      if (action === 'out' && overtime) throw new HttpError(400, '19:00 이후는 퇴근(야근)으로 골라 주세요.')
+      if (action === 'out_overtime' && !overtime) throw new HttpError(400, '퇴근(야근)은 19:00 이후 시간이어야 합니다.')
+      if (new Date(iso) <= new Date(existing.check_in_at)) throw new HttpError(400, '퇴근 시간이 출근 시간보다 빠릅니다.')
+      patch = { check_out_at: iso, worked_minutes: Math.floor(getAttendanceWorkedSeconds(existing.check_in_at, iso) / 60), updated_at: nowIso }
+    }
+  }
+
+  const res = existing?.id
+    ? await db.from(TABLES.attendanceDays).update(patch).eq('id', existing.id).select('*').single()
+    : await db.from(TABLES.attendanceDays).insert({ user_id: userId, work_date: workDate, ...patch }).select('*').single()
+  if (res.error) throw res.error
+  await logEvent(db, res.data.id, eventType, 'admin', `미처리 처리: ${note || action}`)
+  await audit(db, profile.id, 'resolve_attendance', res.data.id, { user_id: userId, work_date: workDate, action, time })
+  return toRecord(res.data)
 }

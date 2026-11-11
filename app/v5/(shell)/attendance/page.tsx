@@ -130,7 +130,7 @@ export default function V5Attendance() {
                     </span>
                     <span>
                       <small>퇴근</small> {fmtTimeSec(d.checkOutAt)}
-                      {d.autoCheckout && <em className="g-muted g-small"> (자동)</em>}
+                      {d.autoCheckout && <em className="g-muted g-small"> 퇴근(미처리)</em>}
                     </span>
                   </div>
                   <div className="g-history-side">

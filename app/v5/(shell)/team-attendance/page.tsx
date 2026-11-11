@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
+import { TeamCalendar } from './team-calendar'
 
 export default function V5TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
@@ -192,8 +193,7 @@ export default function V5TeamAttendance() {
                                 <td className="nowrap">{fmtYmdShort(d)}</td>
                                 <td className="num">{fmtTime(r?.checkInAt)}</td>
                                 <td className="num">
-                                  {fmtTime(r?.checkOutAt)}
-                                  {r?.autoCheckout && <span className="g-muted g-small"> (자동)</span>}
+                                  {r?.autoCheckout ? <span className="g-muted g-small">미처리</span> : fmtTime(r?.checkOutAt)}
                                 </td>
                                 <td className="num">{r?.checkInAt ? fmtMinutes(r.workedMinutes) : '-'}</td>
                                 <td>
@@ -237,6 +237,9 @@ export default function V5TeamAttendance() {
           </ul>
         )}
       </section>
+
+      {/* 맨 아래 달력: 고른 직원의 날짜별 출근(지각)·퇴근(야근/미처리)과 시간 */}
+      {team.data && team.data.rows.length > 0 && <TeamCalendar data={team.data} />}
     </>
   )
 }

@@ -609,6 +609,63 @@ export function useEmployees() {
   return { items, loading, error, reload, loginAs, busyId, resetPassword, resetId, notice, editEmployee, deleteEmployee }
 }
 
+/* ───────────────────────── 07 미처리 (근태) ───────────────────────── */
+export type UnresolvedItem = { kind: 'in' | 'out'; userId: string; name: string; loginId: string; workDate: string; checkInAt: string | null }
+export type UnresolvedData = { checkIn: UnresolvedItem[]; checkOut: UnresolvedItem[]; from: string; to: string }
+export type ResolveAction = 'in' | 'in_late' | 'out' | 'out_overtime' | 'absent' | 'off'
+export const UNRESOLVED_EVENT = 'ycrm:unresolved-changed' // 처리하면 상단 알림도 바로 다시 센다
+export const SETTINGS_TAB_EVENT = 'ycrm:settings-tab' // 설정 화면에 떠 있을 때 특정 탭으로 바꾸기
+
+export function useUnresolved() {
+  const [data, setData] = useState<UnresolvedData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const reload = useCallback(async () => {
+    const res = await api<UnresolvedData>('/api/settings/unresolved')
+    if (res.ok) {
+      setData(res.data)
+      setError('')
+    } else setError(res.error)
+    setLoading(false)
+  }, [])
+  useEffect(() => {
+    void reload()
+  }, [reload])
+  const resolve = async (body: { userId: string; workDate: string; action: ResolveAction; time?: string | null; note?: string }): Promise<ActionResult> => {
+    const res = await api('/api/settings/unresolved', { method: 'POST', body })
+    if (!res.ok) return { ok: false, error: res.error }
+    await reload()
+    window.dispatchEvent(new Event(UNRESOLVED_EVENT))
+    return { ok: true }
+  }
+  return { data, loading, error, reload, resolve }
+}
+
+// 상단 알림용 미처리 건수: 권한이 있을 때만 묻고, 5분마다 + 화면을 다시 볼 때 + 처리했을 때 다시 센다
+export function useUnresolvedCount(enabled: boolean) {
+  const [count, setCount] = useState<{ checkIn: number; checkOut: number } | null>(null)
+  useEffect(() => {
+    if (!enabled) return
+    let alive = true
+    const load = async () => {
+      const res = await api<{ checkIn: number; checkOut: number }>('/api/settings/unresolved?summary=1')
+      if (alive && res.ok) setCount(res.data)
+    }
+    void load()
+    const timer = window.setInterval(load, 5 * 60 * 1000)
+    const onFocus = () => document.visibilityState === 'visible' && void load()
+    document.addEventListener('visibilitychange', onFocus)
+    window.addEventListener(UNRESOLVED_EVENT, load)
+    return () => {
+      alive = false
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener(UNRESOLVED_EVENT, load)
+    }
+  }, [enabled])
+  return enabled ? count : null
+}
+
 /* ───────────────────────── 06 덤프파일 (삭제된 사원의 기록) ───────────────────────── */
 export type DumpPerson = { id: string; name: string; loginId: string; deletedAt: string }
 export type DumpAttendance = { userId: string; name: string; workDate: string; checkInAt: string | null; checkOutAt: string | null; status: string; absenceReason: string | null; workedMinutes: number }
@@ -641,22 +698,23 @@ export function useDump() {
 }
 
 // 설정 화면 탭(모든 스킨 공통 순서·번호)
-export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin' | 'dump'
+export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin' | 'dump' | 'unresolved'
 export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label: string }> = [
   { key: 'employees', no: '01', label: '사원목록' },
   { key: 'assign', no: '02', label: '역할부여' },
   { key: 'roles', no: '03', label: '역할설정' },
   { key: 'create', no: '04', label: '아이디생성' },
   { key: 'skin', no: '05', label: '스킨' },
-  { key: 'dump', no: '06', label: '덤프파일' }
+  { key: 'dump', no: '06', label: '덤프파일' },
+  { key: 'unresolved', no: '07', label: '미처리' }
 ]
 
 // 이 사람이 볼 수 있는 설정 탭(01~06 모두 역할별 권한) + 처음 열 탭
-// 06 덤프파일은 화면이 있는 스킨(v5)만 opts.dump 로 켠다.
-export function useSettingsTabs(opts: { dump?: boolean } = {}) {
+// 06 덤프파일·07 미처리는 화면이 있는 스킨(v5)만 opts 로 켠다.
+export function useSettingsTabs(opts: { dump?: boolean; unresolved?: boolean } = {}) {
   const { me } = useSession()
   const allowed = new Set<string>(me.settingsTabs || [])
-  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump))
+  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump) && (t.key !== 'unresolved' || opts.unresolved))
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }
 

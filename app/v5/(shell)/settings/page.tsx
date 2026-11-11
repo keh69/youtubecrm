@@ -1,22 +1,31 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
 import { DumpTab } from './dump-tab'
+import { UnresolvedTab } from './unresolved-tab'
 import { DateInput, dottedToIso, isoToDotted } from '@/components/date-input'
-import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
+import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TAB_EVENT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 
 export default function V5Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs({ dump: true }) // 역할별로 허용된 설정 하부 메뉴만(01~06)
+  const st = useSettingsTabs({ dump: true, unresolved: true }) // 역할별로 허용된 설정 하부 메뉴만(01~07)
   const [tabState, setTab] = useState<SettingsTab | null>(null)
+  // 상단 미처리 알림에서 들어오면(?tab=unresolved 또는 이미 설정 화면이면 알림 이벤트) 그 탭을 연다
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('tab')
+    if (q) setTab(q as SettingsTab)
+    const open = (e: Event) => setTab((e as CustomEvent<SettingsTab>).detail)
+    window.addEventListener(SETTINGS_TAB_EVENT, open)
+    return () => window.removeEventListener(SETTINGS_TAB_EVENT, open)
+  }, [])
   const tab: SettingsTab | null = st.tabs.length === 0 ? null : tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
@@ -73,6 +82,7 @@ export default function V5Settings() {
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
       {tab === 'dump' && <DumpTab />}
+      {tab === 'unresolved' && <UnresolvedTab />}
       {tab === 'skin' && (
         <section className="g-glass">
           <SkinPicker />

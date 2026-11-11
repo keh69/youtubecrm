@@ -54,7 +54,8 @@ export const SETTINGS_SUBS = [
   { key: 'roles', menuKey: 'settings_roles', no: '03', label: '역할설정', parent: null, defaultOn: true },
   { key: 'create', menuKey: 'settings_create', no: '04', label: '아이디생성', parent: null, defaultOn: true },
   { key: 'skin', menuKey: 'settings_skin', no: '05', label: '스킨', parent: null, defaultOn: true },
-  { key: 'dump', menuKey: 'settings_dump', no: '06', label: '덤프파일', parent: null, defaultOn: false }
+  { key: 'dump', menuKey: 'settings_dump', no: '06', label: '덤프파일', parent: null, defaultOn: false },
+  { key: 'unresolved', menuKey: 'settings_unresolved', no: '07', label: '미처리', parent: null, defaultOn: false }
 ] as const
 export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
 export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
