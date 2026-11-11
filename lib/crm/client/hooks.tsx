@@ -327,8 +327,9 @@ export function useTeamAttendance() {
 
 /* ───────────────────────── 영상등록 ───────────────────────── */
 
-export function useVideoRegister() {
+export function useVideoRegister(opts: { requireType?: boolean } = {}) {
   const [stockName, setStockName] = useState('')
+  const [contentType, setContentType] = useState<'' | 'longform' | 'shortform'>('') // 롱폼/숏폼(필수인 화면에서는 꼭 골라야 추가된다)
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -357,11 +358,17 @@ export function useVideoRegister() {
       setError('유튜브 영상 주소를 입력해 주세요.')
       return { ok: false, error: '유튜브 영상 주소를 입력해 주세요.' }
     }
+    if (opts.requireType && !contentType) {
+      const msg = '롱폼 또는 숏폼을 골라 주세요.'
+      setError(msg)
+      window.alert(msg)
+      return { ok: false, error: msg }
+    }
     setBusy(true)
     setError('')
     const res = await api<{ video: Video; updated: boolean }>('/api/videos/create', {
       method: 'POST',
-      body: { stockName: stockName.trim(), youtubeUrl: url.trim() }
+      body: { stockName: stockName.trim(), youtubeUrl: url.trim(), ...(contentType ? { contentType } : {}) }
     })
     setBusy(false)
     if (!res.ok) {
@@ -371,6 +378,7 @@ export function useVideoRegister() {
     setLastAdded(res.data)
     setStockName('')
     setUrl('')
+    setContentType('')
     await reloadRecent()
     return { ok: true }
   }
@@ -390,7 +398,7 @@ export function useVideoRegister() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { stockName, setStockName, url, setUrl, busy, error, submit, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
+  return { stockName, setStockName, contentType, setContentType, url, setUrl, busy, error, submit, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
 }
 
 /* ───────────────────────── 통계 ───────────────────────── */

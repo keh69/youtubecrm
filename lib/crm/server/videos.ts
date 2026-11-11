@@ -44,7 +44,8 @@ export function toVideoDto(row: any, ownerName?: string): VideoDto {
   }
 }
 
-export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockName: string) {
+// contentType: 등록할 때 고른 롱폼/숏폼. 없으면(예전 화면) 길이로 정한다.
+export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockName: string, contentType?: 'longform' | 'shortform') {
   const { db, profile } = ctx
   const videoId = extractYoutubeVideoId(youtubeUrl)
   if (!videoId) throw new HttpError(400, '유튜브 영상 주소가 올바르지 않습니다. (예: https://youtu.be/영상ID)')
@@ -86,7 +87,7 @@ export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockNa
         channel_id: channelId,
         primary_owner_user_id: profile.id,
         youtube_url: youtubeUrl.trim(),
-        content_type: deriveContentType(meta.durationSeconds, 'longform'),
+        content_type: contentType || deriveContentType(meta.durationSeconds, 'longform'),
         stock_name: stockName,
         publish_state: 'published',
         title: meta.title || null,

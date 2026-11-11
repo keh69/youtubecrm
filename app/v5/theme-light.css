@@ -3263,3 +3263,10 @@ html:has(.v5) {
   gap: 8px;
   margin-top: 4px;
 }
+
+/* 영상등록: 롱폼/숏폼 고르기(필수). 안 고르고 추가하면 빨간 테두리로 알려 준다 */
+.v5 .g-type-pick.warn {
+  outline: 2px solid #e5484d;
+  outline-offset: 2px;
+  border-radius: 999px;
+}

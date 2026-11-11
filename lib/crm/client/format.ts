@@ -105,9 +105,12 @@ export function dayBadges(record: { late?: boolean; overtime?: boolean; autoChec
 }
 
 // 영상 형식: 10분(600초) 이상 롱폼, 미만 숏폼. 길이를 모르면 서버가 정한 값.
+// 영상 형식: 등록할 때 고른 롱폼/숏폼(contentType)을 따른다. 값이 없으면 길이로 판단(10분 이상 롱폼).
 export function videoFormatLabel(video: { durationSeconds: number | null; contentType?: string }) {
+  if (video.contentType === 'shortform') return '숏폼'
+  if (video.contentType === 'longform') return '롱폼'
   if (typeof video.durationSeconds === 'number') return video.durationSeconds >= 600 ? '롱폼' : '숏폼'
-  return video.contentType === 'shortform' ? '숏폼' : '롱폼'
+  return '롱폼'
 }
 
 export function todayKst() {

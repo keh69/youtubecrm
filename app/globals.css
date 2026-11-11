@@ -1122,3 +1122,143 @@ html {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ───────── 영상통계 영상 표 필터(components/video-filters.tsx, 모든 스킨) ───────── */
+.vf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+  margin: 4px 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  font-size: 13px;
+}
+.vf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.vf-grow {
+  flex: 1 1 200px;
+}
+.vf-label {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+.vf-input {
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 32px;
+  min-width: 0;
+}
+.vf-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vf-range .vf-input {
+  width: 84px;
+}
+.vf-range .vf-input[type='date'] {
+  width: 138px;
+}
+.vf-multi {
+  position: relative;
+}
+.vf-multi > summary {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+.vf-multi > summary::-webkit-details-marker {
+  display: none;
+}
+.vf-multi > summary > span:last-child {
+  display: inline-block;
+  min-width: 110px;
+  max-width: 200px;
+  padding: 6px 26px 6px 8px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: color-mix(in srgb, currentColor 5%, transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 9px center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vf-multi .vf-on {
+  border-color: #2563eb !important;
+  color: #2563eb;
+  font-weight: 700;
+}
+.vf-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2328;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+:root[data-theme='dark'] .vf-pop {
+  background: #26262b;
+  color: #f2f2f2;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.vf-list {
+  max-height: 240px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.vf-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.vf-opt:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+.vf-none {
+  opacity: 0.6;
+  padding: 6px 4px;
+}
+.vf-mini {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.vf-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-bottom: 6px;
+  white-space: nowrap;
+}

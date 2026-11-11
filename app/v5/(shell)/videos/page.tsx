@@ -8,7 +8,7 @@ import { Empty, Loading, PageHead } from '../../_components/ui'
 export default function V5Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
-  const reg = useVideoRegister()
+  const reg = useVideoRegister({ requireType: true }) // 롱폼/숏폼을 꼭 골라야 추가된다
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
@@ -48,6 +48,21 @@ export default function V5Videos() {
             <span>종목명</span>
             <input className="g-input" value={reg.stockName} onChange={(e) => reg.setStockName(e.target.value)} placeholder="예) 삼성전자" maxLength={60} />
           </label>
+          <div className="g-field">
+            <span>형식 *</span>
+            <div className={`g-seg g-type-pick${reg.error.includes('롱폼') ? ' warn' : ''}`} role="radiogroup" aria-label="롱폼 또는 숏폼">
+              {(
+                [
+                  ['longform', '롱폼'],
+                  ['shortform', '숏폼']
+                ] as const
+              ).map(([k, label]) => (
+                <button key={k} type="button" role="radio" aria-checked={reg.contentType === k} className={reg.contentType === k ? 'on' : ''} onClick={() => reg.setContentType(k)}>
+                  {reg.contentType === k ? '☑' : '☐'} {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="g-field grow">
             <span>유튜브 영상 주소</span>
             <input className="g-input" value={reg.url} onChange={(e) => reg.setUrl(e.target.value)} placeholder="https://youtu.be/..." inputMode="url" />

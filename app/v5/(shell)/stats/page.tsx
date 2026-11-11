@@ -3,14 +3,16 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
 
   if (!allowed) return null
-  const videos = st.videos
+  const videos = vf.filtered
   const daily = st.data?.daily || []
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
   const labelStep = Math.max(1, Math.ceil(daily.length / 15))
@@ -154,10 +156,13 @@ export default function V5Stats() {
           <h2 className="g-h2">영상 ({fmtNumber(videos.length)})</h2>
           <span className="g-muted g-small">{STAT_SORTS.find((o) => o.key === st.sort)?.label}</span>
         </div>
+        {st.videos.length > 0 && <VideoFilterBar ctl={vf} total={st.videos.length} />}
         {st.loading && !st.data ? (
           <Loading />
-        ) : videos.length === 0 ? (
+        ) : st.videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
+        ) : videos.length === 0 ? (
+          <Empty>필터에 맞는 영상이 없습니다.</Empty>
         ) : (
           <div className="g-table-wrap">
             <table className="g-table g-vtable">
