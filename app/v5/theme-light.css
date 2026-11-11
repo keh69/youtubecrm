@@ -2697,3 +2697,97 @@ html:has(.v5) {
 :root:not([data-theme='light']) .v5 .g-account > .g-account-toggle {
   align-self: end;
 }
+
+/* ───────── 상단 메뉴바 4차 수정 (2026-11-11): 3차보다 10% 크게 + 메뉴 버튼 사이 간격 넓힘 ─────────
+   넓은 화면(761px 이상)에만 적용. 휴대폰 크기는 그대로. */
+@media (min-width: 761px) {
+  html:root[data-theme='light'] .v5 .g-navpill,
+  html:root:not([data-theme='light']) .v5 .g-navpill {
+    gap: 12px;
+    padding: 8px 8px 8px 13px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand,
+  html:root:not([data-theme='light']) .v5 .g-brand {
+    font-size: 15.5px;
+    gap: 8px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand img,
+  html:root:not([data-theme='light']) .v5 .g-brand img {
+    width: 26px;
+    height: 26px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu,
+  html:root:not([data-theme='light']) .v5 .g-menu {
+    gap: 10px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu a,
+  html:root:not([data-theme='light']) .v5 .g-menu a {
+    padding: 7px 14px;
+    font-size: 14.3px;
+  }
+  html:root[data-theme='light'] .v5 .g-avatar,
+  html:root:not([data-theme='light']) .v5 .g-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 15.5px;
+  }
+  html:root[data-theme='light'] .v5 .g-user,
+  html:root:not([data-theme='light']) .v5 .g-user {
+    gap: 9px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text,
+  html:root:not([data-theme='light']) .v5 .g-user-text {
+    max-width: 132px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text strong,
+  html:root:not([data-theme='light']) .v5 .g-user-text strong {
+    font-size: 13.8px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text small,
+  html:root:not([data-theme='light']) .v5 .g-user-text small {
+    font-size: 11px;
+  }
+  html:root[data-theme='light'] .v5 .g-theme,
+  html:root:not([data-theme='light']) .v5 .g-theme {
+    height: 30px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+  html:root[data-theme='light'] .v5 .g-navpill .g-btn,
+  html:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu a,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu a {
+    gap: 10px;
+    min-width: 176px;
+    padding: 10px 13px !important;
+    border-radius: 13px !important;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu b,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu b {
+    font-size: 13.8px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu small,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu small {
+    font-size: 11.5px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-ico,
+  html:root:not([data-theme='light']) .v5 .g-dd-ico {
+    font-size: 16.5px;
+  }
+}
+
+/* 통계 드롭다운: 누르면(페이지 이동) 바로 닫힌다. 마우스가 메뉴 밖으로 나가면 다시 열릴 수 있는 상태로 돌아간다.
+   마우스로 여는 넓은 화면에서만(휴대폰은 작은 버튼으로 늘 보임). */
+@media (min-width: 761px) and (hover: hover) {
+  html:root[data-theme='light'] .v5 .g-dd.closed .g-dd-menu,
+  html:root:not([data-theme='light']) .v5 .g-dd.closed .g-dd-menu {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -4px) scale(0.94);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s 0.12s;
+  }
+}

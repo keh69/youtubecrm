@@ -1,12 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, logout } = useSession()
   const nav = useNav()
+  // 통계 드롭다운을 누르면 닫아 둘 메뉴(마우스가 그 메뉴 밖으로 나가면 풀린다)
+  const [closedKey, setClosedKey] = useState<string | null>(null)
   const roles = me.roles.map((r) => r.name).join(', ') || '역할 없음'
   return (
     <div className="g-app">
@@ -29,7 +32,18 @@ function Shell({ children }: { children: React.ReactNode }) {
               if (!item.sub) return link
               // 근태체크·영상등록: 마우스를 올리면(또는 키보드로 들어가면) 아래로 '통계' 드롭다운이 펼쳐진다
               return (
-                <span key={item.key} className={`g-dd${item.active ? ' in' : ''}`}>
+                <span
+                  key={item.key}
+                  className={`g-dd${item.active ? ' in' : ''}${closedKey === item.key ? ' closed' : ''}`}
+                  onMouseLeave={() => setClosedKey((k) => (k === item.key ? null : k))}
+                  onClick={(e) => {
+                    // 근태체크·영상등록이나 통계를 누르면 드롭다운을 닫는다(포커스도 풀어서 다시 열리지 않게)
+                    if ((e.target as HTMLElement).closest('a')) {
+                      setClosedKey(item.key)
+                      ;(document.activeElement as HTMLElement | null)?.blur()
+                    }
+                  }}
+                >
                   {link}
                   <span className="g-dd-menu" role="menu" aria-label={`${item.label} 하위 메뉴`}>
                     <Link href={item.sub.href} role="menuitem" className={item.sub.active ? 'on' : ''} aria-current={item.sub.active ? 'page' : undefined}>
