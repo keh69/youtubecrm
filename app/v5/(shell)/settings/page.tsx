@@ -5,6 +5,7 @@ import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
+import { AffiliationSelect } from '@/components/affiliation-select'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
@@ -92,7 +93,7 @@ function EmployeesTab() {
       {emp.loading ? (
         <Loading />
       ) : emp.items.length === 0 ? (
-        <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 내 역할로 정해 주세요.</Empty>
+        <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 나(내 아이디)로 정해 주세요.</Empty>
       ) : (
         <div className="g-table-wrap">
           <table className="g-table">
@@ -147,52 +148,6 @@ function EmployeesTab() {
 type S = ReturnType<typeof useSettings>
 type Report = (res: { ok: boolean; error?: string }, okText: string) => boolean
 
-/* ── 소속 선택칸: 역할별로 그 역할이 적용된 아이디만 보여 준다(적용된 아이디가 없는 역할은 안 보임) ──
-   고른 아이디(사람) 밑으로 소속된다. 자기 자신은 고를 수 없다. */
-function AffiliationSelect({
-  s,
-  value,
-  legacyRoleId,
-  excludeId,
-  onChange,
-  className,
-  listedOnly = false
-}: {
-  s: S
-  value: string | null
-  legacyRoleId?: string | null
-  excludeId?: string
-  onChange: (userId: string | null) => void
-  className: string
-  listedOnly?: boolean // 아이디 생성: 상세설정 '하부'가 켜진 역할의 아이디만
-}) {
-  const { roles, users } = s.data!
-  const groups = roles
-    .filter((r) => !listedOnly || r.affiliationVisible !== false)
-    .map((r) => ({ role: r, people: users.filter((u) => u.active && u.id !== excludeId && u.roleIds.includes(r.id)) }))
-    .filter((g) => g.people.length > 0)
-  const legacy = !value && legacyRoleId ? roles.find((r) => r.id === legacyRoleId) : undefined
-  return (
-    <select className={className} value={value || (legacy ? 'legacy' : '')} onChange={(e) => e.target.value !== 'legacy' && onChange(e.target.value || null)}>
-      <option value="">소속 없음</option>
-      {legacy && (
-        <option value="legacy" disabled>
-          (예전 방식) 역할 &lsquo;{legacy.name}&rsquo; — 사람을 다시 골라 주세요
-        </option>
-      )}
-      {groups.map((g) => (
-        <optgroup key={g.role.id} label={g.role.name}>
-          {g.people.map((u) => (
-            <option key={`${g.role.id}-${u.id}`} value={u.id}>
-              {u.name} ({u.loginId})
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
-  )
-}
-
 /* ── 역할부여: 아이디별 역할 추가/제거 + 소속 + 계정 정보 ── */
 function AssignTab({ s, report }: { s: S; report: Report }) {
   const { me } = useSession()
@@ -226,7 +181,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
                 <label className="g-account-aff">
                   <small className="g-label">소속</small>
                   <AffiliationSelect
-                    s={s}
+                    data={s.data!}
                     className="g-input sm"
                     value={u.affiliationUserId}
                     legacyRoleId={u.affiliationRoleId}
@@ -507,7 +462,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
           </label>
           <label className="g-field">
             <span>소속</span>
-            <AffiliationSelect s={s} listedOnly className="g-input" value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
+            <AffiliationSelect data={s.data!} listedOnly className="g-input" value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
           </label>
         </div>
         <div className="g-editor-actions">

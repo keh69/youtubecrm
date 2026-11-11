@@ -8,6 +8,7 @@ import { SkinPicker } from '@/components/skin-picker'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
+import { AffiliationSelect } from '@/components/affiliation-select'
 
 export default function V3Settings() {
   const allowed = useMenuGuard('settings')
@@ -90,7 +91,7 @@ function EmployeesTab() {
       {emp.loading ? (
         <Loading />
       ) : emp.items.length === 0 ? (
-        <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 내 역할로 정해 주세요.</Empty>
+        <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 나(내 아이디)로 정해 주세요.</Empty>
       ) : (
         <div className="j-table-wrap">
           <table className="j-table">
@@ -154,7 +155,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
   return (
     <section className="j-section">
       <p className="j-aside">
-        <strong>소속</strong>에 역할(예: A팀장)을 정하면, 그 역할을 가진 사람이 로그인했을 때 이 직원의 영상·통계·근태를 볼 수 있습니다. 위로 계속 이어집니다(팀원 → 팀장 → 관리자).
+        <strong>소속</strong>에서 사람(아이디)을 고르면 그 사람 밑으로 들어가, 그 사람이 로그인했을 때 이 직원의 영상·통계·근태를 볼 수 있습니다. 위로 계속 이어집니다(팀원 → 팀장 → 관리자). 소속 목록에는 역할별로 그 역할이 적용된 아이디만 나옵니다.
       </p>
       <div className="j-table-wrap">
         <table className="j-table">
@@ -180,19 +181,14 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
                     <RoleChips user={u} roles={roles} onChange={async (ids) => report(await s.setUserRoles(u.id, ids), `${u.name}님의 역할을 저장했습니다.`)} />
                   </td>
                   <td>
-                    <select
+                    <AffiliationSelect
+                      data={s.data!}
                       className="j-select-sm"
-                      value={u.affiliationRoleId || ''}
-                      aria-label={`${u.name} 소속`}
-                      onChange={async (e) => report(await s.updateAccount(u.id, { affiliationRoleId: e.target.value || null }), `${u.name}님의 소속을 저장했습니다.`)}
-                    >
-                      <option value="">소속 없음</option>
-                      {roles.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
+                      value={u.affiliationUserId}
+                      legacyRoleId={u.affiliationRoleId}
+                      excludeId={u.id}
+                      onChange={async (id) => report(await s.updateAccount(u.id, { affiliationUserId: id }), `${u.name}님의 소속을 저장했습니다.`)}
+                    />
                   </td>
                   <td className="right nowrap">
                     <button type="button" className="j-textbtn" aria-expanded={editId === u.id} onClick={() => setEditId(editId === u.id ? null : u.id)}>
@@ -219,18 +215,22 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
 function RoleChips({ user, roles, onChange }: { user: SettingsUser; roles: SettingsRole[]; onChange: (ids: string[]) => void }) {
   const owned = roles.filter((r) => user.roleIds.includes(r.id))
   const rest = roles.filter((r) => !user.roleIds.includes(r.id))
+  // 역할은 아이디마다 1개만(역할이 없을 때만 추가 보임). 총 관리자는 추가·× 버튼을 숨긴다.
+  const isSuper = owned.some((r) => r.locked)
   return (
     <div className="j-chips">
       {owned.length === 0 && <span className="j-muted small">역할 없음</span>}
       {owned.map((r) => (
         <span key={r.id} className="j-chip">
           {r.name}
-          <button type="button" aria-label={`${r.name} 역할 제거`} onClick={() => onChange(user.roleIds.filter((id) => id !== r.id))}>
-            ×
-          </button>
+          {!isSuper && (
+            <button type="button" aria-label={`${r.name} 역할 제거`} onClick={() => onChange(user.roleIds.filter((id) => id !== r.id))}>
+              ×
+            </button>
+          )}
         </span>
       ))}
-      {rest.length > 0 && (
+      {owned.length === 0 && rest.length > 0 && (
         <select className="j-chip-add" value="" onChange={(e) => e.target.value && onChange([...user.roleIds, e.target.value])} aria-label="역할 추가">
           <option value="">+ 역할 추가</option>
           {rest.map((r) => (
@@ -389,7 +389,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         onChange={() => toggle(r, m.key)}
                         aria-label={`${r.name} - ${m.label}`}
                       />
-                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} />}
+                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                     </td>
                   ))}
                   <td className="num">
@@ -469,14 +469,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
         </label>
         <label className="j-field">
           <span>소속</span>
-          <select value={form.affiliationRoleId || ''} onChange={(e) => setForm((f) => ({ ...f, affiliationRoleId: e.target.value || null }))}>
-            <option value="">소속 없음</option>
-            {s.data!.roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          <AffiliationSelect data={s.data!} listedOnly value={form.affiliationUserId || null} onChange={(id) => setForm((f) => ({ ...f, affiliationUserId: id, affiliationRoleId: null }))} />
         </label>
         <div className="j-actions span">
           <button className="j-btn ink" disabled={busy}>
