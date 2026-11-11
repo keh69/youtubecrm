@@ -28,7 +28,7 @@ export type CrmContext = {
   menus: MenuKey[]
   isAdmin: boolean
   isSuperAdmin: boolean // 총관리자(super_admin): 모든 직원 데이터를 본다
-  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~04)
+  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~05)
 }
 
 // 화면에 보여줄 수 있는 에러. 이 클래스로 던지면 status 와 메시지가 그대로 응답된다.
@@ -183,7 +183,7 @@ export function requireMenu(ctx: CrmContext, key: MenuKey) {
   if (!ctx.menus.includes(key)) throw new HttpError(403, '이 메뉴를 사용할 권한이 없습니다.')
 }
 
-// 역할 code → 설정 안에서 보이는 하부 메뉴(01~04). 저장된 행이 없으면 보임, can_view=false 면 숨김.
+// 역할 code → 설정 안에서 보이는 하부 메뉴(01~05). 저장된 행이 없으면 보임, can_view=false 면 숨김.
 export async function loadSettingsSubMap(db: Admin, roleCodes: string[]) {
   const map = new Map<string, SettingsSubKey[]>()
   if (roleCodes.length === 0) return map

@@ -6,7 +6,7 @@ import type { SettingsRole } from '@/lib/crm/client/types'
 import type { ActionResult } from '@/lib/crm/client/hooks'
 
 // 역할설정 표: '설정'이 켜진 역할의 스위치 오른쪽 [상세] 버튼.
-// 누르면 설정 안의 01 사원목록 ~ 04 아이디생성을 이 역할에게 보일지 정하는 작은 창이 열린다(모든 스킨 공통).
+// 누르면 설정 안의 01 사원목록 ~ 05 스킨을 이 역할에게 보일지 정하는 작은 창이 열린다(모든 스킨 공통).
 export function RoleSettingsDetail({
   role,
   onSave
@@ -44,7 +44,7 @@ export function RoleSettingsDetail({
 
   return (
     <span className="rsd" ref={box}>
-      <button type="button" className={`rsd-btn${open ? ' on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={`${role.name}: 설정 안의 하부 메뉴(01~04) 보이기 설정`}>
+      <button type="button" className={`rsd-btn${open ? ' on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={`${role.name}: 설정 안의 하부 메뉴(01~05) 보이기 설정`}>
         상세
       </button>
       {open && (
@@ -58,7 +58,7 @@ export function RoleSettingsDetail({
               <input type="checkbox" checked={role.locked || tabs.includes(s.key)} disabled={role.locked} onChange={() => toggle(s.key)} aria-label={`${role.name} - 설정 ${s.no} ${s.label}`} />
             </label>
           ))}
-          <span className="rsd-note">{role.locked ? '총 관리자는 항상 전부 보입니다.' : '끄면 이 역할의 설정 화면에서 그 메뉴가 사라집니다. 05 스킨은 항상 보입니다.'}</span>
+          <span className="rsd-note">{role.locked ? '총 관리자는 항상 전부 보입니다.' : '끄면 이 역할의 설정 화면에서 그 메뉴가 사라집니다.'}</span>
           {error && <span className="rsd-error">{error}</span>}
         </span>
       )}

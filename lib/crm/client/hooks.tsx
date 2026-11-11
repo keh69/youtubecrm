@@ -486,7 +486,7 @@ export function useSettings() {
     createRole: (name: string) => run('/api/settings/roles', 'POST', { name }),
     renameRole: (id: string, name: string) => run(`/api/settings/roles/${id}`, 'PATCH', { name }),
     // 스위치가 바로 움직이도록 화면부터 바꾸고(낙관적 갱신) 서버에 저장한다. 실패하면 다시 불러와 되돌린다.
-    // 설정 하부 메뉴(01~04) 보이기/안 보이기 저장 (스위치가 바로 움직이게 화면부터 바꾼다)
+    // 설정 하부 메뉴(01~05) 보이기/안 보이기 저장 (스위치가 바로 움직이게 화면부터 바꾼다)
     saveRoleSettingsTabs: async (id: string, settingsTabs: SettingsSubKey[]): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, settingsTabs } : r)) } : d))
       const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { settingsTabs } })
@@ -591,10 +591,10 @@ export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label:
   { key: 'skin', no: '05', label: '스킨' }
 ]
 
-// 이 사람이 볼 수 있는 설정 탭(01~04 는 역할별 권한, 05 스킨은 항상) + 처음 열 탭
+// 이 사람이 볼 수 있는 설정 탭(01~05 모두 역할별 권한) + 처음 열 탭
 export function useSettingsTabs() {
   const { me } = useSession()
-  const allowed = new Set<string>([...(me.settingsTabs || []), 'skin'])
+  const allowed = new Set<string>(me.settingsTabs || [])
   const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key))
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }

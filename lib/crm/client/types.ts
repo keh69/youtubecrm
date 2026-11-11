@@ -10,7 +10,7 @@ export type Me = {
   isAdmin: boolean
   isSuperAdmin: boolean // 최고관리자(총 관리자): 하단 버전·스킨 전환 막대가 보인다
   skin: SkinKey // 이 사람이 고른 스킨(로그인하면 이 스킨 주소로 들어간다)
-  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~04)
+  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~05)
 }
 
 export type DayRecord = {
@@ -95,7 +95,7 @@ export type SettingsRole = {
   system: boolean
   locked: boolean
   menus: MenuKey[]
-  settingsTabs: SettingsSubKey[] // 이 역할이 설정 안에서 볼 수 있는 하부 메뉴(01~04)
+  settingsTabs: SettingsSubKey[] // 이 역할이 설정 안에서 볼 수 있는 하부 메뉴(01~05)
   holderCount: number
   memberCount: number
 }

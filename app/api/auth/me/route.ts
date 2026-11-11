@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       menus: ctx.menus,
       isAdmin: ctx.isAdmin,
       isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE),
-      settingsTabs: ctx.settingsTabs, // 설정 안에서 보이는 하부 메뉴(01~04)
+      settingsTabs: ctx.settingsTabs, // 설정 안에서 보이는 하부 메뉴(01~05)
       // 디자인 고르는 기능을 없애서 저장된 값과 상관없이 모두 기본 디자인(v5)으로 연다.
       skin: DEFAULT_SKIN
     })

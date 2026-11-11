@@ -12,9 +12,9 @@ import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 export default function V5Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
+  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(01~05)
   const [tabState, setTab] = useState<SettingsTab | null>(null)
-  const tab: SettingsTab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
+  const tab: SettingsTab | null = st.tabs.length === 0 ? null : tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
 
@@ -56,6 +56,7 @@ export default function V5Settings() {
         </div>
       </div>
 
+      {st.tabs.length === 0 && <Note msg={{ tone: 'error', text: '설정 안에서 볼 수 있는 메뉴가 없습니다. 관리자에게 역할설정 > 설정 > 상세에서 켜 달라고 요청해 주세요.' }} />}
       <Note msg={msg} />
       {s.error && <Note msg={{ tone: 'error', text: s.error }} />}
       {s.loading && !s.data && <Loading />}
