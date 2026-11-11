@@ -2872,3 +2872,32 @@ html:has(.v5) {
     font-size: 18px;
   }
 }
+
+/* ───────── 회원가입 화면 (2026-11-11) ───────── */
+:root[data-theme='light'] .v5 .g-signup-card,
+:root:not([data-theme='light']) .v5 .g-signup-card {
+  max-width: 620px;
+}
+.v5 .g-signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.v5 .g-signup-card .g-small a,
+.v5 .g-login-card .g-small a {
+  color: #7c5cff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+:root:not([data-theme='light']) .v5 .g-login-card .g-small a {
+  color: #b9a6ff;
+}
+/* 봇 막기용 숨은 칸 */
+.v5 .g-hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+}

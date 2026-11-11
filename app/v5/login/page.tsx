@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLogin } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 
@@ -30,7 +31,9 @@ export default function V5Login() {
         <button className="g-btn primary block lg" disabled={busy}>
           {busy ? '로그인 중…' : '로그인'}
         </button>
-        <p className="g-muted g-small g-center">계정은 관리자가 만들어 드립니다.</p>
+        <p className="g-muted g-small g-center">
+          아이디가 없나요? <Link href="/v5/signup">회원가입</Link>
+        </p>
       </form>
     </main>
   )

@@ -116,7 +116,7 @@ export async function assertSuperAdminRemains(ctx: CrmContext, change: { userId:
   if (remaining.length === 0) throw new HttpError(400, '총 관리자 역할을 가진 계정이 최소 1명은 있어야 합니다.')
 }
 
-export async function assertAffiliationColumn(ctx: CrmContext) {
+export async function assertAffiliationColumn(ctx: Pick<CrmContext, 'db'>) {
   const { error } = await ctx.db.from(TABLES.crmUsers).select('affiliation_role_id').limit(1)
   if (error && isMissingSchema(error)) throw new HttpError(409, MIGRATION_HINT)
 }
