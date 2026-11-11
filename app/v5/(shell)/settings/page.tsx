@@ -145,6 +145,9 @@ function EmployeesTab() {
   )
 }
 
+// 상세설정 표의 칸 이름: '직원근태'는 '근태통계'로 보여 준다(v5)
+const colLabel = (m: { key: string; label: string }) => (m.key === 'attendance_team' ? '근태통계' : m.label)
+
 type S = ReturnType<typeof useSettings>
 type Report = (res: { ok: boolean; error?: string }, okText: string) => boolean
 
@@ -325,7 +328,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
       </section>
 
       <section className="g-glass">
-        <h2 className="g-h2">역할별로 볼 수 있는 메뉴</h2>
+        <h2 className="g-h2">상세설정</h2>
         <p className="g-muted g-small">체크한 메뉴만 보입니다. 여러 역할을 가진 사람은 모든 역할의 메뉴를 합쳐서 봅니다. 왼쪽 ⠿ 부분을 마우스로 끌어 놓으면 역할 순서가 바뀌고 바로 저장됩니다.</p>
         <div className="g-table-wrap">
           <table className="g-table g-matrix">
@@ -335,7 +338,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                 <th>역할</th>
                 {MENUS.map((m) => (
                   <th key={m.key} className="center" title={m.description}>
-                    {m.label}
+                    {colLabel(m)}
                   </th>
                 ))}
                 <th className="num">보유 / 소속</th>
@@ -379,8 +382,8 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                   </td>
                   {MENUS.map((m) => (
                     <td key={m.key} className="center">
-                      <label className="g-switch" title={`${r.name} - ${m.label}`}>
-                        <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${m.label}`} />
+                      <label className="g-switch" title={`${r.name} - ${colLabel(m)}`}>
+                        <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${colLabel(m)}`} />
                         <span aria-hidden="true" />
                       </label>
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
