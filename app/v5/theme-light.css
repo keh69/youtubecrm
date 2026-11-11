@@ -3270,3 +3270,18 @@ html:has(.v5) {
   outline-offset: 2px;
   border-radius: 999px;
 }
+
+/* ───────── 역할설정 탭: 상세설정 표가 가로 스크롤 없이 다 보이게 (2026-11-11) ─────────
+   상세설정 표(g-matrix)가 있는 화면은 내용 폭을 화면 가득(최대 1600px)까지 넓히고, 표도 그 폭을 꽉 채운다.
+   같은 화면의 설정 탭 줄·역할 추가 칸도 같은 폭으로 맞춰진다(모두 같은 내용 폭 안에 있으므로). */
+html:root .v5 .g-content:has(.g-matrix) {
+  max-width: min(1600px, calc(100vw - 32px));
+}
+html:root .v5 .g-matrix {
+  width: 100%;
+}
+html:root .v5 .g-matrix th,
+html:root .v5 .g-matrix td {
+  padding-left: 10px;
+  padding-right: 10px;
+}

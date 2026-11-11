@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { SETTINGS_SUBS, type SettingsSubKey } from '@/lib/crm/menus'
 import type { SettingsRole } from '@/lib/crm/client/types'
 import type { ActionResult } from '@/lib/crm/client/hooks'
@@ -21,19 +22,48 @@ export function RoleSettingsDetail({
   const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
   const box = useRef<HTMLSpanElement>(null)
+  const btn = useRef<HTMLButtonElement>(null)
+  const pop = useRef<HTMLSpanElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  // 창은 표 밖(body)에 띄운다. 표 칸 안에 두면 표의 스크롤 영역에 잘려서 일부만 보였다.
+  // [상세설정] 버튼 바로 아래(오른쪽 끝 맞춤)에 두고, 화면 밖으로 나가면 안쪽으로 당긴다.
+  const place = () => {
+    const b = btn.current?.getBoundingClientRect()
+    if (!b) return
+    const w = pop.current?.offsetWidth || 300
+    const h = pop.current?.offsetHeight || 320
+    let left = b.right - w
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8))
+    let top = b.bottom + 8
+    if (top + h > window.innerHeight - 8) top = Math.max(8, b.top - h - 8) // 아래 공간이 모자라면 버튼 위로
+    setPos({ top, left })
+  }
+  useLayoutEffect(() => {
+    if (open) place()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, role.settingsTabs, role.affiliationVisible])
 
   useEffect(() => {
     if (!open) return
     const close = (e: MouseEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (box.current?.contains(t) || pop.current?.contains(t)) return
+      setOpen(false)
     }
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const follow = () => place()
     document.addEventListener('mousedown', close)
     document.addEventListener('keydown', esc)
+    window.addEventListener('resize', follow)
+    window.addEventListener('scroll', follow, true)
     return () => {
       document.removeEventListener('mousedown', close)
       document.removeEventListener('keydown', esc)
+      window.removeEventListener('resize', follow)
+      window.removeEventListener('scroll', follow, true)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const settingsOn = role.menus.includes('settings')
@@ -57,11 +87,12 @@ export function RoleSettingsDetail({
 
   return (
     <span className="rsd" ref={box}>
-      <button type="button" className={`rsd-btn${open ? ' on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={`${role.name}: 상세설정`}>
+      <button ref={btn} type="button" className={`rsd-btn${open ? ' on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={`${role.name}: 상세설정`}>
         상세설정
       </button>
-      {open && (
-        <span className="rsd-pop" role="dialog" aria-label={`${role.name} 상세설정`}>
+      {open &&
+        createPortal(
+        <span ref={pop} className="rsd-pop rsd-floating" role="dialog" aria-label={`${role.name} 상세설정`} style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}>
           <span className="rsd-title">{role.name} · 상세설정</span>
           {settingsOn &&
             SETTINGS_SUBS.filter((s) => !s.parent).map((s) => {
@@ -109,8 +140,9 @@ export function RoleSettingsDetail({
             </>
           )}
           {error && <span className="rsd-error">{error}</span>}
-        </span>
-      )}
+        </span>,
+          document.body
+        )}
     </span>
   )
 }

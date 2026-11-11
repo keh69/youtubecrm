@@ -509,18 +509,18 @@ export function AttendanceEditToggle({ role, s, report }: { role: NonNullable<S[
 }
 
 /* ───────── 역할설정 표: '영상통계' 스위치 옆 '관리자' 체크칸 ───────── */
-// 켜진 역할은 영상통계에서 전 직원의 영상을 보고, 꺼져 있으면 내가 올린 영상만 본다.
+// 켜진 역할은 영상통계에서 모든 계정의 영상을 보고, 꺼져 있으면 나와 내 소속 하부의 영상만 본다.
 export function StatsAllToggle({ role, s, report }: { role: NonNullable<S['data']>['roles'][number]; s: S; report: Report }) {
   if (!role.menus.includes('stats')) return null
   const on = Boolean(role.locked || role.statsAll)
   return (
-    <label className="xs-att-edit" title="켜면 영상통계에서 전 직원의 영상을 봅니다. 끄면 내가 올린 영상만 봅니다.">
+    <label className="xs-att-edit" title="켜면 영상통계에서 모든 계정의 영상을 봅니다. 끄면 나와 내 소속 하부의 영상만 봅니다.">
       <input
         type="checkbox"
         className="rsd-chk"
         checked={on}
         disabled={role.locked}
-        onChange={async () => report(await s.saveRoleStatsAll(role.id, !on), `'${role.name}' 영상통계를 ${on ? '내 영상만' : '전 직원'} 보도록 바꿨습니다.`)}
+        onChange={async () => report(await s.saveRoleStatsAll(role.id, !on), `'${role.name}' 영상통계를 ${on ? '본인과 하부 직원' : '모든 계정'} 영상이 보이도록 바꿨습니다.`)}
         aria-label={`${role.name} - 영상통계 관리자`}
       />
       관리자

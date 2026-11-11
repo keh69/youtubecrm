@@ -1262,3 +1262,17 @@ html {
   padding-bottom: 6px;
   white-space: nowrap;
 }
+
+/* 상세설정 창을 표 밖(body)에 띄울 때: 화면 기준 위치, 맨 위에 */
+.rsd-pop.rsd-floating {
+  position: fixed;
+  right: auto;
+  z-index: 300;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+}
+:root[data-theme='dark'] .rsd-pop.rsd-floating {
+  background: #26262b;
+  color: #f2f2f2;
+  border-color: rgba(255, 255, 255, 0.12);
+}
