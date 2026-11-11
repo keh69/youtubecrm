@@ -2,18 +2,22 @@
 
 const KST = 'Asia/Seoul'
 
+// 날짜가 비었거나 잘못되면 화면 전체가 멈추지 않게 '-' 로 보여 준다
+const validDate = (d: Date) => !Number.isNaN(d.getTime())
+
 export function fmtTime(iso: string | null | undefined) {
-  if (!iso) return '-'
+  if (!iso || !validDate(new Date(iso))) return '-'
   return new Intl.DateTimeFormat('ko-KR', { timeZone: KST, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
 }
 
 export function fmtTimeSec(iso: string | null | undefined) {
-  if (!iso) return '-'
+  if (!iso || !validDate(new Date(iso))) return '-'
   return new Intl.DateTimeFormat('ko-KR', { timeZone: KST, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date(iso))
 }
 
 // 2026-11-11 → 11.11 (수)
 export function fmtYmdShort(ymd: string) {
+  if (!ymd || !/^d{4}-d{2}-d{2}/.test(ymd)) return '-'
   const [y, m, d] = ymd.split('-').map(Number)
   const wd = new Intl.DateTimeFormat('ko-KR', { timeZone: KST, weekday: 'short' }).format(new Date(Date.UTC(y, m - 1, d, 12)))
   return `${m}.${d} (${wd})`
@@ -21,7 +25,7 @@ export function fmtYmdShort(ymd: string) {
 
 // ISO → 2026.11.11
 export function fmtDate(iso: string | null | undefined) {
-  if (!iso) return '-'
+  if (!iso || !validDate(new Date(iso))) return '-'
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: KST, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso))
   return parts.replace(/-/g, '.')
 }

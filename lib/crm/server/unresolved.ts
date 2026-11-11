@@ -23,8 +23,10 @@ export type UnresolvedItem = {
 
 export async function loadUnresolved(ctx: CrmContext) {
   const { db } = ctx
+  const today = getKstYmd(new Date())
+  const from = addDaysToYmd(today, -(LOOKBACK_DAYS - 1))
   const people = (await loadVisibleUsers(ctx)).filter((u) => u.active)
-  if (!people.length) return { checkIn: [] as UnresolvedItem[], checkOut: [] as UnresolvedItem[], from: '', to: '' }
+  if (!people.length) return { checkIn: [] as UnresolvedItem[], checkOut: [] as UnresolvedItem[], from, to: today }
 
   const { rolesByUser } = await loadRolesForUsers(
     db,
@@ -32,7 +34,7 @@ export async function loadUnresolved(ctx: CrmContext) {
   )
   const staff = people.filter((p) => !(rolesByUser.get(p.id) || []).some((r) => r.code === LOCKED_ROLE_CODE))
   const ids = staff.map((p) => p.id)
-  if (!ids.length) return { checkIn: [], checkOut: [], from: '', to: '' }
+  if (!ids.length) return { checkIn: [] as UnresolvedItem[], checkOut: [] as UnresolvedItem[], from, to: today }
 
   // 언제부터 근태를 봐야 하는지: 입사일자(있으면)와 아이디를 만든 날 중 늦은 날
   const startOf = new Map<string, string>()
@@ -41,8 +43,6 @@ export async function loadUnresolved(ctx: CrmContext) {
   const hire = await db.from(TABLES.crmUsers).select('id, hire_date').in('id', ids)
   if (!hire.error) for (const u of (hire.data || []) as any[]) if (u.hire_date && u.hire_date > (startOf.get(u.id) || '')) startOf.set(u.id, u.hire_date)
 
-  const today = getKstYmd(new Date())
-  const from = addDaysToYmd(today, -(LOOKBACK_DAYS - 1))
   await closeOpenDays(db, ids)
   const records = await loadDays(db, ids, from, today)
   const byKey = new Map(records.map((r) => [`${r.userId}|${r.workDate}`, r]))
