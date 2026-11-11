@@ -2791,3 +2791,84 @@ html:has(.v5) {
     transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s 0.12s;
   }
 }
+
+/* ───────── 상단 메뉴바 5차 수정 (2026-11-11): 4차보다 10% 더 크게 ─────────
+   넓은 화면(761px 이상)에만 적용. 휴대폰 크기는 그대로. */
+@media (min-width: 761px) {
+  html:root[data-theme='light'] .v5 .g-navpill,
+  html:root:not([data-theme='light']) .v5 .g-navpill {
+    gap: 13px;
+    padding: 9px 9px 9px 14px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand,
+  html:root:not([data-theme='light']) .v5 .g-brand {
+    font-size: 17px;
+    gap: 9px;
+  }
+  html:root[data-theme='light'] .v5 .g-brand img,
+  html:root:not([data-theme='light']) .v5 .g-brand img {
+    width: 29px;
+    height: 29px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu,
+  html:root:not([data-theme='light']) .v5 .g-menu {
+    gap: 11px;
+  }
+  html:root[data-theme='light'] .v5 .g-menu a,
+  html:root:not([data-theme='light']) .v5 .g-menu a {
+    padding: 8px 15px;
+    font-size: 15.7px;
+  }
+  html:root[data-theme='light'] .v5 .g-avatar,
+  html:root:not([data-theme='light']) .v5 .g-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+  html:root[data-theme='light'] .v5 .g-user,
+  html:root:not([data-theme='light']) .v5 .g-user {
+    gap: 10px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text,
+  html:root:not([data-theme='light']) .v5 .g-user-text {
+    max-width: 145px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text strong,
+  html:root:not([data-theme='light']) .v5 .g-user-text strong {
+    font-size: 15.2px;
+  }
+  html:root[data-theme='light'] .v5 .g-user-text small,
+  html:root:not([data-theme='light']) .v5 .g-user-text small {
+    font-size: 12px;
+  }
+  html:root[data-theme='light'] .v5 .g-theme,
+  html:root:not([data-theme='light']) .v5 .g-theme {
+    height: 33px;
+    padding: 0 12px;
+    font-size: 13.2px;
+  }
+  html:root[data-theme='light'] .v5 .g-navpill .g-btn,
+  html:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+    font-size: 13.2px;
+    padding: 8px 13px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu a,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu a {
+    gap: 11px;
+    min-width: 194px;
+    padding: 11px 14px !important;
+    border-radius: 14px !important;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu b,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu b {
+    font-size: 15.2px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-menu small,
+  html:root:not([data-theme='light']) .v5 .g-dd-menu small {
+    font-size: 12.6px;
+  }
+  html:root[data-theme='light'] .v5 .g-dd-ico,
+  html:root:not([data-theme='light']) .v5 .g-dd-ico {
+    font-size: 18px;
+  }
+}
