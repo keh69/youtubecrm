@@ -114,20 +114,18 @@ export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideo
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   return (
     <div className="vf-bar" role="group" aria-label="영상 필터">
+      {/* 표 열 순서대로: 올린 날짜 · 영상 · 재생시간 · 형식 · 담당자 · 종목 · 조회수 */}
+      <div className="vf-field">
+        <span className="vf-label">올린 날짜</span>
+        <span className="vf-range">
+          <input className="vf-input" type="date" value={f.dateFrom} onChange={(e) => set({ dateFrom: e.target.value })} aria-label="올린 날짜 시작" />~
+          <input className="vf-input" type="date" value={f.dateTo} onChange={(e) => set({ dateTo: e.target.value })} aria-label="올린 날짜 끝" />
+        </span>
+      </div>
       <label className="vf-field vf-grow">
         <span className="vf-label">영상(제목)</span>
         <input className="vf-input" value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder="제목에 들어간 글자" />
       </label>
-      <MultiPick label="담당자" all={options.owners} value={f.owners} onChange={(owners) => set({ owners })} />
-      <MultiPick label="형식" all={options.formats} value={f.formats} onChange={(formats) => set({ formats })} />
-      <MultiPick label="종목" all={options.stocks} value={f.stocks} onChange={(stocks) => set({ stocks })} />
-      <div className="vf-field">
-        <span className="vf-label">조회수</span>
-        <span className="vf-range">
-          <input className="vf-input" inputMode="numeric" value={f.viewsMin} onChange={(e) => set({ viewsMin: e.target.value.replace(/\D/g, '') })} placeholder="최소" aria-label="조회수 최소" />~
-          <input className="vf-input" inputMode="numeric" value={f.viewsMax} onChange={(e) => set({ viewsMax: e.target.value.replace(/\D/g, '') })} placeholder="최대" aria-label="조회수 최대" />
-        </span>
-      </div>
       <div className="vf-field">
         <span className="vf-label">재생시간(분)</span>
         <span className="vf-range">
@@ -135,11 +133,14 @@ export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideo
           <input className="vf-input" inputMode="decimal" value={f.durMax} onChange={(e) => set({ durMax: e.target.value.replace(/[^\d.]/g, '') })} placeholder="최대" aria-label="재생시간 최대(분)" />
         </span>
       </div>
+      <MultiPick label="형식" all={options.formats} value={f.formats} onChange={(formats) => set({ formats })} />
+      <MultiPick label="담당자" all={options.owners} value={f.owners} onChange={(owners) => set({ owners })} />
+      <MultiPick label="종목" all={options.stocks} value={f.stocks} onChange={(stocks) => set({ stocks })} />
       <div className="vf-field">
-        <span className="vf-label">올린 날짜</span>
+        <span className="vf-label">조회수</span>
         <span className="vf-range">
-          <input className="vf-input" type="date" value={f.dateFrom} onChange={(e) => set({ dateFrom: e.target.value })} aria-label="올린 날짜 시작" />~
-          <input className="vf-input" type="date" value={f.dateTo} onChange={(e) => set({ dateTo: e.target.value })} aria-label="올린 날짜 끝" />
+          <input className="vf-input" inputMode="numeric" value={f.viewsMin} onChange={(e) => set({ viewsMin: e.target.value.replace(/\D/g, '') })} placeholder="최소" aria-label="조회수 최소" />~
+          <input className="vf-input" inputMode="numeric" value={f.viewsMax} onChange={(e) => set({ viewsMax: e.target.value.replace(/\D/g, '') })} placeholder="최대" aria-label="조회수 최대" />
         </span>
       </div>
       <div className="vf-status">

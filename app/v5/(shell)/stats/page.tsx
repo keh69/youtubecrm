@@ -167,14 +167,14 @@ export default function V5Stats() {
           <div className="g-table-wrap">
             <table className="g-table g-vtable">
               <thead>
+                {/* 열 순서: 올린 날짜 · 영상 · 재생시간(형식 표시 포함) · 담당자 · 종목 · 조회수 */}
                 <tr>
+                  <th>올린 날짜</th>
                   <th>영상</th>
+                  <th className="num">재생시간</th>
                   <th>담당자</th>
-                  <th>형식</th>
                   <th>종목</th>
                   <th className="num">조회수</th>
-                  <th className="num">재생시간</th>
-                  <th>올린 날짜</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,6 +182,7 @@ export default function V5Stats() {
                   const fmt = videoFormatLabel(v)
                   return (
                     <tr key={v.id}>
+                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                       <td>
                         <div className="g-vcell">
                           <a href={v.url} target="_blank" rel="noreferrer" className="g-thumb" aria-label={`${v.title} 유튜브에서 보기`}>
@@ -192,6 +193,12 @@ export default function V5Stats() {
                           </a>
                         </div>
                       </td>
+                      <td className="num nowrap">
+                        <span className="g-dur-cell">
+                          {fmtDuration(v.durationSeconds)}
+                          <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
+                        </span>
+                      </td>
                       <td className="nowrap">
                         <span className="g-who">
                           <span className="g-avatar xs">{(v.ownerName || '-').slice(0, 1)}</span>
@@ -199,14 +206,9 @@ export default function V5Stats() {
                         </span>
                       </td>
                       <td>
-                        <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
-                      </td>
-                      <td>
                         <span className="g-chip accent">{v.stockName}</span>
                       </td>
                       <td className="num">{fmtNumber(v.viewCount)}</td>
-                      <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                     </tr>
                   )
                 })}

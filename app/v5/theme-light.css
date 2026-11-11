@@ -3290,3 +3290,10 @@ html:root .v5 .g-matrix td {
 .v5 .g-register .g-row-form > .g-register-btn {
   margin-left: auto;
 }
+
+/* 영상통계 표: 재생시간 칸에 형식(롱폼/숏폼)도 함께 */
+.v5 .g-dur-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
