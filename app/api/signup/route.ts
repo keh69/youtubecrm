@@ -31,7 +31,12 @@ export async function GET() {
 }
 
 // 가입: 봇 막기용 숨은 칸(website)은 사람이 채울 수 없으니 값이 있으면 거절한다.
-const signupSchema = newAccountSchema.extend({ website: z.string().optional() })
+// 회원가입은 입사일자·이메일·전화번호가 필수(설정 > 아이디 만들기는 선택 그대로).
+const signupSchema = newAccountSchema
+  .extend({ website: z.string().optional() })
+  .refine((b) => Boolean(b.hireDate), { message: '입사일자를 입력해 주세요.', path: ['hireDate'] })
+  .refine((b) => Boolean(b.email), { message: '이메일을 입력해 주세요.', path: ['email'] })
+  .refine((b) => Boolean(b.phone && b.phone.replace(/[^0-9]/g, '').length >= 9), { message: '전화번호를 입력해 주세요.', path: ['phone'] })
 
 export async function POST(request: Request) {
   try {

@@ -34,7 +34,7 @@ export function DateInput({
   className,
   autoFocus,
   ariaLabel = '날짜',
-  placeholder = '1987.05.27'
+  placeholder = '2026.11.11'
 }: {
   value: string
   onChange: (dotted: string) => void
@@ -44,17 +44,15 @@ export function DateInput({
   placeholder?: string
 }) {
   const text = useRef<HTMLInputElement>(null)
-  const picker = useRef<HTMLInputElement>(null)
 
-  const openCalendar = () => {
-    const p = picker.current
-    if (!p) return
-    p.value = dottedToIso(value) || ''
+  // 📅 자리에는 진짜 날짜 칸(type=date)을 투명하게 겹쳐 둔다. 누르는 순간 브라우저가 직접 달력을 연다.
+  // (숨긴 칸에 showPicker 만 부르던 예전 방식은 일부 브라우저에서 달력이 뜨지 않았다)
+  const openPicker = (e: React.MouseEvent<HTMLInputElement>) => {
+    const p = e.currentTarget
     try {
       p.showPicker()
     } catch {
-      p.focus()
-      p.click()
+      /* 이미 열렸거나 지원하지 않는 브라우저: 브라우저 기본 동작에 맡긴다 */
     }
   }
 
@@ -71,29 +69,31 @@ export function DateInput({
         autoFocus={autoFocus}
         aria-label={ariaLabel}
       />
-      <button type="button" className="date-input-btn" onClick={openCalendar} aria-label={`${ariaLabel} 달력 열기`} title="달력에서 고르기">
-        📅
-      </button>
-      <input
-        ref={picker}
-        type="date"
-        className="date-input-picker"
-        tabIndex={-1}
-        aria-hidden="true"
-        min="1950-01-01"
-        onChange={(e) => {
-          if (!e.target.value) return
-          onChange(isoToDotted(e.target.value))
-          // 고른 뒤 바로 칸에 커서를 둔다(이어서 고칠 수 있게)
-          window.setTimeout(() => {
-            const el = text.current
-            if (el) {
-              el.focus()
-              el.setSelectionRange(el.value.length, el.value.length)
-            }
-          }, 0)
-        }}
-      />
+      <span className="date-input-cal" title="달력에서 고르기">
+        <span className="date-input-ico" aria-hidden="true">
+          📅
+        </span>
+        <input
+          type="date"
+          className="date-input-picker"
+          aria-label={`${ariaLabel} 달력에서 고르기`}
+          min="1950-01-01"
+          value={dottedToIso(value) || ''}
+          onClick={openPicker}
+          onChange={(e) => {
+            if (!e.target.value) return
+            onChange(isoToDotted(e.target.value))
+            // 고른 뒤 바로 칸에 커서를 둔다(이어서 고칠 수 있게)
+            window.setTimeout(() => {
+              const el = text.current
+              if (el) {
+                el.focus()
+                el.setSelectionRange(el.value.length, el.value.length)
+              }
+            }, 0)
+          }}
+        />
+      </span>
     </span>
   )
 }

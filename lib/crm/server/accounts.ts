@@ -11,13 +11,13 @@ import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/delet
 
 type Db = CrmContext['db']
 
-// 입사일자: 화면에서는 1987.05.27 로 보이고, 서버에는 1987-05-27 로 온다. 비우면 저장하지 않는다.
+// 입사일자: 화면에서는 2026.11.11 로 보이고, 서버에는 2026-11-11 로 온다. 비우면 저장하지 않는다.
 export const hireDateSchema = z
   .union([
     z.literal(''),
     z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/,'입사일자는 1987.05.27 처럼 적어 주세요.')
+      .regex(/^\d{4}-\d{2}-\d{2}$/,'입사일자는 2026.11.11 처럼 적어 주세요.')
       .refine((v) => {
         const d = new Date(`${v}T00:00:00Z`)
         return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v && v >= '1950-01-01' && v <= `${new Date().getUTCFullYear() + 1}-12-31`

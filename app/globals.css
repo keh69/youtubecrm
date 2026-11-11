@@ -540,31 +540,46 @@ a {
   padding-right: 42px !important;
   font-variant-numeric: tabular-nums;
 }
-.date-input-btn {
+.date-input-cal {
   position: absolute;
   top: 50%;
   right: 6px;
   transform: translateY(-50%);
-  width: 32px;
-  height: 30px;
-  border: 0;
+  width: 34px;
+  height: 32px;
   border-radius: 8px;
-  background: transparent;
-  font-size: 17px;
-  line-height: 1;
-  cursor: pointer;
 }
-.date-input-btn:hover {
+.date-input-cal:hover {
   background: rgba(124, 92, 255, 0.12);
 }
+.date-input-ico {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  pointer-events: none;
+}
+/* 진짜 날짜 칸을 📅 위에 투명하게 덮는다(누르면 브라우저 달력이 뜬다) */
 .date-input-picker {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-  border: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  color-scheme: light dark;
+}
+.date-input-picker::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
 }

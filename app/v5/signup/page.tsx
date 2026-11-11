@@ -28,13 +28,13 @@ export default function V5Signup() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!form.loginId.trim() || !form.password || !form.name.trim()) {
-      setError('아이디, 비밀번호, 이름은 꼭 입력해 주세요.')
+    if (!form.loginId.trim() || !form.password || !form.name.trim() || !form.hireDate.trim() || !form.email.trim() || !form.phone.trim()) {
+      setError('* 표시된 칸(아이디, 비밀번호, 이름, 입사일자, 이메일, 전화번호)은 모두 입력해 주세요.')
       return
     }
     const hireDate = dottedToIso(form.hireDate)
-    if (hireDate === null) {
-      setError('입사일자는 1987.05.27 처럼 적어 주세요.')
+    if (!hireDate) {
+      setError('입사일자는 2026.11.11 처럼 적어 주세요.')
       return
     }
     setBusy(true)
@@ -77,7 +77,7 @@ export default function V5Signup() {
           </>
         ) : (
           <form onSubmit={submit} className="g-signup-form">
-            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본 역할(역할설정 표 맨 아래 역할, 예: 사원)을 받습니다.</p>
+            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;사원&rsquo; 역할을 받습니다.</p>
             <div className="g-grid-form">
               <label className="g-field">
                 <span>아이디 (ID) *</span>
@@ -92,15 +92,15 @@ export default function V5Signup() {
                 <input className="g-input" value={form.name} onChange={(e) => set('name', e.target.value)} autoComplete="name" />
               </label>
               <label className="g-field">
-                <span>입사일자</span>
-                <DateInput className="g-input" value={form.hireDate} onChange={(v) => set('hireDate', v)} ariaLabel="입사일자" />
+                <span>입사일자 *</span>
+                <DateInput className="g-input" value={form.hireDate} onChange={(v) => set('hireDate', v)} ariaLabel="입사일자" placeholder="2026.11.11" />
               </label>
               <label className="g-field">
-                <span>이메일 (선택)</span>
+                <span>이메일 *</span>
                 <input className="g-input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />
               </label>
               <label className="g-field">
-                <span>전화번호</span>
+                <span>전화번호 *</span>
                 <input className="g-input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" />
               </label>
               <label className="g-field">
