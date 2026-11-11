@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession, type NavItem } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 // 메뉴 → 스키마 트리의 "테이블 이름" (장식용)
 const TABLE: Record<NavItem['key'], string> = {
@@ -97,6 +98,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="main">
+        <ThemeToggle className="desk-theme" />
         <header className="mobile-top">
           <button className="btn ghost small" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             ☰ 메뉴
@@ -104,6 +106,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <strong>
             <span className="t-kw">crm</span>&gt; 여왕개미미디어 CRM
           </strong>
+          <ThemeToggle className="mobile-theme" />
         </header>
         {open && <div className="side-dim" onClick={() => setOpen(false)} />}
         <main className="content">{children}</main>

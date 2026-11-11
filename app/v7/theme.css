@@ -1,7 +1,7 @@
 /* ==========================================================================
    v7 · SQL 콘솔 — 쿼리 편집기 + 결과 그리드 느낌 (v6 사이드바 구조 기반)
    - 모든 규칙은 .v7 아래로만 둔다.
-   - 남색 편집기 면, 고정폭 글꼴, 구문 강조 색(키워드·문자열·숫자·함수).
+   - 검정·짙은 회색 편집기 면, 고정폭 글꼴, 구문 강조 색(키워드·문자열·숫자·함수).
    목차
      0. 변수
      1. 바탕·글자·유틸·구문 강조
@@ -25,26 +25,26 @@
 /* ── 0. 변수 ─────────────────────────────────────────────────────────────── */
 .v7 {
   /* 편집기 면 */
-  --canvas: #0b111f;
-  --surface: #0f1626;
-  --surface-2: #16213a;
-  --surface-3: #1c2948;
-  --hover: #18233d;
+  --canvas: #0b0b0d;
+  --surface: #0e0e10;
+  --surface-2: #17171a;
+  --surface-3: #1f1f23;
+  --hover: #1c1c20;
 
   /* 선·글자 */
-  --line: #1d2842;
-  --line-strong: #2a3a5e;
-  --grid: #1a2540;
-  --text: #d6deeb;
-  --muted: #8a99b8;
-  --faint: #56658a;
+  --line: #26262b;
+  --line-strong: #36363c;
+  --grid: #1f1f23;
+  --text: #e8e8ec;
+  --muted: #a1a1aa;
+  --faint: #6b6b74;
 
   /* 사이드바 */
-  --side-bg: #0a0f1c;
-  --side-text: #b6c2da;
-  --side-muted: #5b6a8c;
-  --side-line: #17213a;
-  --side-hover: #121b31;
+  --side-bg: #09090b;
+  --side-text: #c4c4cc;
+  --side-muted: #75757f;
+  --side-line: #1c1c20;
+  --side-hover: #151518;
   --side-active-bg: rgba(130, 170, 255, 0.1);
 
   /* 구문 강조 */
@@ -54,7 +54,7 @@
   --fn: #82aaff;
   --param: #ffcb6b;
   --op: #89ddff;
-  --cm: #64759a;
+  --cm: #7a7a84;
 
   --accent: #82aaff;
   --accent-weak: rgba(130, 170, 255, 0.12);
@@ -62,7 +62,7 @@
   /* 실행 버튼 */
   --primary: #c3e88d;
   --primary-hover: #d5f2a8;
-  --primary-ink: #0b111f;
+  --primary-ink: #0e0e10;
 
   /* 상태색 */
   --ok: #4ade80;
@@ -1106,7 +1106,7 @@
   position: absolute;
   right: 4px;
   bottom: 4px;
-  background: rgba(11, 17, 31, 0.88);
+  background: rgba(0, 0, 0, 0.85);
   color: var(--num);
   font-size: 10px;
   font-weight: 600;
@@ -1374,7 +1374,7 @@
   .v7 .side-dim {
     position: fixed;
     inset: 0;
-    background: rgba(5, 8, 16, 0.6);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 30;
   }
   .v7 .mobile-top {
@@ -1553,5 +1553,79 @@
 @media (max-width: 860px) {
   .v7 .row-form > .field:has(> .readonly-box) {
     flex: 1 1 100%;
+  }
+}
+
+/* ── 테마 전환 버튼 (블랙 ↔ 화이트) ─────────────────────────────────────── */
+.v7 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  flex-shrink: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.v7 .theme-toggle::before {
+  content: 'SET theme =';
+  color: var(--kw);
+  font-size: 10.5px;
+}
+.v7 .theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--fn);
+  background: var(--accent-weak);
+}
+.v7 .theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.v7 .theme-toggle-icon {
+  color: var(--param);
+  font-size: 12px;
+  line-height: 1;
+}
+.v7 .theme-toggle-label {
+  color: var(--str);
+}
+.v7 .main {
+  position: relative;
+}
+.v7 .desk-theme {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 5;
+}
+.v7 .mobile-top .theme-toggle {
+  margin-left: auto;
+}
+.v7 .mobile-top .theme-toggle::before {
+  content: none;
+}
+.v7 .login-wrap {
+  position: relative;
+}
+.v7 .login-theme {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+@media (max-width: 860px) {
+  .v7 .desk-theme {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .v7 .login-theme::before {
+    content: none;
   }
 }

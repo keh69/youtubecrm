@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CrmSessionProvider, useNav, useNow, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function TopClock() {
   const now = useNow(1000)
@@ -51,6 +52,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           </nav>
           <div className="top-user">
             <TopClock />
+            <ThemeToggle className="top-theme" />
             <div className="who">
               <strong>{me.name}</strong>
               <span>{me.roles.map((r) => r.name).join(', ') || '역할 없음'}</span>

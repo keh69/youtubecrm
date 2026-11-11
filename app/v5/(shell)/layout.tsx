@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, logout } = useSession()
@@ -49,6 +50,7 @@ function Shell({ children }: { children: React.ReactNode }) {
               <strong>{me.name}</strong>
               <small>{roles}</small>
             </span>
+            <ThemeToggle className="g-theme" />
             <button className="g-btn ghost sm" onClick={logout}>
               로그아웃
             </button>

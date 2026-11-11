@@ -1,4 +1,5 @@
 import './theme.css'
+import './theme-light.css'
 
 // v4 · Bold Block — 네오 브루탈리즘. 크림색 바탕 위에 노랑·분홍·파랑·민트 블록, 검은 3px 테두리와 딱딱한 그림자.
 export default function V4Layout({ children }: { children: React.ReactNode }) {

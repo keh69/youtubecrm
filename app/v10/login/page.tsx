@@ -1,11 +1,13 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V10Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v10')
   return (
     <main className="login-wrap">
+      <ThemeToggle className="login-theme" />
       <form className="login-card" onSubmit={submit}>
         <div className="login-tab" aria-hidden="true">
           <span className="ficon ext-tsx">{'<>'}</span> login.tsx

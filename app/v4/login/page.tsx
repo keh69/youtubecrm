@@ -1,12 +1,16 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 import { Msg } from '../_components/ui'
 
 export default function V4Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v4')
   return (
     <main className="login">
+      <div className="login-theme">
+        <ThemeToggle />
+      </div>
       <div className="login-deco deco-a" aria-hidden="true" />
       <div className="login-deco deco-b" aria-hidden="true" />
       <form className="login-card" onSubmit={submit}>

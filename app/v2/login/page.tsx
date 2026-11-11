@@ -1,12 +1,14 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V2Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v2')
   return (
     <main className="login">
       <div className="login-grid" aria-hidden="true" />
+      <ThemeToggle className="login-theme" />
       <form className="login-term" onSubmit={submit}>
         <div className="login-bar">
           <span className="dot" />

@@ -1,12 +1,14 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 import { Ico } from '../_ui'
 
 export default function V9Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v9')
   return (
     <main className="login-wrap">
+      <ThemeToggle className="tb-btn tb-theme login-theme" />
       <form className="login-card" onSubmit={submit}>
         <div className="login-titlebar">
           <span aria-hidden="true">🗄</span>

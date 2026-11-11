@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function koreanToday() {
   return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())
@@ -18,6 +19,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <span className="j-ear-user">
             <strong>{me.name}</strong>
             <span className="j-ear-roles">{me.roles.map((r) => r.name).join(', ') || '역할 없음'}</span>
+            <ThemeToggle className="j-theme" />
             <button type="button" className="j-textbtn" onClick={logout}>
               로그아웃
             </button>

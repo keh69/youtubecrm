@@ -1,4 +1,5 @@
 import './theme.css'
+import './theme-light.css'
 
 // v5 · Soft Glass — 파스텔 그라데이션 바탕, 흐릿한 색 덩어리, 반투명 유리 카드, 둥근 알약 UI.
 export default function V5Layout({ children }: { children: React.ReactNode }) {

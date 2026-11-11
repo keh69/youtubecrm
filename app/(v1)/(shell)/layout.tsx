@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, logout } = useSession()
@@ -49,6 +50,9 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="main">
+        <div className="theme-slot">
+          <ThemeToggle />
+        </div>
         <header className="mobile-top">
           <button className="btn ghost small" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             ☰ 메뉴

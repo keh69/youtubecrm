@@ -1,0 +1,202 @@
+/* v2 · Night Console — 화이트(라이트) 테마. 색만 바꾼다(레이아웃은 theme.css 그대로).
+   <html data-theme="light"> 일 때만 적용되고, 모든 규칙은 .v2 아래로만. */
+:root[data-theme='light'] .v2 {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --panel-2: #f7f9fa;
+  --zebra: #f5f7f9;
+  --hover: #eaf0f3;
+  --line: #dbe1e6;
+  --line-2: #c3ccd4;
+  --text: #14181d;
+  --muted: #56606b;
+  --accent: #0e7490;
+  --accent-dim: rgba(8, 145, 178, 0.11);
+  --ok: #15803d;
+  --ok-dim: rgba(22, 163, 74, 0.11);
+  --late: #b45309;
+  --late-dim: rgba(217, 119, 6, 0.12);
+  --ot: #7e22ce;
+  --ot-dim: rgba(147, 51, 234, 0.1);
+  --bad: #b91c1c;
+  --bad-dim: rgba(220, 38, 38, 0.09);
+  color-scheme: light;
+}
+
+:root[data-theme='light'] .v2 ::selection {
+  background: rgba(8, 145, 178, 0.22);
+  color: #0b1a20;
+}
+
+/* ───────── 폼 ───────── */
+:root[data-theme='light'] .v2 input,
+:root[data-theme='light'] .v2 select {
+  background: #ffffff;
+}
+:root[data-theme='light'] .v2 input::placeholder {
+  color: #8a939c;
+}
+
+/* ───────── 키(버튼) ───────── */
+:root[data-theme='light'] .v2 .key {
+  background: #ffffff;
+  border-bottom-color: #b5bfc8;
+}
+:root[data-theme='light'] .v2 .key:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: #a9b4be;
+}
+:root[data-theme='light'] .v2 .key.ghost {
+  background: transparent;
+}
+:root[data-theme='light'] .v2 .key.accent {
+  background: var(--accent-dim);
+  border-color: rgba(8, 145, 178, 0.5);
+  color: var(--accent);
+}
+:root[data-theme='light'] .v2 .key.accent:hover:not(:disabled) {
+  background: rgba(8, 145, 178, 0.2);
+  border-color: var(--accent);
+}
+:root[data-theme='light'] .v2 .key.danger {
+  background: var(--bad-dim);
+  border-color: rgba(220, 38, 38, 0.45);
+}
+:root[data-theme='light'] .v2 .key.danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.16);
+}
+:root[data-theme='light'] .v2 .key.danger-text:hover:not(:disabled) {
+  border-color: rgba(220, 38, 38, 0.45);
+}
+:root[data-theme='light'] .v2 .key.go {
+  background: linear-gradient(#e6f6fa, #cfeef5);
+  border-color: rgba(8, 145, 178, 0.55);
+  border-bottom-color: #0e7490;
+  color: #0b5d73;
+  text-shadow: none;
+}
+:root[data-theme='light'] .v2 .key.go:hover:not(:disabled) {
+  background: linear-gradient(#d8f1f7, #bfe6f0);
+}
+:root[data-theme='light'] .v2 .key.stop {
+  background: linear-gradient(#ffffff, #eef1f4);
+  border-color: #b5bfc8;
+  border-bottom-color: #8e9aa5;
+}
+:root[data-theme='light'] .v2 .key.stop:hover:not(:disabled) {
+  background: linear-gradient(#f7f9fa, #e3e8ec);
+}
+
+/* ───────── 메시지 ───────── */
+:root[data-theme='light'] .v2 .note.good {
+  border-color: rgba(22, 163, 74, 0.35);
+  border-left-color: var(--ok);
+  background: var(--ok-dim);
+}
+:root[data-theme='light'] .v2 .note.bad {
+  border-color: rgba(220, 38, 38, 0.32);
+  border-left-color: var(--bad);
+  background: var(--bad-dim);
+}
+
+/* ───────── 로그인 ───────── */
+:root[data-theme='light'] .v2 .login-grid {
+  opacity: 0.6;
+}
+:root[data-theme='light'] .v2 .login-term {
+  box-shadow: 0 18px 50px rgba(20, 40, 60, 0.12), 0 0 0 1px rgba(8, 145, 178, 0.08);
+}
+:root[data-theme='light'] .v2 .login-bar .dot:first-child {
+  box-shadow: none;
+}
+
+/* ───────── 상단 바 ───────── */
+:root[data-theme='light'] .v2 .top {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 0 rgba(20, 40, 60, 0.03);
+}
+:root[data-theme='light'] .v2 .top-brand .mono {
+  border-color: rgba(8, 145, 178, 0.5);
+}
+:root[data-theme='light'] .v2 .top-nav a:not(.on):hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+/* ───────── 표 ───────── */
+:root[data-theme='light'] .v2 .tbl tr.open > td {
+  background: rgba(8, 145, 178, 0.07) !important;
+  box-shadow: inset 0 1px 0 rgba(8, 145, 178, 0.25);
+}
+:root[data-theme='light'] .v2 .tbl tr.open > td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent), inset 0 1px 0 rgba(8, 145, 178, 0.25);
+}
+
+/* ───────── 근태 콘솔 ───────── */
+:root[data-theme='light'] .v2 .console {
+  background-image: radial-gradient(ellipse at 20% 0%, rgba(8, 145, 178, 0.06), transparent 60%);
+}
+:root[data-theme='light'] .v2 .clock {
+  text-shadow: none;
+}
+:root[data-theme='light'] .v2 .readout {
+  background: #f1f5f7;
+  box-shadow: inset 0 1px 3px rgba(20, 40, 60, 0.08);
+}
+
+/* ───────── 영상 ───────── */
+:root[data-theme='light'] .v2 .added {
+  border-color: rgba(22, 163, 74, 0.35);
+}
+:root[data-theme='light'] .v2 .added-thumb,
+:root[data-theme='light'] .v2 .vthumb {
+  background: #e4e9ed;
+}
+
+/* ───────── 차트 ───────── */
+:root[data-theme='light'] .v2 .chart-bar {
+  box-shadow: none;
+}
+:root[data-theme='light'] .v2 .chart-col:hover .chart-bar:not(.zero) {
+  background: #0891b2;
+}
+:root[data-theme='light'] .v2 .chart-col:hover .chart-track {
+  background: rgba(8, 145, 178, 0.07);
+}
+
+/* ───────── 탭 · 칩 · 토글 ───────── */
+:root[data-theme='light'] .v2 .ctabs button .mono {
+  color: #6b7580;
+}
+:root[data-theme='light'] .v2 .chip {
+  border-color: rgba(8, 145, 178, 0.4);
+}
+:root[data-theme='light'] .v2 .tog-track {
+  background: #e4e9ed;
+}
+:root[data-theme='light'] .v2 .tog-knob {
+  background: #9aa5af;
+}
+:root[data-theme='light'] .v2 .tog.on .tog-track {
+  border-color: rgba(8, 145, 178, 0.6);
+}
+
+/* ───────── 등록자(읽기 전용) ───────── */
+:root[data-theme='light'] .v2 .readonly-box {
+  background: var(--panel-2);
+}
+
+/* ───────── 테마 전환 버튼 ───────── */
+:root[data-theme='light'] .v2 .theme-toggle {
+  background: #ffffff;
+  border-color: var(--line-2);
+  color: var(--text);
+}
+:root[data-theme='light'] .v2 .theme-toggle:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+:root[data-theme='light'] .v2 .theme-toggle-icon {
+  color: var(--accent);
+  text-shadow: none;
+}

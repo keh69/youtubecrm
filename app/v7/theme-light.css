@@ -1,0 +1,153 @@
+/* v7 · SQL 콘솔 — 화이트(라이트) 테마. 흰 편집기 면 + 옅은 회색 거터·그리드, 흰 바탕용 구문 강조.
+   색만 바꾼다(레이아웃은 theme.css 그대로). <html data-theme="light"> 일 때만, 모든 규칙은 .v7 아래로만. */
+:root[data-theme='light'] .v7 {
+  /* 편집기 면 */
+  --canvas: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f3f4f6;
+  --surface-3: #e8eaee;
+  --hover: #eef0f4;
+
+  /* 선·글자 */
+  --line: #e0e3e8;
+  --line-strong: #cbd0d7;
+  --grid: #e7e9ed;
+  --text: #1c1e23;
+  --muted: #555a64;
+  --faint: #7a7f89;
+
+  /* 사이드바 */
+  --side-bg: #eef0f3;
+  --side-text: #2b2e35;
+  --side-muted: #646974;
+  --side-line: #d9dde3;
+  --side-hover: #e2e6eb;
+  --side-active-bg: rgba(29, 95, 209, 0.1);
+
+  /* 구문 강조 (흰 바탕용) */
+  --kw: #8a2bc2;
+  --str: #2d7a1f;
+  --num: #c2410c;
+  --fn: #1d5fd1;
+  --param: #9a5800;
+  --op: #0b7285;
+  --cm: #737883;
+
+  --accent: #1d5fd1;
+  --accent-weak: rgba(29, 95, 209, 0.1);
+
+  /* 실행 버튼 */
+  --primary: #2d7a1f;
+  --primary-hover: #25661a;
+  --primary-ink: #ffffff;
+
+  /* 상태색 */
+  --ok: #15803d;
+  --ok-weak: rgba(22, 163, 74, 0.11);
+  --working: #1d4ed8;
+  --working-weak: rgba(37, 99, 235, 0.1);
+  --bad: #b91c1c;
+  --bad-weak: rgba(220, 38, 38, 0.09);
+  --late: #b45309;
+  --late-weak: rgba(217, 119, 6, 0.12);
+  --overtime: #7e22ce;
+  --overtime-weak: rgba(147, 51, 234, 0.1);
+
+  --focus: 0 0 0 2px rgba(29, 95, 209, 0.38);
+
+  color-scheme: light;
+}
+
+:root[data-theme='light'] .v7 ::selection {
+  background: rgba(29, 95, 209, 0.18);
+  color: #111318;
+}
+
+/* 흰 글자로 박혀 있던 강조 → 진한 글자 */
+:root[data-theme='light'] .v7 h1,
+:root[data-theme='light'] .v7 .brand strong,
+:root[data-theme='light'] .v7 .side-user strong,
+:root[data-theme='light'] .v7 .tabs button.on {
+  color: #111318;
+}
+:root[data-theme='light'] .v7 .side-nav a:hover,
+:root[data-theme='light'] .v7 .side-nav a.active,
+:root[data-theme='light'] .v7 .side-nav a.parent,
+:root[data-theme='light'] .v7 .side-nav a.tree-sub:hover,
+:root[data-theme='light'] .v7 .side-nav a.tree-sub.on,
+:root[data-theme='light'] .v7 .side .btn.ghost:hover:not(:disabled) {
+  color: #111318;
+}
+
+/* 연결 표시 점: 빛 번짐 없이 */
+:root[data-theme='light'] .v7 .conn {
+  background: #ffffff;
+}
+:root[data-theme='light'] .v7 .conn-dot {
+  box-shadow: none;
+}
+
+/* 쿼리 줄 */
+:root[data-theme='light'] .v7 .ql:hover {
+  background: rgba(29, 95, 209, 0.05);
+}
+
+/* 메시지 */
+:root[data-theme='light'] .v7 .msg.error {
+  color: #b91c1c;
+}
+
+/* 상태 테두리 */
+:root[data-theme='light'] .v7 .tone-ok {
+  border-color: rgba(22, 163, 74, 0.45);
+}
+:root[data-theme='light'] .v7 .tone-working {
+  border-color: rgba(37, 99, 235, 0.45);
+}
+:root[data-theme='light'] .v7 .tone-absent {
+  border-color: rgba(220, 38, 38, 0.45);
+}
+:root[data-theme='light'] .v7 .tone-late {
+  border-color: rgba(217, 119, 6, 0.5);
+}
+:root[data-theme='light'] .v7 .tone-overtime {
+  border-color: rgba(147, 51, 234, 0.45);
+}
+:root[data-theme='light'] .v7 .chip.role {
+  border-color: rgba(29, 95, 209, 0.4);
+}
+
+/* 결과 그리드 줄무늬 */
+:root[data-theme='light'] .v7 .table tbody tr:nth-child(even) > td,
+:root[data-theme='light'] .v7 .video-list li:nth-child(even) {
+  background: rgba(15, 23, 42, 0.028);
+}
+
+/* 영상 길이 배지(썸네일 위): 어두운 배지 유지 */
+:root[data-theme='light'] .v7 .dur {
+  background: rgba(17, 19, 24, 0.82);
+  color: #ffffff;
+}
+
+/* 모바일 사이드바 뒤 어둡게 */
+:root[data-theme='light'] .v7 .side-dim {
+  background: rgba(15, 23, 42, 0.32);
+}
+:root[data-theme='light'] .v7 .mobile-top {
+  background: #ffffff;
+}
+
+/* 테마 전환 버튼 */
+:root[data-theme='light'] .v7 .theme-toggle {
+  background: #ffffff;
+  border-color: var(--line-strong);
+  color: var(--muted);
+}
+:root[data-theme='light'] .v7 .theme-toggle:hover {
+  background: var(--accent-weak);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+:root[data-theme='light'] .v7 .theme-toggle-icon {
+  color: var(--kw);
+}

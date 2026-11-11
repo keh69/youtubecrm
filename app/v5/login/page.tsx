@@ -1,11 +1,13 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V5Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v5')
   return (
     <main className="g-login">
+      <ThemeToggle className="g-theme g-login-theme" />
       <form className="g-glass g-login-card" onSubmit={submit}>
         <div className="g-login-logo">
           <img src="/logo-ant.png" alt="" width={44} height={44} />

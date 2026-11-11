@@ -1,11 +1,13 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V6Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v6')
   return (
     <main className="login-wrap">
+      <ThemeToggle className="v6-theme login-theme" />
       <form className="login-card" onSubmit={submit}>
         <div className="login-brand">
           <img src="/logo-ant.png" alt="" width={36} height={36} className="login-logo" />

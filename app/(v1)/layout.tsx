@@ -1,4 +1,5 @@
 import './theme.css'
+import './theme-light.css'
 
 // v1 · Office Classic — 밝은 회색 바탕, 흰 사이드바, 남색(인디고) 포인트, 단정한 카드.
 export default function V1Layout({ children }: { children: React.ReactNode }) {

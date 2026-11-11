@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V1Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('')
@@ -14,6 +15,9 @@ export default function V1Login() {
   }, [])
   return (
     <main className="login-wrap">
+      <div className="login-theme">
+        <ThemeToggle />
+      </div>
       <form className="login-card" onSubmit={submit}>
         <img src="/logo-ant.png" alt="" width={48} height={48} className="login-logo" />
         <h1>여왕개미미디어 CRM</h1>

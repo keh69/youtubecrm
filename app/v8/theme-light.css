@@ -1,0 +1,217 @@
+/* v8 · 터미널 — 화이트(라이트) 테마 = "종이 단말기".
+   미색 바탕 + 거의 검은 글자, 초록·호박색은 강조로만, 빛 번짐 없음.
+   색만 바꾼다(레이아웃은 theme.css 그대로). <html data-theme="light"> 일 때만, 모든 규칙은 .v8 아래로만. */
+:root[data-theme='light'] .v8 {
+  /* 바탕 */
+  --bg: #f6f6f2;
+  --bg-2: #ebebe4;
+  --panel: #fdfdfb;
+  --hover: rgba(21, 128, 61, 0.08);
+
+  /* 글자 */
+  --green: #15803d;
+  --green-dim: #3d6b4d;
+  --amber: #b45309;
+  --dim: #5c605c;
+
+  /* 선 */
+  --line: rgba(21, 128, 61, 0.45);
+  --line-faint: rgba(21, 128, 61, 0.18);
+
+  /* 상태색 */
+  --ok: #15803d;
+  --working: #0e7490;
+  --bad: #b91c1c;
+  --late: #b45309;
+  --overtime: #a21caf;
+
+  /* 빛 번짐 없음 */
+  --glow: none;
+  --glow-amber: none;
+
+  color-scheme: light;
+  color: #1b1f1c;
+}
+
+/* 종이 단말기: 빛 번짐 전부 끔 */
+:root[data-theme='light'] .v8,
+:root[data-theme='light'] .v8 *,
+:root[data-theme='light'] .v8 *::before,
+:root[data-theme='light'] .v8 *::after {
+  text-shadow: none !important;
+}
+
+/* 주사선은 아주 옅게, 가장자리 어둡게는 없앰 */
+:root[data-theme='light'] .v8::after {
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.018) 2px, rgba(0, 0, 0, 0.018) 3px);
+}
+:root[data-theme='light'] .v8 ::selection {
+  background: var(--green);
+  color: #ffffff;
+}
+
+/* 프롬프트 줄 */
+:root[data-theme='light'] .v8 .p-cmd {
+  color: #1b1f1c;
+}
+:root[data-theme='light'] .v8 .cursor {
+  box-shadow: none;
+}
+
+/* 사이드바 */
+:root[data-theme='light'] .v8 .brand img {
+  filter: grayscale(1) sepia(1) hue-rotate(85deg) saturate(3) brightness(0.78);
+}
+:root[data-theme='light'] .v8 .side-nav a.active {
+  color: #ffffff;
+  box-shadow: none;
+}
+:root[data-theme='light'] .v8 .side-nav a.active::before {
+  color: #ffffff;
+}
+:root[data-theme='light'] .v8 .side-nav a.nav-sub:not(.on):hover {
+  background: rgba(180, 83, 9, 0.1);
+}
+:root[data-theme='light'] .v8 .side-nav a.nav-sub.on {
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* 버튼: 채워지면 흰 글자 */
+:root[data-theme='light'] .v8 .btn:hover:not(:disabled),
+:root[data-theme='light'] .v8 .btn.dark:hover:not(:disabled),
+:root[data-theme='light'] .v8 .btn.danger:hover:not(:disabled),
+:root[data-theme='light'] .v8 .btn.ghost:hover:not(:disabled),
+:root[data-theme='light'] .v8 .btn.ghost.danger-text:hover:not(:disabled) {
+  color: #ffffff;
+}
+:root[data-theme='light'] .v8 .btn.dark {
+  border-color: rgba(180, 83, 9, 0.5);
+}
+:root[data-theme='light'] .v8 .btn.danger {
+  border-color: rgba(185, 28, 28, 0.5);
+}
+:root[data-theme='light'] .v8 .btn.big.primary {
+  box-shadow: inset 0 0 0 1px rgba(21, 128, 61, 0.08);
+}
+:root[data-theme='light'] .v8 .btn.big.dark {
+  box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.08);
+}
+
+/* 폼 */
+:root[data-theme='light'] .v8 .field > input,
+:root[data-theme='light'] .v8 .field > select,
+:root[data-theme='light'] .v8 .table select,
+:root[data-theme='light'] .v8 .inline-edit input {
+  color: #1b1f1c;
+}
+:root[data-theme='light'] .v8 select option {
+  color: #1b1f1c;
+}
+:root[data-theme='light'] .v8 .field > input:focus,
+:root[data-theme='light'] .v8 .field > select:focus,
+:root[data-theme='light'] .v8 .table select:focus,
+:root[data-theme='light'] .v8 .inline-edit input:focus {
+  background: rgba(21, 128, 61, 0.05);
+}
+:root[data-theme='light'] .v8 input:-webkit-autofill,
+:root[data-theme='light'] .v8 input:-webkit-autofill:hover,
+:root[data-theme='light'] .v8 input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1b1f1c;
+}
+:root[data-theme='light'] .v8 input[type='checkbox'] {
+  background: #ffffff;
+}
+:root[data-theme='light'] .v8 input[type='checkbox']:checked {
+  background: var(--green);
+  box-shadow: inset 0 0 0 3px #ffffff;
+}
+
+/* 메시지 */
+:root[data-theme='light'] .v8 .msg.ok {
+  border-color: rgba(21, 128, 61, 0.5);
+}
+:root[data-theme='light'] .v8 .msg.error {
+  border-color: rgba(185, 28, 28, 0.5);
+}
+
+/* 배지·칩 */
+:root[data-theme='light'] .v8 .badge.tone-late,
+:root[data-theme='light'] .v8 .badge.tone-overtime,
+:root[data-theme='light'] .v8 .chip.format,
+:root[data-theme='light'] .v8 .chip.role button:hover {
+  color: #ffffff;
+}
+:root[data-theme='light'] .v8 .chip {
+  border-color: rgba(180, 83, 9, 0.55);
+}
+:root[data-theme='light'] .v8 .chip.role {
+  border-color: var(--line);
+}
+
+/* 표 */
+:root[data-theme='light'] .v8 .table.inner tbody tr:hover > td {
+  background: rgba(21, 128, 61, 0.07);
+}
+
+/* 로그인 */
+:root[data-theme='light'] .v8 .login-card {
+  box-shadow: 0 10px 30px rgba(30, 40, 30, 0.08);
+}
+
+/* 근태 시계·숫자: 번짐 없이 */
+:root[data-theme='light'] .v8 .att-clock strong {
+  color: var(--amber);
+}
+
+/* 영상 */
+:root[data-theme='light'] .v8 .dur {
+  background: rgba(20, 24, 20, 0.86);
+  color: #bbf7d0;
+  border-color: rgba(20, 24, 20, 0.86);
+}
+
+/* 통계 막대 */
+:root[data-theme='light'] .v8 .bar {
+  box-shadow: none;
+}
+
+/* 설정 탭·순서 끌기 */
+:root[data-theme='light'] .v8 .seg button.on,
+:root[data-theme='light'] .v8 .tabs button.on,
+:root[data-theme='light'] .v8 .tabs button.on .tab-no {
+  color: #ffffff;
+}
+:root[data-theme='light'] .v8 .tabs button.on .tab-no {
+  opacity: 0.8;
+}
+:root[data-theme='light'] .v8 .drag-row.dragging td {
+  background: rgba(180, 83, 9, 0.12);
+}
+
+/* 스킨 */
+:root[data-theme='light'] .v8 .skin-card.on {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+/* 모바일 */
+:root[data-theme='light'] .v8 .side.open {
+  box-shadow: 4px 0 24px rgba(30, 40, 30, 0.14);
+}
+:root[data-theme='light'] .v8 .side-dim {
+  background: rgba(20, 24, 20, 0.3);
+}
+
+/* 테마 전환 버튼 */
+:root[data-theme='light'] .v8 .theme-toggle {
+  background: var(--panel);
+  color: var(--green);
+  border-color: var(--line);
+}
+:root[data-theme='light'] .v8 .theme-toggle:hover {
+  background: var(--green);
+  color: #ffffff;
+}
+:root[data-theme='light'] .v8 .theme-toggle:hover .theme-toggle-icon {
+  color: #ffffff;
+}

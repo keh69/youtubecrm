@@ -2,11 +2,13 @@
 
 import { useLogin } from '@/lib/crm/client/hooks'
 import { PromptLine } from '../term'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V8Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v8')
   return (
     <main className="login-wrap">
+      <ThemeToggle className="login-theme" />
       <form className="login-card card" onSubmit={submit}>
         <h2>login</h2>
         <pre className="login-banner" aria-hidden="true">{`QUEEN-ANT MEDIA CRM  v8\ntty1 · secure shell`}</pre>

@@ -1,14 +1,14 @@
 /* v2 · Night Console — 모든 규칙은 .v2 아래로만 */
 .v2 {
-  --bg: #0b0f14;
-  --panel: #121821;
-  --panel-2: #0f141b;
-  --zebra: #151c26;
-  --hover: #1a2330;
-  --line: #1f2a37;
-  --line-2: #2a3747;
-  --text: #d6dde6;
-  --muted: #7d8a99;
+  --bg: #0d0d0f;
+  --panel: #17171a;
+  --panel-2: #131316;
+  --zebra: #1a1a1e;
+  --hover: #222227;
+  --line: #2c2c32;
+  --line-2: #3a3a42;
+  --text: #e8e8ec;
+  --muted: #a1a1aa;
   --accent: #22d3ee;
   --accent-dim: rgba(34, 211, 238, 0.14);
   --ok: #4ade80;
@@ -101,7 +101,7 @@
   width: 100%;
 }
 .v2 input::placeholder {
-  color: #4f5c6b;
+  color: #6b6b74;
 }
 .v2 input:focus,
 .v2 select:focus {
@@ -143,7 +143,7 @@
   border: 1px solid var(--line-2);
   border-bottom-width: 3px;
   border-radius: var(--radius);
-  background: #18212c;
+  background: #1e1e22;
   color: var(--text);
   font-weight: 600;
   font-size: 13px;
@@ -152,7 +152,7 @@
 }
 .v2 .key:hover:not(:disabled) {
   background: var(--hover);
-  border-color: #3a4a5d;
+  border-color: #4a4a53;
 }
 .v2 .key:active:not(:disabled) {
   transform: translateY(1px);
@@ -481,7 +481,7 @@
   right: 0;
   z-index: 50;
   height: var(--top-h);
-  background: rgba(11, 15, 20, 0.92);
+  background: rgba(13, 13, 15, 0.92);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
@@ -873,7 +873,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 14px;
-  background: #070a0e;
+  background: #0a0a0b;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.6);
@@ -917,13 +917,13 @@
   background: linear-gradient(#16505d, #103a44);
 }
 .v2 .key.stop {
-  background: linear-gradient(#1f2833, #161d26);
-  border-color: #3a4a5d;
-  border-bottom-color: #0b0f14;
+  background: linear-gradient(#232327, #1a1a1d);
+  border-color: #4a4a53;
+  border-bottom-color: #0d0d0f;
   color: var(--text);
 }
 .v2 .key.stop:hover:not(:disabled) {
-  background: linear-gradient(#27323f, #1c2430);
+  background: linear-gradient(#2b2b31, #202024);
 }
 .v2 .key.big:disabled {
   opacity: 0.3;
@@ -1251,7 +1251,7 @@
 }
 .v2 .ctabs button .mono {
   font-size: 10px;
-  color: #4f5c6b;
+  color: #8a8a93;
 }
 .v2 .ctabs button:hover {
   color: var(--text);
@@ -1341,7 +1341,7 @@
   height: 18px;
   border: 1px solid var(--line-2);
   border-radius: 2px;
-  background: #070a0e;
+  background: #0a0a0b;
   transition: background 0.12s, border-color 0.12s;
 }
 .v2 .tog-knob {
@@ -1351,7 +1351,7 @@
   width: 12px;
   height: 12px;
   border-radius: 1px;
-  background: #3a4a5d;
+  background: #4a4a53;
   transition: transform 0.12s, background 0.12s;
 }
 .v2 .tog.on .tog-track {
@@ -1650,4 +1650,53 @@
   font-size: 11px;
   font-weight: 400;
   color: var(--muted);
+}
+
+/* ───────── 테마 전환 버튼 (블랙 ↔ 화이트) ───────── */
+.v2 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  border: 1px solid var(--line-2);
+  border-radius: 2px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.v2 .theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.v2 .theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.v2 .theme-toggle-icon {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--accent);
+}
+.v2 .login-theme {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+@media (max-width: 420px) {
+  .v2 .top-user .theme-toggle-label {
+    display: none;
+  }
+  .v2 .top-user .theme-toggle {
+    padding: 0 7px;
+  }
 }

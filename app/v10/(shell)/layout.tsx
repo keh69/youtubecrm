@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useNow, useSession, type NavItem } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 // 메뉴 → 탐색기 속 '파일' 모양(파일명·확장자·아이콘 색)
 const FILES: Record<NavItem['key'], { name: string; ext: string; glyph: string }> = {
@@ -190,6 +191,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             <span className="sb-sep">·</span>
             <span className="sb-item sb-clock">KST {clock}</span>
             {currentFile && <span className="sb-item sb-file">{currentFile.name} · UTF-8 · LF</span>}
+            <ThemeToggle className="sb-theme" />
           </div>
           <div className="tabbar" role="tablist" aria-label="열린 화면">
             {current && currentFile ? (

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 import type { MenuKey } from '@/lib/crm/menus'
 
 const NAV_ICON: Record<MenuKey | 'skin' | 'me', string> = {
@@ -64,7 +65,12 @@ function Shell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main">
+        <div className="theme-slot">
+          <ThemeToggle />
+        </div>
+        {children}
+      </main>
     </div>
   )
 }

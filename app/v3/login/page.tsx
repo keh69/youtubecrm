@@ -1,11 +1,15 @@
 'use client'
 
 import { useLogin } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 export default function V3Login() {
   const { loginId, setLoginId, password, setPassword, busy, error, submit } = useLogin('/v3')
   return (
     <main className="j-login">
+      <div className="login-theme">
+        <ThemeToggle className="j-theme" />
+      </div>
       <div className="j-login-paper">
         <div className="j-login-plate">
           <span className="j-plate-tag">사내 업무 일지</span>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, logout } = useSession()
@@ -60,8 +61,12 @@ function Shell({ children }: { children: React.ReactNode }) {
             ☰ 메뉴
           </button>
           <strong>여왕개미미디어 CRM</strong>
+          <ThemeToggle className="v6-theme" />
         </header>
         {open && <div className="side-dim" onClick={() => setOpen(false)} />}
+        <div className="main-bar">
+          <ThemeToggle className="v6-theme" />
+        </div>
         <main className="content">{children}</main>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { ThemeToggle } from '@/lib/crm/client/theme'
 import { Ico } from '../_ui'
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,8 @@ function Shell({ children }: { children: React.ReactNode }) {
             <Ico>⏻</Ico>
             <span className="tb-label">로그아웃</span>
           </button>
+          <span className="tb-sep" aria-hidden="true" />
+          <ThemeToggle className="tb-btn tb-theme" />
         </div>
       </header>
 

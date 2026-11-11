@@ -1,0 +1,257 @@
+/* v10 · 코드 에디터 — 화이트(라이트) 테마. 흰 편집기, #f3f3f3 탐색기, 파란 상태 막대(#0b62c4)+흰 글자.
+   색만 바꾼다(레이아웃은 theme.css 그대로). <html data-theme="light"> 일 때만, 모든 규칙은 .v10 아래로만. */
+:root[data-theme='light'] .v10 {
+  /* 바탕 */
+  --canvas: #ffffff;
+  --surface: #f8f8f8;
+  --surface-2: #f0f0f0;
+  --input: #ffffff;
+  --hover: #f0f2f5;
+  --selected: #e4e6f1;
+
+  /* 선·글자 */
+  --line: #e3e3e3;
+  --line-strong: #cbcbcb;
+  --text: #1f1f1f;
+  --text-bright: #111111;
+  --muted: #5c5c5c;
+  --faint: #6e6e6e;
+  --gutter: #8f8f8f;
+
+  /* 코드 토큰 (흰 바탕용) */
+  --tk-comment: #1a7f1a;
+  --tk-number: #098658;
+  --tk-func: #795e26;
+  --tk-var: #001080;
+  --tk-type: #1f7a91;
+  --tk-string: #a31515;
+
+  /* 활동 막대·탐색기 */
+  --activity-bg: #e8e8e8;
+  --activity-ink: #616161;
+  --side-bg: #f3f3f3;
+  --side-text: #333333;
+  --side-muted: #5f5f5f;
+  --side-line: #e0e0e0;
+  --side-hover: #e6e6e6;
+  --side-active-bg: #e4e6f1;
+
+  /* 포인트 */
+  --accent: #0b62c4;
+  --accent-ink: #0b62c4;
+  --accent-weak: rgba(11, 98, 196, 0.1);
+  --focus-ring: #0b62c4;
+
+  /* 버튼 */
+  --primary: #0b62c4;
+  --primary-hover: #0a55aa;
+  --primary-ink: #ffffff;
+  --secondary: #e6e6e6;
+  --secondary-hover: #d8d8d8;
+
+  /* 상태색 */
+  --ok: #15803d;
+  --ok-weak: rgba(22, 163, 74, 0.11);
+  --working: #1d4ed8;
+  --working-weak: rgba(37, 99, 235, 0.1);
+  --bad: #b91c1c;
+  --bad-weak: rgba(220, 38, 38, 0.09);
+  --late: #b45309;
+  --late-weak: rgba(217, 119, 6, 0.12);
+  --overtime: #7e22ce;
+  --overtime-weak: rgba(147, 51, 234, 0.1);
+
+  color-scheme: light;
+  scrollbar-color: #c4c4c4 transparent;
+}
+:root[data-theme='light'] .v10 ::selection {
+  background: #add6ff;
+}
+
+/* 파일 아이콘 색 (흰 바탕에서 읽히게) */
+:root[data-theme='light'] .v10 .ext-tsx {
+  color: #0070c1;
+}
+:root[data-theme='light'] .v10 .ext-sql {
+  color: #b3570e;
+}
+:root[data-theme='light'] .v10 .ext-json {
+  color: #8a6d00;
+}
+:root[data-theme='light'] .v10 .ext-css {
+  color: #9b2a96;
+}
+:root[data-theme='light'] .v10 .ext-md {
+  color: #2b6f8f;
+}
+
+/* 활동 막대 */
+:root[data-theme='light'] .v10 .act:hover,
+:root[data-theme='light'] .v10 .act.on {
+  color: #1f1f1f;
+}
+:root[data-theme='light'] .v10 .act.on::before {
+  background: var(--accent);
+}
+
+/* 탐색기 */
+:root[data-theme='light'] .v10 .side-nav a::after {
+  background: #d6d6d6;
+}
+:root[data-theme='light'] .v10 .side-nav a.active .fname-ko,
+:root[data-theme='light'] .v10 .side-nav a.parent .fname-ko,
+:root[data-theme='light'] .v10 .side-nav a.nav-sub.on {
+  color: #111111;
+}
+
+/* 상태 막대: 파란 바탕 + 흰 글자 유지 */
+:root[data-theme='light'] .v10 .statusbar {
+  background: #0b62c4;
+  color: #ffffff;
+}
+:root[data-theme='light'] .v10 .sb-dot {
+  color: #c6f6c3;
+}
+
+/* 에디터 탭·경로 */
+:root[data-theme='light'] .v10 .etab.on {
+  color: #1f1f1f;
+}
+:root[data-theme='light'] .v10 .crumbs {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+:root[data-theme='light'] .v10 .page-head::before {
+  background: #e3e3e3;
+}
+
+/* 버튼: 보조 버튼은 진한 글자, 채운 버튼은 흰 글자 */
+:root[data-theme='light'] .v10 .btn,
+:root[data-theme='light'] .v10 .btn.dark {
+  color: var(--text);
+}
+:root[data-theme='light'] .v10 .btn.primary {
+  color: var(--primary-ink);
+}
+:root[data-theme='light'] .v10 .btn.danger {
+  background: #b91c1c;
+  color: #ffffff;
+}
+:root[data-theme='light'] .v10 .btn.danger:hover:not(:disabled) {
+  background: #991b1b;
+}
+:root[data-theme='light'] .v10 .btn.ghost {
+  color: var(--text);
+}
+:root[data-theme='light'] .v10 .btn.ghost.danger-text {
+  color: var(--bad);
+}
+:root[data-theme='light'] .v10 .btn.ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* 메시지·상태 테두리 */
+:root[data-theme='light'] .v10 .msg.ok {
+  border-color: rgba(22, 163, 74, 0.35);
+}
+:root[data-theme='light'] .v10 .msg.error {
+  border-color: rgba(220, 38, 38, 0.35);
+}
+:root[data-theme='light'] .v10 .tone-ok {
+  border-color: rgba(22, 163, 74, 0.45);
+}
+:root[data-theme='light'] .v10 .tone-working {
+  border-color: rgba(37, 99, 235, 0.45);
+}
+:root[data-theme='light'] .v10 .tone-absent {
+  border-color: rgba(220, 38, 38, 0.45);
+}
+:root[data-theme='light'] .v10 .tone-late {
+  border-color: rgba(217, 119, 6, 0.5);
+}
+:root[data-theme='light'] .v10 .tone-overtime {
+  border-color: rgba(147, 51, 234, 0.45);
+}
+:root[data-theme='light'] .v10 .chip.role {
+  border-color: rgba(11, 98, 196, 0.45);
+}
+
+/* 표 */
+:root[data-theme='light'] .v10 .table th + th,
+:root[data-theme='light'] .v10 .table td + td {
+  border-left-color: #ebebeb;
+}
+:root[data-theme='light'] .v10 .table td {
+  border-bottom-color: #ebebeb;
+}
+:root[data-theme='light'] .v10 .detail-row > td,
+:root[data-theme='light'] .v10 .table tbody tr.detail-row:hover > td {
+  background: #f7f8fa;
+}
+
+/* 로그인 */
+:root[data-theme='light'] .v10 .login-card {
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+}
+:root[data-theme='light'] .v10 .login-wrap {
+  background:
+    linear-gradient(180deg, var(--accent) 0 3px, transparent 3px),
+    #f3f3f3;
+}
+:root[data-theme='light'] .v10 .login-tab {
+  color: #1f1f1f;
+}
+
+/* 근태 시계 */
+:root[data-theme='light'] .v10 .att-clock strong {
+  color: #0b62c4;
+}
+
+/* 영상 */
+:root[data-theme='light'] .v10 .video-list li {
+  border-bottom-color: #ebebeb;
+}
+:root[data-theme='light'] .v10 .dur {
+  background: rgba(17, 17, 17, 0.82);
+  color: #ffffff;
+}
+
+/* 통계 막대 눈금 */
+:root[data-theme='light'] .v10 .bars {
+  background-image: repeating-linear-gradient(0deg, transparent 0 33px, #ececec 33px 34px);
+}
+
+/* 설정 탭·세그먼트 */
+:root[data-theme='light'] .v10 .seg button:hover:not(.on),
+:root[data-theme='light'] .v10 .tabs button:hover,
+:root[data-theme='light'] .v10 .tabs button.on {
+  color: #1f1f1f;
+}
+
+/* 스킨 */
+:root[data-theme='light'] .v10 .skin-card.on {
+  background: rgba(11, 98, 196, 0.06);
+}
+
+/* 모바일 */
+:root[data-theme='light'] .v10 .side-dim {
+  background: rgba(0, 0, 0, 0.28);
+}
+@media (max-width: 860px) {
+  :root[data-theme='light'] .v10 .side {
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.14);
+  }
+}
+
+/* 테마 전환 버튼 (상태 막대 위: 파란 바탕 흰 글자 유지) */
+:root[data-theme='light'] .v10 .statusbar .theme-toggle {
+  color: #ffffff;
+}
+:root[data-theme='light'] .v10 .login-theme {
+  background: #ffffff;
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+:root[data-theme='light'] .v10 .login-theme:hover {
+  background: var(--hover);
+}
