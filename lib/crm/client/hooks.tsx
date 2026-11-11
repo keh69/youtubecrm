@@ -104,7 +104,7 @@ export type NavItem = { key: MenuKey | 'skin' | 'me'; label: string; path: strin
 const NAV_SUBS: Partial<Record<MenuKey, MenuKey>> = { attendance: 'attendance_team', videos: 'stats' }
 const SUB_KEYS = new Set<MenuKey>(Object.values(NAV_SUBS) as MenuKey[])
 
-// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '스킨', '내정보'는 누구에게나 보인다.
+// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '내정보'는 누구에게나 보인다. (스킨 메뉴는 2026-11-11 메뉴에서 뺐다)
 // 부모 메뉴의 active 는 [통계] 페이지에 있을 때도 켜진다.
 export function useNav(): NavItem[] {
   const { me, base } = useSession()
@@ -114,7 +114,6 @@ export function useNav(): NavItem[] {
     const has = (k: MenuKey) => me.menus.includes(k)
     const items: Array<Omit<NavItem, 'href' | 'active' | 'sub'>> = [
       ...MENUS.filter((m) => has(m.key) && !(SUB_KEYS.has(m.key) && Object.entries(NAV_SUBS).some(([p, c]) => c === m.key && has(p as MenuKey)))),
-      { key: 'skin', label: '스킨', path: '/skin', description: '화면 디자인 고르기' },
       { key: 'me', label: '내정보', path: '/me', description: '내 정보 확인, 비밀번호 변경' }
     ]
     return items.map((m) => {

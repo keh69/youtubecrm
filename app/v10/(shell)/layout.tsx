@@ -84,7 +84,6 @@ function Shell({ children }: { children: React.ReactNode }) {
   const currentFile = current ? (onSub ? subFileOf(current) : fileOf(current)) : null
   const currentLabel = current ? (onSub && current.sub?.key === 'attendance_team' ? '직원근태 > 근태통계' : onSub ? '영상통계' : current.label) : ''
   const clock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)
-  const skinActive = current?.key === 'skin'
   const meActive = current?.key === 'me'
 
   return (
@@ -93,9 +92,6 @@ function Shell({ children }: { children: React.ReactNode }) {
         <span className="act on" title="탐색기">
           <Icon name="files" />
         </span>
-        <Link href={`${base}/skin`} className={`act${skinActive ? ' on' : ''}`} title="스킨" aria-label="스킨">
-          <Icon name="palette" />
-        </Link>
         <span className="act-spacer" />
         <Link href={`${base}/me`} className={`act${meActive ? ' on' : ''}`} title="내정보" aria-label="내정보">
           <Icon name="user" />
