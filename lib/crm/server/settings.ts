@@ -3,6 +3,7 @@ import { AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type 
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
 import { isDeletedRow } from '@/lib/crm/server/deleted'
+import { pickDefaultRole } from '@/lib/crm/server/accounts'
 
 export function requireSettings(ctx: CrmContext) {
   requireMenu(ctx, 'settings')
@@ -56,6 +57,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
   const menuMap = await loadMenuMap(db, allRoles.map((r) => r.code))
   const subMap = await loadSettingsSubMap(db, allRoles.map((r) => r.code))
   const affHidden = await loadAffiliationHiddenCodes(db)
+  const signupRole = await pickDefaultRole(db) // 지금 실제로 쓰이는 가입역할
 
   const roles = allRoles.map((r) => ({
     id: r.id,
@@ -66,6 +68,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
     settingsTabs: subMap.get(r.code) || [],
     affiliationVisible: !affHidden.has(r.code),
+    signupRole: signupRole?.id === r.id, // 회원가입·아이디 만들기에서 새 아이디가 받는 역할(삭제 불가)
     holderCount: userRows.filter((u) => !isDeletedRow(u) && (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)
     memberCount: userRows.filter(

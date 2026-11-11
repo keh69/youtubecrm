@@ -433,6 +433,28 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
       <section className="g-glass">
         <h2 className="g-h2">상세설정</h2>
         <p className="g-muted g-small">체크한 메뉴만 보입니다. 여러 역할을 가진 사람은 모든 역할의 메뉴를 합쳐서 봅니다. 왼쪽 ⠿ 부분을 마우스로 끌어 놓으면 역할 순서가 바뀌고 바로 저장됩니다.</p>
+        {/* 회원가입·아이디 만들기에서 새 아이디가 받는 역할. 이 역할은 삭제할 수 없다(삭제 자리에 '가입역할' 표시) */}
+        <label className="g-signup-role">
+          <span>회원가입 시 역할 :</span>
+          <select
+            className="g-input sm"
+            value={s.data!.roles.find((r) => r.signupRole)?.id || ''}
+            onChange={async (e) => {
+              const role = s.data!.roles.find((r) => r.id === e.target.value)
+              if (role) report(await s.setSignupRole(role.id), `회원가입 시 역할을 '${role.name}'(으)로 정했습니다.`)
+            }}
+            aria-label="회원가입 시 역할"
+          >
+            {!s.data!.roles.some((r) => r.signupRole) && <option value="">(역할 없음)</option>}
+            {s.data!.roles
+              .filter((r) => !r.locked)
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+          </select>
+        </label>
         <div className="g-table-wrap">
           <table className="g-table g-matrix">
             <thead>
@@ -501,9 +523,14 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         이름 변경
                       </button>
                     )}
-                    {!r.system && (
+                    {!r.system && r.signupRole && (
+                      <button className="g-btn signup sm g-ml g-slot" title="회원가입·아이디 만들기에서 새 아이디가 받는 역할이라 삭제할 수 없습니다. 바꾸려면 위의 '회원가입 시 역할'에서 다른 역할을 고르세요." onClick={() => document.querySelector<HTMLSelectElement>('.g-signup-role select')?.focus()}>
+                        가입역할
+                      </button>
+                    )}
+                    {!r.system && !r.signupRole && (
                       <button
-                        className="g-btn soft-danger sm g-ml"
+                        className="g-btn soft-danger sm g-ml g-slot"
                         onClick={async () => {
                           if (!window.confirm(`'${r.name}' 역할을 삭제할까요? 이 역할을 가진 사람에게서 빠지고, 이 역할이 소속인 직원은 소속이 비워집니다.`)) return
                           report(await s.deleteRole(r.id), '역할을 삭제했습니다.')
@@ -532,7 +559,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
   return (
     <section className="g-glass">
       <h2 className="g-h2">아이디 만들기</h2>
-      <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;사원&rsquo; 역할을 받습니다.</p>
+      <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;{s.data!.roles.find((r) => r.signupRole)?.name || '사원'}&rsquo; 역할을 받습니다.</p>
       <form
         onSubmit={async (e) => {
           e.preventDefault()

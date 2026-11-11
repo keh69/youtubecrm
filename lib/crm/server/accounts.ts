@@ -4,7 +4,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, type CrmContext } from '@/lib/crm/server/context'
-import { LOCKED_ROLE_CODE, RETIRED_ROLE_CODE } from '@/lib/crm/menus'
+import { LOCKED_ROLE_CODE, RETIRED_ROLE_CODE, SIGNUP_ROLE_MENU_KEY } from '@/lib/crm/menus'
 import { INTERNAL_EMAIL_DOMAIN, assertAffiliationColumn, internalEmailFor } from '@/lib/crm/server/settings'
 import { assertAffiliationTarget } from '@/lib/crm/server/scope'
 import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/deleted'
@@ -53,8 +53,19 @@ export const newAccountSchema = z.object({
 })
 export type NewAccountInput = z.infer<typeof newAccountSchema>
 
-// 새 아이디가 받을 기본 역할: 'staff'(직원) 역할이 있으면 그것, 없으면 역할설정 표 맨 아래 역할(총 관리자·퇴사 제외).
+// 새 아이디가 받을 기본 역할(가입역할):
+//  1) 상세설정 '회원가입 시 역할'에서 고른 역할
+//  2) 없으면 'staff'(직원) 역할, 3) 그것도 없으면 역할설정 표 맨 아래 역할(총 관리자·퇴사 제외).
 // 예전에는 'staff' 만 찾아서, 그 역할을 지우면 새 아이디가 역할 없이 만들어져 로그인해도 볼 메뉴가 없었다.
+// 가입역할 바꾸기: 고른 역할 하나에만 표시를 남긴다
+export async function setSignupRole(db: Db, roleCode: string) {
+  if (roleCode === LOCKED_ROLE_CODE || roleCode === RETIRED_ROLE_CODE) throw new HttpError(400, '이 역할은 가입역할로 정할 수 없습니다.')
+  const { error: delError } = await db.from(TABLES.roleMenuPermissions).delete().eq('menu_key', SIGNUP_ROLE_MENU_KEY)
+  if (delError) throw delError
+  const { error } = await db.from(TABLES.roleMenuPermissions).insert({ role_type: roleCode, menu_key: SIGNUP_ROLE_MENU_KEY, can_view: true, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
 export async function pickDefaultRole(db: Db) {
   const { data, error } = await db
     .from(TABLES.roles)
@@ -63,6 +74,10 @@ export async function pickDefaultRole(db: Db) {
     .order('created_at', { ascending: true })
   if (error) throw error
   const roles = (data || []) as Array<{ id: string; code: string; name: string }>
+  const usableRole = (r: { code: string }) => r.code !== LOCKED_ROLE_CODE && r.code !== RETIRED_ROLE_CODE
+  const { data: picked } = await db.from(TABLES.roleMenuPermissions).select('role_type').eq('menu_key', SIGNUP_ROLE_MENU_KEY).eq('can_view', true)
+  const chosen = roles.find((r) => usableRole(r) && (picked || []).some((p: any) => p.role_type === r.code))
+  if (chosen) return chosen
   const staff = roles.find((r) => r.code === 'staff')
   if (staff) return staff
   const usable = roles.filter((r) => r.code !== LOCKED_ROLE_CODE && r.code !== RETIRED_ROLE_CODE)

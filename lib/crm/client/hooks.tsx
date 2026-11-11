@@ -493,6 +493,13 @@ export function useSettings() {
       if (!res.ok) await reload()
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },
+    // 상세설정 '회원가입 시 역할' 저장
+    setSignupRole: async (roleId: string): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => ({ ...r, signupRole: r.id === roleId })) } : d))
+      const res = await api('/api/settings/roles/signup', { method: 'PUT', body: { roleId } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
     // 상세설정 '하부' 켜기/끄기 저장
     saveRoleAffiliation: async (id: string, affiliationVisible: boolean): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, affiliationVisible } : r)) } : d))

@@ -61,6 +61,8 @@ export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
 export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
 // 역할설정 > 상세설정 > '하부': 켜져 있으면 아이디 생성의 소속 목록에 이 역할의 아이디가 나온다(행이 없으면 켜짐).
 export const AFFILIATION_MENU_KEY = 'aff_member'
+// 상세설정 '회원가입 시 역할': 이 값(can_view=true)이 붙은 역할 하나가 새 아이디(회원가입·아이디 만들기)의 기본 역할이 된다.
+export const SIGNUP_ROLE_MENU_KEY = 'signup_role'
 
 // 저장된 값(없으면 기본값)으로 이 역할이 쓸 수 있는 설정 메뉴·세부 권한 목록을 만든다. 부모가 꺼진 세부 권한은 뺀다.
 export function resolveSettingsSubs(stored: (menuKey: string) => boolean | undefined): SettingsSubKey[] {

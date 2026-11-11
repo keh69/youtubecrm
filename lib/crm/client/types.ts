@@ -97,6 +97,7 @@ export type SettingsRole = {
   menus: MenuKey[]
   settingsTabs: SettingsSubKey[] // 이 역할이 설정 안에서 볼 수 있는 하부 메뉴(01~05)
   affiliationVisible: boolean // 상세설정 '하부': 아이디 생성 소속 목록에 이 역할의 아이디가 나오는지
+  signupRole?: boolean // 상세설정 '회원가입 시 역할': 새 아이디가 받는 역할(삭제 불가)
   holderCount: number
   memberCount: number
 }

@@ -3202,3 +3202,32 @@ html:has(.v5) {
     font-size: 10.5px;
   }
 }
+
+/* ───────── 상세설정: 회원가입 시 역할 / 가입역할 버튼 (2026-11-11) ───────── */
+.v5 .g-signup-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 12px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.v5 .g-signup-role select {
+  min-width: 160px;
+}
+/* 삭제 버튼 자리에 같은 크기로 들어가는 '가입역할' 버튼 */
+.v5 .g-btn.signup {
+  background: #eef6ff;
+  color: #1d4ed8;
+  border: 1px solid rgba(29, 78, 216, 0.3);
+}
+:root:not([data-theme='light']) .v5 .g-btn.signup {
+  background: rgba(59, 130, 246, 0.14);
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.4);
+}
+/* 삭제 자리의 버튼(삭제/가입역할)은 폭을 같게 해서 '이름 변경' 위치가 줄마다 같도록 */
+.v5 .g-btn.g-slot {
+  min-width: 84px;
+  justify-content: center;
+}

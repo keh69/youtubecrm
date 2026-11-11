@@ -13,6 +13,7 @@ const EMPTY = { loginId: '', password: '', name: '', hireDate: '', email: '', ph
 export default function V5Signup() {
   const [form, setForm] = useState(EMPTY)
   const [groups, setGroups] = useState<Group[]>([])
+  const [roleName, setRoleName] = useState('사원')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState('')
@@ -21,7 +22,10 @@ export default function V5Signup() {
   useEffect(() => {
     fetch('/api/signup', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((j) => setGroups(Array.isArray(j.groups) ? j.groups : []))
+      .then((j) => {
+        setGroups(Array.isArray(j.groups) ? j.groups : [])
+        if (j.signupRole) setRoleName(j.signupRole)
+      })
       .catch(() => setGroups([]))
   }, [])
 
@@ -77,7 +81,7 @@ export default function V5Signup() {
           </>
         ) : (
           <form onSubmit={submit} className="g-signup-form">
-            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;사원&rsquo; 역할을 받습니다.</p>
+            <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;{roleName}&rsquo; 역할을 받습니다.</p>
             <div className="g-grid-form">
               <label className="g-field">
                 <span>아이디 (ID) *</span>

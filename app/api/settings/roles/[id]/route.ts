@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { MENU_KEYS, SETTINGS_SUB_KEYS, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, getContext, handleError, type CrmContext } from '@/lib/crm/server/context'
+import { pickDefaultRole } from '@/lib/crm/server/accounts'
 import { assertRoleNameFree, audit, isSystemRole, requireSettingsTab, saveRoleAffiliationVisible, saveRoleMenus, saveRoleSettingsTabs } from '@/lib/crm/server/settings'
 
 type Params = { params: Promise<{ id: string }> }
@@ -52,6 +53,7 @@ export async function DELETE(request: Request, context: Params) {
     const { id } = await context.params
     const role = await loadRole(ctx, id)
     if (isSystemRole(role.code)) throw new HttpError(400, `'${role.name}' 역할은 삭제할 수 없습니다.`)
+    if ((await pickDefaultRole(ctx.db))?.id === role.id) throw new HttpError(400, `'${role.name}' 은(는) 가입역할이라 삭제할 수 없습니다. 상세설정의 '회원가입 시 역할'을 다른 역할로 바꾼 뒤 삭제해 주세요.`)
     if (ctx.roles.some((r) => r.id === role.id) && !ctx.isAdmin) {
       throw new HttpError(400, '내가 가진 역할은 삭제할 수 없습니다.')
     }

@@ -5,7 +5,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, handleError, loadRolesForUsers } from '@/lib/crm/server/context'
 import { loadAffiliationHiddenCodes } from '@/lib/crm/server/settings'
 import { selectUserRows } from '@/lib/crm/server/scope'
-import { createCrmAccount, newAccountSchema } from '@/lib/crm/server/accounts'
+import { createCrmAccount, newAccountSchema, pickDefaultRole } from '@/lib/crm/server/accounts'
 
 // 회원가입(로그인 없이 누구나): 설정 > 아이디 만들기와 같은 내용으로 아이디를 만든다. 가입 즉시 기본 역할(역할설정 표 맨 아래 역할)로 로그인할 수 있다.
 
@@ -24,7 +24,8 @@ export async function GET() {
         people: active.filter((u) => (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).map((u) => ({ id: u.id, name: u.name, loginId: u.login_id }))
       }))
       .filter((g) => g.people.length > 0)
-    return NextResponse.json({ groups }, { headers: { 'Cache-Control': 'no-store' } })
+    const signupRole = (await pickDefaultRole(db))?.name || null
+    return NextResponse.json({ groups, signupRole }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e) {
     return handleError(e, '소속 목록 조회 실패')
   }
