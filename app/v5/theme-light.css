@@ -2151,3 +2151,187 @@
 }
 
 :root[data-theme='light'] .v5 { color-scheme: light; }
+
+
+/* ── 상단 메뉴바: 20% 크게 + 글씨 또렷하게 (블랙·화이트 공통, 2026-11-11) ──
+   손글씨 느낌 제목 글꼴(Jua)과 반투명 배경 때문에 작은 메뉴 글씨가 번져 보여서,
+   메뉴바만 또렷한 고딕 글꼴·진한 글자색·덜 비치는 배경으로 바꾸고 크기를 1.2배로 키운다. */
+:root[data-theme='light'] .v5 .g-navpill,
+:root:not([data-theme='light']) .v5 .g-navpill {
+  gap: 14px;
+  padding: 10px 10px 10px 17px;
+}
+:root[data-theme='light'] .v5 .g-brand,
+:root:not([data-theme='light']) .v5 .g-brand,
+:root[data-theme='light'] .v5 .g-menu a,
+:root:not([data-theme='light']) .v5 .g-menu a,
+:root[data-theme='light'] .v5 .g-user-text strong,
+:root:not([data-theme='light']) .v5 .g-user-text strong,
+:root[data-theme='light'] .v5 .g-theme,
+:root:not([data-theme='light']) .v5 .g-theme,
+:root[data-theme='light'] .v5 .g-navpill .g-btn,
+:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+  font-family: system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+}
+:root[data-theme='light'] .v5 .g-brand,
+:root:not([data-theme='light']) .v5 .g-brand {
+  font-size: 20px;
+  font-weight: 800;
+  gap: 10px;
+}
+:root[data-theme='light'] .v5 .g-brand img,
+:root:not([data-theme='light']) .v5 .g-brand img {
+  width: 34px;
+  height: 34px;
+}
+:root[data-theme='light'] .v5 .g-menu,
+:root:not([data-theme='light']) .v5 .g-menu {
+  gap: 5px;
+}
+:root[data-theme='light'] .v5 .g-menu a,
+:root:not([data-theme='light']) .v5 .g-menu a {
+  padding: 10px 19px;
+  font-size: 18px;
+  font-weight: 600;
+}
+:root[data-theme='light'] .v5 .g-menu a.nav-sub,
+:root:not([data-theme='light']) .v5 .g-menu a.nav-sub {
+  padding: 5px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+:root[data-theme='light'] .v5 .g-avatar,
+:root:not([data-theme='light']) .v5 .g-avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 20px;
+}
+:root[data-theme='light'] .v5 .g-user,
+:root:not([data-theme='light']) .v5 .g-user {
+  gap: 10px;
+}
+:root[data-theme='light'] .v5 .g-user-text,
+:root:not([data-theme='light']) .v5 .g-user-text {
+  max-width: 150px;
+}
+:root[data-theme='light'] .v5 .g-user-text strong,
+:root:not([data-theme='light']) .v5 .g-user-text strong {
+  font-size: 17px;
+  font-weight: 700;
+}
+:root[data-theme='light'] .v5 .g-user-text small,
+:root:not([data-theme='light']) .v5 .g-user-text small {
+  font-size: 13.5px;
+}
+:root[data-theme='light'] .v5 .g-theme,
+:root:not([data-theme='light']) .v5 .g-theme {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+:root[data-theme='light'] .v5 .g-navpill .g-btn,
+:root:not([data-theme='light']) .v5 .g-navpill .g-btn {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 9px 16px;
+}
+/* 화이트: 메뉴 글자를 진하게, 배경은 덜 비치게 */
+:root[data-theme='light'] .v5 .g-navpill {
+  background: rgba(255, 255, 255, 0.9);
+}
+:root[data-theme='light'] .v5 .g-menu a:not(.on):not(.half):not(.nav-sub) {
+  color: #2d2a3e;
+}
+:root[data-theme='light'] .v5 .g-user-text small {
+  color: #5f5a75;
+}
+/* 블랙: 배경은 덜 비치게 */
+:root:not([data-theme='light']) .v5 .g-navpill {
+  background: rgba(24, 24, 28, 0.92);
+}
+@media (max-width: 760px) {
+  :root[data-theme='light'] .v5 .g-brand,
+:root:not([data-theme='light']) .v5 .g-brand {
+    font-size: 18px;
+  }
+  :root[data-theme='light'] .v5 .g-avatar,
+:root:not([data-theme='light']) .v5 .g-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+  :root[data-theme='light'] .v5 .g-menu a,
+:root:not([data-theme='light']) .v5 .g-menu a {
+    padding: 8px 16px;
+    font-size: 16px;
+  }
+  :root[data-theme='light'] .v5 .g-menu a.nav-sub,
+:root:not([data-theme='light']) .v5 .g-menu a.nav-sub {
+    padding: 5px 11px;
+    font-size: 14px;
+  }
+  :root[data-theme='light'] .v5 .g-top .g-theme,
+:root:not([data-theme='light']) .v5 .g-top .g-theme {
+    width: 38px;
+    padding: 0;
+  }
+}
+
+/* 근태체크: 현재상태 / 총 근무시간 */
+:root[data-theme='light'] .v5 .g-att-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 6px;
+  width: 100%;
+  max-width: 520px;
+}
+:root[data-theme='light'] .v5 .g-att-summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+:root[data-theme='light'] .v5 .g-att-summary dt {
+  font-size: 15px;
+  font-weight: 600;
+}
+:root[data-theme='light'] .v5 .g-att-summary dt::after {
+  content: ' :';
+}
+:root[data-theme='light'] .v5 .g-att-summary dd {
+  margin: 0;
+  font-family: var(--head);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+  :root[data-theme='light'] .v5 .g-att-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme='light'] .v5 .g-att-summary > div {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(124, 92, 255, 0.18);
+  color: #2d2a3e;
+}
+:root[data-theme='light'] .v5 .g-att-summary dt {
+  color: #5f5a75;
+}
+:root[data-theme='light'] .v5 .g-att-summary.tone-working dd:first-child,
+:root[data-theme='light'] .v5 .g-att-summary.tone-working > div:first-child dd {
+  color: #2f6fed;
+}
+:root[data-theme='light'] .v5 .g-att-summary.tone-ok > div:first-child dd {
+  color: #1f9d6f;
+}
+:root[data-theme='light'] .v5 .g-att-summary.tone-absent > div:first-child dd {
+  color: #d9435f;
+}

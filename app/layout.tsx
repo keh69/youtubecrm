@@ -1,7 +1,6 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
-import { BUILD_VERSION } from '@/lib/generated-version'
-import { VersionSwitcher } from '@/components/version-switcher'
+import { SiteVersion } from '@/components/site-version'
 import { ImpersonationBar } from '@/components/impersonation-bar'
 import { THEME_BOOT_SCRIPT } from '@/lib/crm/client/theme'
 
@@ -23,7 +22,7 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" data-theme="dark" suppressHydrationWarning>
+    <html lang="ko" data-theme="light" suppressHydrationWarning>
       <head>
         {/* 블랙/화이트 테마: 그리기 전에 저장된 테마를 적용해 깜빡임을 막는다 */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
@@ -31,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <ImpersonationBar />
-        <VersionSwitcher buildVersion={BUILD_VERSION} />
+        <SiteVersion />
       </body>
     </html>
   )

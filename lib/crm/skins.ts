@@ -17,7 +17,8 @@ export const SKINS = [
 ] as const
 
 export type SkinKey = (typeof SKINS)[number]['key']
-export const DEFAULT_SKIN: SkinKey = 'v1'
+// 2026-11-11: 디자인 고르는 버튼을 없애고 모든 사람이 v5(소프트 글래스)를 쓴다.
+export const DEFAULT_SKIN: SkinKey = 'v5'
 
 export function isSkinKey(value: unknown): value is SkinKey {
   return typeof value === 'string' && SKINS.some((s) => s.key === value)

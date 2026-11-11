@@ -1,6 +1,5 @@
 import './theme.css'
 import './theme-light.css'
-import { SiteVersion } from '@/components/site-version'
 
 // v2 · Night Console — 어두운 관제 콘솔. 시안(cyan) 포인트, 숫자는 모두 고정폭(IBM Plex Mono).
 export default function V2Layout({ children }: { children: React.ReactNode }) {
@@ -13,7 +12,6 @@ export default function V2Layout({ children }: { children: React.ReactNode }) {
       />
       <div className="v2">
         {children}
-        <SiteVersion />
       </div>
     </>
   )

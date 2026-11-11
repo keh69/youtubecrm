@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
-import { DEFAULT_SKIN, isSkinKey } from '@/lib/crm/skins'
+import { DEFAULT_SKIN } from '@/lib/crm/skins'
 import { getContext, handleError } from '@/lib/crm/server/context'
 
 export async function GET(request: Request) {
@@ -14,7 +14,8 @@ export async function GET(request: Request) {
       menus: ctx.menus,
       isAdmin: ctx.isAdmin,
       isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE),
-      skin: isSkinKey(ctx.profile.skin) ? ctx.profile.skin : DEFAULT_SKIN
+      // 디자인 고르는 기능을 없애서 저장된 값과 상관없이 모두 기본 디자인(v5)으로 연다.
+      skin: DEFAULT_SKIN
     })
   } catch (e) {
     return handleError(e, '내 정보 조회 실패')

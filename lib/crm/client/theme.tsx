@@ -2,19 +2,19 @@
 
 // 블랙 / 화이트 테마 전환 (v1~v10 공통).
 // <html data-theme="dark|light"> 로 표시하고, 각 스킨의 theme.css(블랙)·theme-light.css(화이트)가 그에 맞춰 칠한다.
-// 고른 테마는 이 브라우저에 저장된다(새로고침·다시 로그인해도 유지). 기본값은 블랙.
+// 고른 테마는 이 브라우저에 저장된다(새로고침·다시 로그인해도 유지). 기본값은 화이트.
 
 import { useCallback, useEffect, useState } from 'react'
 
 export type Theme = 'dark' | 'light'
-export const THEME_STORAGE_KEY = 'ycrm_theme'
+export const THEME_STORAGE_KEY = 'ycrm_theme_v2' // 기본값을 화이트로 바꾸며 키를 새로 했다(이전 'ycrm_theme' 값은 무시)
 
 // 화면이 그려지기 전에 테마를 정해 깜빡임을 막는 스크립트(루트 레이아웃 <head>에 넣는다)
-export const THEME_BOOT_SCRIPT = `try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}`
+export const THEME_BOOT_SCRIPT = `try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}`
 
 function readTheme(): Theme {
-  if (typeof document === 'undefined') return 'dark'
-  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+  if (typeof document === 'undefined') return 'light'
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
 }
 
 function applyTheme(theme: Theme) {
@@ -26,7 +26,7 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('light')
   useEffect(() => {
     setTheme(readTheme())
     const onChange = (e: Event) => setTheme((e as CustomEvent<Theme>).detail)

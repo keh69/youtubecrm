@@ -24,7 +24,7 @@ export function homeFor(me: Pick<Me, 'menus' | 'skin'>) {
 }
 
 // 버전별 (shell) 레이아웃에서 감싼다. 로그인 안 했으면 그 버전의 로그인 화면으로 보낸다.
-// 최고관리자가 아니면 자기가 고른 스킨 주소로 옮겨 준다(같은 메뉴 유지).
+// 다른 디자인 주소로 들어오면 기본 디자인(v5) 주소로 옮겨 준다(같은 메뉴 유지).
 export function CrmSessionProvider({ base, children, loading = null }: { base: string; children: React.ReactNode; loading?: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -54,7 +54,7 @@ export function CrmSessionProvider({ base, children, loading = null }: { base: s
     void load()
   }, [base, load])
 
-  const wrongSkin = Boolean(me && !me.isSuperAdmin && skinOfPath(pathname) !== me.skin)
+  const wrongSkin = Boolean(me && skinOfPath(pathname) !== me.skin)
   useEffect(() => {
     if (me && wrongSkin) router.replace(`${skinBase(me.skin)}${pathWithoutSkin(pathname)}` || '/')
   }, [me, wrongSkin, pathname, router])
@@ -135,7 +135,7 @@ export function RootRedirect({ base }: { base: string }) {
       if (!(await getToken())) return router.replace(`${base}/login`)
       const res = await getMeCached<Me>()
       if (!res.ok) return router.replace(`${base}/login`)
-      router.replace(res.data.isSuperAdmin ? firstAllowedPath(base, res.data.menus) : homeFor(res.data))
+      router.replace(homeFor(res.data))
     })()
   }, [base, router])
   return null

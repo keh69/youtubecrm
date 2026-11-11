@@ -50,69 +50,6 @@ a {
   white-space: nowrap;
 }
 
-/* 버전 전환(비교용) — 모든 버전 공통, 화면 오른쪽 아래 작은 알약 */
-.vswitch {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: rgba(17, 17, 17, 0.82);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  font: 600 11px/1 system-ui, -apple-system, 'Malgun Gothic', sans-serif;
-  backdrop-filter: blur(6px);
-}
-
-.vswitch a {
-  color: #d4d4d4;
-  text-decoration: none;
-  padding: 6px 7px;
-  border-radius: 999px;
-}
-
-.vswitch a:hover {
-  color: #fff;
-}
-
-.vswitch a[aria-current='page'] {
-  background: #fff;
-  color: #111;
-}
-
-.vswitch-build {
-  color: #8a8a8a;
-  padding: 0 8px 0 6px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* 스킨이 11개라 좁은 화면에서는 가로로 밀어서 본다 */
-.vswitch {
-  max-width: calc(100vw - 24px);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-@media (max-width: 640px) {
-  .vswitch {
-    right: 8px;
-    bottom: 8px;
-  }
-  .vswitch-build {
-    display: none;
-  }
-}
-
-@media print {
-  .vswitch {
-    display: none;
-  }
-}
-
 /* 사원 아이디로 들어가 있을 때 오른쪽 위 "관리자로 복귀" (모든 스킨 공통) */
 .imp-bar {
   position: fixed;
@@ -148,13 +85,39 @@ a {
   }
 }
 
-/* 모든 스킨 화면 맨 아래 사이트 버전 꼬리말 — 스킨 글자색을 흐리게 따라간다 */
+/* 사이트 버전: 화면 오른쪽 아래(예전 v1~v11 디자인 버튼 자리)에 항상. 블랙/화이트 테마에 맞춤 */
 .site-version {
-  text-align: center;
-  font-size: 12px;
-  line-height: 1.4;
-  opacity: 0.6;
-  padding: 10px 16px 14px;
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: 600 12px/1.2 system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #3f3f46;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+:root[data-theme='dark'] .site-version {
+  background: rgba(24, 24, 27, 0.92);
+  color: #d4d4d8;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+@media (max-width: 640px) {
+  .site-version {
+    right: 8px;
+    bottom: 8px;
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}
+@media print {
+  .site-version {
+    display: none;
+  }
 }

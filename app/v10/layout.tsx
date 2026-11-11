@@ -1,6 +1,5 @@
 import './theme.css'
 import './theme-light.css'
-import { SiteVersion } from '@/components/site-version'
 
 // v10 · 코드 에디터 — 개발자 에디터(IDE) 화면 느낌.
 // 왼쪽 활동 막대 + 탐색기(파일 트리) 사이드바, 위쪽 파란 상태 막대와 에디터 탭, 어두운 패널.
@@ -15,7 +14,6 @@ export default function V10Layout({ children }: { children: React.ReactNode }) {
       />
       <div className="v10">
         {children}
-        <SiteVersion />
       </div>
     </>
   )

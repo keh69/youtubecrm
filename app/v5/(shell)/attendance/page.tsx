@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow } from '@/lib/crm/client/hooks'
-import { fmtMinutes, fmtTimeSec, fmtYmdShort, statusTone } from '@/lib/crm/client/format'
+import { fmtHourMin, fmtTimeSec, fmtYmdShort, liveWorkedMinutes, statusLabel, statusTone } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 
 const GOAL_MINUTES = 9 * 60
@@ -45,7 +45,7 @@ export default function V5Attendance() {
 
   const t = att.today
   const clock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)
-  const worked = t?.checkInAt ? t.workedMinutes : 0
+  const worked = liveWorkedMinutes(t, now)
   const pct = Math.min(100, Math.round((worked / GOAL_MINUTES) * 100))
 
   return (
@@ -60,9 +60,20 @@ export default function V5Attendance() {
           <strong>{clock}</strong>
         </div>
 
+        <dl className={`g-att-summary tone-${statusTone(t)}`}>
+          <div>
+            <dt>현재상태</dt>
+            <dd>{statusLabel(t)}</dd>
+          </div>
+          <div>
+            <dt>총 근무시간</dt>
+            <dd>{fmtHourMin(worked)}</dd>
+          </div>
+        </dl>
+
         <Ring minutes={worked} active={Boolean(t?.checkInAt)} tone={statusTone(t)}>
           <StatusPill record={t} />
-          <strong className="g-ring-value">{t?.checkInAt ? fmtMinutes(t.workedMinutes) : '-'}</strong>
+          <strong className="g-ring-value">{t?.checkInAt ? fmtHourMin(worked) : '-'}</strong>
           <span className="g-muted g-small">근무 시간 · 9시간 중 {t?.checkInAt ? pct : 0}%</span>
         </Ring>
 
@@ -123,7 +134,7 @@ export default function V5Attendance() {
                     </span>
                   </div>
                   <div className="g-history-side">
-                    <span className="g-history-worked">{d.checkInAt ? fmtMinutes(d.workedMinutes) : '-'}</span>
+                    <span className="g-history-worked">{d.checkInAt ? fmtHourMin(d.workedMinutes) : '-'}</span>
                     <StatusPill record={d} />
                   </div>
                   {d.status === 'absent' && d.absenceReason && <p className="g-history-reason">사유: {d.absenceReason}</p>}

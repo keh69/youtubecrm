@@ -2184,3 +2184,57 @@
     right: 12px;
   }
 }
+
+/* 근태체크: 현재상태 / 총 근무시간 */
+:root:not([data-theme='light']) .v5 .g-att-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 6px;
+  width: 100%;
+  max-width: 520px;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary dt {
+  font-size: 15px;
+  font-weight: 600;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary dt::after {
+  content: ' :';
+}
+:root:not([data-theme='light']) .v5 .g-att-summary dd {
+  margin: 0;
+  font-family: var(--head);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+  :root:not([data-theme='light']) .v5 .g-att-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root:not([data-theme='light']) .v5 .g-att-summary > div {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e8e8ec;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary dt {
+  color: #a1a1aa;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary.tone-working > div:first-child dd {
+  color: #60a5fa;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary.tone-ok > div:first-child dd {
+  color: #4ade80;
+}
+:root:not([data-theme='light']) .v5 .g-att-summary.tone-absent > div:first-child dd {
+  color: #f87171;
+}

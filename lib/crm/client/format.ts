@@ -59,7 +59,7 @@ export function fmtNumber(n: number | null | undefined) {
   return new Intl.NumberFormat('ko-KR').format(Number(n || 0))
 }
 
-// 근태 상태 표시 이름: 미출근 / 근무중 / 퇴근 / 결근. 지각·야근은 여기서 표시하지 않는다
+// 근태 상태 표시 이름: 미출근 / 출근(근무 중) / 퇴근 / 결근. 지각·야근은 여기서 표시하지 않는다
 // (직원 본인 화면에는 지각을 띄우지 않는다. 직원근태 화면은 dayBadges 로 따로 표시).
 export function statusLabel(record: { status: string; checkInAt: string | null; checkOutAt: string | null } | null | undefined) {
   if (!record) return '미출근'
@@ -67,7 +67,20 @@ export function statusLabel(record: { status: string; checkInAt: string | null; 
   if (record.status === 'vacation') return '휴가'
   if (record.status === 'early_leave') return '조퇴'
   if (!record.checkInAt) return '미출근'
-  return record.checkOutAt ? '퇴근' : '근무중'
+  return record.checkOutAt ? '퇴근' : '출근'
+}
+
+// 근태체크 "총 근무시간" 표기: 485분 → 8시간05분, 0분 → 0시간00분
+export function fmtHourMin(minutes: number) {
+  const m = Math.max(0, Math.floor(minutes))
+  return `${Math.floor(m / 60)}시간${String(m % 60).padStart(2, '0')}분`
+}
+
+// 지금까지 일한 분: 근무 중이면 출근 시각부터 지금까지(1분마다 갱신), 퇴근했으면 기록된 값
+export function liveWorkedMinutes(record: { checkInAt: string | null; checkOutAt: string | null; workedMinutes: number; status?: string } | null | undefined, now: Date = new Date()) {
+  if (!record?.checkInAt || record.status === 'absent') return 0
+  if (record.checkOutAt) return record.workedMinutes
+  return Math.max(0, Math.floor((now.getTime() - new Date(record.checkInAt).getTime()) / 60000))
 }
 
 // 상태 색 분류: 버전마다 색은 다르게 칠하되 분류는 같게 쓴다.
