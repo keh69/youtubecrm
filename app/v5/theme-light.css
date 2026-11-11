@@ -2344,3 +2344,16 @@
     margin: -10px 0 -8px;
   }
 }
+
+/* ── v5 글꼴: 모든 글자를 Pretendard Variable 로 (블랙·화이트 공통, 2026-11-11 요청) ──
+   v5 화면 안의 모든 요소와, v5 를 쓰는 동안 화면에 뜨는 공통 부품(사이트 버전, 관리자로 복귀 막대)까지 적용 */
+.v5,
+.v5 *,
+.v5 *::before,
+.v5 *::after,
+html:has(.v5) .site-version,
+html:has(.v5) .site-version *,
+html:has(.v5) .imp-bar,
+html:has(.v5) .imp-bar * {
+  font-family: 'Pretendard Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji' !important;
+}

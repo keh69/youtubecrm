@@ -5,7 +5,8 @@ import './theme-light.css'
 export default function V5Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" precedence="default" />
+      {/* 글꼴: Pretendard Variable (theme-light.css 맨 아래에서 v5 전체에 지정) */}
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" precedence="default" />
       <div className="v5">
         <div className="g-bg" aria-hidden="true">
           <i className="g-blob b1" />
