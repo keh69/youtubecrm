@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin-client'
 import { TABLES } from '@/lib/supabase/tables'
 import { verifyAccessToken } from '@/lib/auth/verify-token'
 import { getBearerToken } from '@/lib/auth/session'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>
 
@@ -193,9 +193,9 @@ export async function loadSettingsSubMap(db: Admin, roleCodes: string[]) {
     .in('role_type', roleCodes)
     .in('menu_key', SETTINGS_SUBS.map((s) => s.menuKey))
   if (error) throw error
-  const hidden = new Set((data || []).filter((r: any) => !r.can_view).map((r: any) => `${r.role_type}|${r.menu_key}`))
+  const stored = new Map((data || []).map((r: any) => [`${r.role_type}|${r.menu_key}`, Boolean(r.can_view)]))
   for (const code of roleCodes) {
-    map.set(code, code === LOCKED_ROLE_CODE ? [...SETTINGS_SUB_KEYS] : SETTINGS_SUBS.filter((s) => !hidden.has(`${code}|${s.menuKey}`)).map((s) => s.key))
+    map.set(code, code === LOCKED_ROLE_CODE ? [...SETTINGS_SUB_KEYS] : resolveSettingsSubs((menuKey) => stored.get(`${code}|${menuKey}`)))
   }
   return map
 }

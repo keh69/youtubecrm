@@ -585,24 +585,77 @@ export function useEmployees() {
     return { ok: true }
   }
 
-  return { items, loading, error, reload, loginAs, busyId, resetPassword, resetId, notice }
+  // 사원 편집(이름·이메일·전화번호)과 삭제(아이디만 지우고 영상·근태 기록은 06 덤프파일에 남긴다)
+  const editEmployee = async (userId: string, body: { name: string; email: string; phone: string }): Promise<ActionResult> => {
+    const res = await api(`/api/settings/employees/${userId}`, { method: 'PATCH', body })
+    if (!res.ok) return { ok: false, error: res.error }
+    setNotice('사원 정보를 저장했습니다.')
+    await reload()
+    return { ok: true }
+  }
+  const deleteEmployee = async (userId: string, label: string): Promise<ActionResult> => {
+    const res = await api(`/api/settings/employees/${userId}`, { method: 'DELETE', body: {} })
+    if (!res.ok) {
+      setError(res.error)
+      return { ok: false, error: res.error }
+    }
+    setError('')
+    setNotice(`${label} 아이디를 삭제했습니다. 근태·영상 기록은 06 덤프파일에 보관됩니다.`)
+    await reload()
+    return { ok: true }
+  }
+
+  return { items, loading, error, reload, loginAs, busyId, resetPassword, resetId, notice, editEmployee, deleteEmployee }
+}
+
+/* ───────────────────────── 06 덤프파일 (삭제된 사원의 기록) ───────────────────────── */
+export type DumpPerson = { id: string; name: string; loginId: string; deletedAt: string }
+export type DumpAttendance = { userId: string; name: string; workDate: string; checkInAt: string | null; checkOutAt: string | null; status: string; absenceReason: string | null; workedMinutes: number }
+export type DumpVideo = { id: string; ownerId: string; ownerName: string; stockName: string; title: string; url: string; publishedAt: string | null; createdAt: string; viewCount: number; durationSeconds: number | null; contentType: string }
+export type DumpData = { people: DumpPerson[]; attendance: DumpAttendance[]; videos: DumpVideo[]; assignees: Array<{ id: string; name: string; loginId: string }> }
+
+export function useDump() {
+  const [data, setData] = useState<DumpData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const reload = useCallback(async () => {
+    const res = await api<DumpData>('/api/settings/dump')
+    if (res.ok) {
+      setData(res.data)
+      setError('')
+    } else setError(res.error)
+    setLoading(false)
+  }, [])
+  useEffect(() => {
+    void reload()
+  }, [reload])
+  // 고른 영상들의 담당자를 바꾼다(바뀐 영상은 그 사원의 영상이 되어 덤프파일에서 빠진다)
+  const reassign = async (videoIds: string[], ownerId: string): Promise<ActionResult & { text?: string }> => {
+    const res = await api<{ count: number; ownerName: string }>('/api/settings/dump', { method: 'POST', body: { videoIds, ownerId } })
+    if (!res.ok) return { ok: false, error: res.error }
+    await reload()
+    return { ok: true, text: `영상 ${res.data.count}개의 담당자를 ${res.data.ownerName}님으로 바꿨습니다.` }
+  }
+  return { data, loading, error, reload, reassign }
 }
 
 // 설정 화면 탭(모든 스킨 공통 순서·번호)
-export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin'
+export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin' | 'dump'
 export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label: string }> = [
   { key: 'employees', no: '01', label: '사원목록' },
   { key: 'assign', no: '02', label: '역할부여' },
   { key: 'roles', no: '03', label: '역할설정' },
   { key: 'create', no: '04', label: '아이디생성' },
-  { key: 'skin', no: '05', label: '스킨' }
+  { key: 'skin', no: '05', label: '스킨' },
+  { key: 'dump', no: '06', label: '덤프파일' }
 ]
 
-// 이 사람이 볼 수 있는 설정 탭(01~05 모두 역할별 권한) + 처음 열 탭
-export function useSettingsTabs() {
+// 이 사람이 볼 수 있는 설정 탭(01~06 모두 역할별 권한) + 처음 열 탭
+// 06 덤프파일은 화면이 있는 스킨(v5)만 opts.dump 로 켠다.
+export function useSettingsTabs(opts: { dump?: boolean } = {}) {
   const { me } = useSession()
   const allowed = new Set<string>(me.settingsTabs || [])
-  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key))
+  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump))
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }
 

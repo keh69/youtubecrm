@@ -2901,3 +2901,65 @@ html:has(.v5) {
   height: 1px !important;
   opacity: 0 !important;
 }
+
+/* ───────── 사원목록 편집·삭제, 06 덤프파일 (2026-11-11) ───────── */
+.v5 .g-btn.danger {
+  background: #fff1f1;
+  color: #d93025;
+  border: 1px solid rgba(217, 48, 37, 0.35);
+}
+.v5 .g-btn.danger:hover:not(:disabled) {
+  background: #ffe2e0;
+}
+:root:not([data-theme='light']) .v5 .g-btn.danger {
+  background: rgba(255, 90, 80, 0.12);
+  color: #ff8a80;
+  border-color: rgba(255, 138, 128, 0.4);
+}
+.v5 .g-emp-edit {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 6px 0;
+}
+.v5 .g-emp-edit-actions {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+.v5 .g-emp-edit-err {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .v5 .g-emp-edit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.v5 .g-dump-bar,
+.v5 .g-dump-reassign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+.v5 .g-dump-reassign {
+  align-items: center;
+  margin: 0 0 12px;
+}
+.v5 .g-dump-who {
+  min-width: 260px;
+  flex: 1 1 260px;
+}
+.v5 .g-dump-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.v5 .g-dump-head .g-h2 {
+  margin: 0;
+}

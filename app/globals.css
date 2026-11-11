@@ -260,7 +260,7 @@ a {
 }
 
 /* 체크박스 → 아이폰 스위치 (v2·v5 처럼 스킨이 자체 스위치를 그린 곳은 제외) */
-:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input) {
+:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(.rsd-chk) {
   -webkit-appearance: none !important;
   appearance: none !important;
   flex: none;
@@ -284,19 +284,19 @@ a {
     background-color 0.26s ease,
     transform 0.2s ease !important;
 }
-:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):checked {
+:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(.rsd-chk):checked {
   background-color: #34c759 !important;
   background-position: 18px 0 !important;
   box-shadow: none !important;
 }
-:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):active:not(:disabled) {
+:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(.rsd-chk):active:not(:disabled) {
   transform: scale(0.94);
 }
-:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):disabled {
+:root input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(.rsd-chk):disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
-:root[data-theme='dark'] input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(:checked) {
+:root[data-theme='dark'] input[type='checkbox']:not(label.tog > input):not(label.g-switch > input):not(.rsd-chk):not(:checked) {
   background-color: #3a3a3c !important;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
 }
@@ -344,7 +344,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 250px;
+  width: 300px;
   padding: 12px;
   border-radius: 14px;
   background: #ffffff;
@@ -383,6 +383,33 @@ a {
   font-variant-numeric: tabular-nums;
   opacity: 0.55;
   margin-right: 2px;
+}
+/* 01 사원목록 오른쪽의 세부 권한(편집·삭제) 체크칸 */
+.rsd-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.rsd-subs {
+  display: inline-flex;
+  gap: 8px;
+}
+.rsd-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rsd-chk {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #007aff;
+  cursor: pointer;
 }
 .rsd-row-sep {
   margin-top: 6px;

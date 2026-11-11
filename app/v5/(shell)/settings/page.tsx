@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
+import { DumpTab } from './dump-tab'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
@@ -13,7 +14,7 @@ import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 export default function V5Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(01~05)
+  const st = useSettingsTabs({ dump: true }) // 역할별로 허용된 설정 하부 메뉴만(01~06)
   const [tabState, setTab] = useState<SettingsTab | null>(null)
   const tab: SettingsTab | null = st.tabs.length === 0 ? null : tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
@@ -70,6 +71,7 @@ export default function V5Settings() {
       {s.data && tab === 'assign' && <AssignTab s={s} report={report} />}
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
+      {tab === 'dump' && <DumpTab />}
       {tab === 'skin' && (
         <section className="g-glass">
           <SkinPicker />
@@ -82,6 +84,38 @@ export default function V5Settings() {
 /* ── 01 사원목록: 내 소속 하부 사원 + 그 아이디로 바로 로그인 ── */
 function EmployeesTab() {
   const emp = useEmployees()
+  const { me } = useSession()
+  // 상세설정에서 이 역할에 켜 준 세부 권한(총 관리자는 항상 전부)
+  const canEdit = (me.settingsTabs || []).includes('employees_edit')
+  const canDelete = (me.settingsTabs || []).includes('employees_delete')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [editErr, setEditErr] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const cols = 7
+  const startEdit = (u: { id: string; name: string; email: string; phone: string }) => {
+    setEditId(u.id)
+    setForm({ name: u.name, email: u.email, phone: u.phone })
+    setEditErr('')
+  }
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editId) return
+    setSaving(true)
+    const res = await emp.editEmployee(editId, form)
+    setSaving(false)
+    if (res.ok) setEditId(null)
+    else setEditErr(res.error || '저장하지 못했습니다.')
+  }
+  const remove = async (u: { id: string; name: string; loginId: string }) => {
+    if (!window.confirm(`${u.name}(${u.loginId}) 아이디를 삭제할까요?
+
+아이디는 더 이상 로그인할 수 없고, 이 사원의 근태·영상 기록은 06 덤프파일에 보관됩니다.`)) return
+    setDeletingId(u.id)
+    await emp.deleteEmployee(u.id, `${u.name}(${u.loginId})`)
+    setDeletingId(null)
+  }
   return (
     <section className="g-glass">
       <div className="copy-form-bar">
@@ -110,7 +144,8 @@ function EmployeesTab() {
             </thead>
             <tbody>
               {emp.items.map((u) => (
-                <tr key={u.id} className={u.active ? '' : 'inactive'}>
+                <Fragment key={u.id}>
+                <tr className={u.active ? '' : 'inactive'}>
                   <td className="nowrap">
                     <strong>{u.loginId}</strong>
                     {!u.active && <span className="g-pill tone-absent g-ml">사용중지</span>}
@@ -134,8 +169,54 @@ function EmployeesTab() {
                     <button className="g-btn primary sm" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
                       {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
                     </button>
+                    {canEdit && (
+                      <>
+                        {' '}
+                        <button className="g-btn ghost sm" disabled={u.isSuperAdmin && !me.isSuperAdmin} aria-expanded={editId === u.id} onClick={() => (editId === u.id ? setEditId(null) : startEdit(u))}>
+                          {editId === u.id ? '닫기' : '편집'}
+                        </button>
+                      </>
+                    )}
+                    {canDelete && (
+                      <>
+                        {' '}
+                        <button className="g-btn danger sm" disabled={u.isSuperAdmin || deletingId !== null} onClick={() => remove(u)}>
+                          {deletingId === u.id ? '삭제 중…' : '삭제'}
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
+                {editId === u.id && (
+                  <tr className="g-edit-row">
+                    <td colSpan={cols}>
+                      <form className="g-emp-edit" onSubmit={saveEdit}>
+                        <label className="g-field">
+                          <span>이름</span>
+                          <input className="g-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                        </label>
+                        <label className="g-field">
+                          <span>이메일 (비우면 그대로)</span>
+                          <input className="g-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                        </label>
+                        <label className="g-field">
+                          <span>전화번호</span>
+                          <input className="g-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" />
+                        </label>
+                        <div className="g-emp-edit-actions">
+                          <button className="g-btn primary sm" disabled={saving}>
+                            {saving ? '저장 중…' : '저장'}
+                          </button>
+                          <button type="button" className="g-btn ghost sm" onClick={() => setEditId(null)}>
+                            취소
+                          </button>
+                        </div>
+                        {editErr && <p className="g-msg error g-emp-edit-err">{editErr}</p>}
+                      </form>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

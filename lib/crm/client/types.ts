@@ -116,6 +116,7 @@ export type SettingsUser = {
 export type SettingsData = {
   roles: SettingsRole[]
   users: SettingsUser[]
+  formerUsers?: Array<{ id: string; name: string }> // 삭제된 사원(소속 칸에 '홍길동(전)'으로 보이게)
   migrated: boolean
   affiliationUserReady: boolean // DB에 소속 아이디 칸이 있는지(210 SQL)
   isSuperAdmin: boolean

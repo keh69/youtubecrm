@@ -1,6 +1,7 @@
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, isMissingSchema, loadRolesForUsers, type CrmContext, type RoleRow } from '@/lib/crm/server/context'
 import { loadAffiliationHiddenCodes, publicEmail } from '@/lib/crm/server/settings'
+import { displayLoginId, formerName, isDeletedRow } from '@/lib/crm/server/deleted'
 
 type Admin = CrmContext['db']
 
@@ -79,10 +80,11 @@ export async function loadVisibleUsers(ctx: CrmContext): Promise<ScopedUser[]> {
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
   const roleName = new Map(allRoles.map((r: RoleRow) => [r.id, r.name]))
   const nameById = new Map(rows.map((u) => [u.id, u.name]))
+  // 삭제된 사원도 기록(영상·근태)이 남아 있으므로 목록에 두되, 이름은 '홍길동(전)'으로 보인다(사용 중 아님).
   const toScoped = (u: any): ScopedUser => ({
     id: u.id,
-    name: u.name,
-    loginId: u.login_id,
+    name: isDeletedRow(u) ? formerName(u.name) : u.name,
+    loginId: displayLoginId(u.login_id),
     affiliationUserId: u.affiliation_user_id || null,
     affiliationRoleId: u.affiliation_role_id || null,
     affiliationName: affiliationNameOf(u, nameById, roleName),
@@ -115,8 +117,9 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
   const nameById = new Map(rows.map((u) => [u.id, u.name]))
   const under = ctx.isSuperAdmin ? new Set(rows.filter((u) => u.id !== ctx.profile.id).map((u) => u.id)) : collectUnder(rows, rolesByUser, ctx.profile.id)
 
+  // 삭제된 사원은 사원목록에 나오지 않는다(기록은 06 덤프파일에서 본다)
   return rows
-    .filter((u) => under.has(u.id))
+    .filter((u) => under.has(u.id) && !isDeletedRow(u))
     .map((u) => ({
       id: u.id,
       name: u.name,

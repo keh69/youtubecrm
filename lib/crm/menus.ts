@@ -43,18 +43,29 @@ export function firstAllowedPath(base: string, menus: string[]) {
 
 // ── 설정 안의 하부 메뉴(01~05) 권한 ──
 // 역할설정 표에서 '설정'이 켜진 역할마다 [상세]로 01~05 를 보이기/안 보이기 할 수 있다.
-// role_menu_permissions 에 menu_key 'settings_<key>' 로 저장(행이 없으면 보임).
+// role_menu_permissions 에 menu_key 'settings_<key>' 로 저장. 행이 없으면 defaultOn 값을 따른다.
+// 설정에 메뉴가 새로 생기면 여기에 한 줄 추가하면 역할설정 > 상세설정에 자동으로 켜기/끄기가 생긴다.
+// parent 가 있는 줄은 탭이 아니라 그 탭 안의 세부 권한(부모 탭이 켜져 있을 때만 의미가 있다).
 export const SETTINGS_SUBS = [
-  { key: 'employees', menuKey: 'settings_employees', no: '01', label: '사원목록' },
-  { key: 'assign', menuKey: 'settings_assign', no: '02', label: '역할부여' },
-  { key: 'roles', menuKey: 'settings_roles', no: '03', label: '역할설정' },
-  { key: 'create', menuKey: 'settings_create', no: '04', label: '아이디생성' },
-  { key: 'skin', menuKey: 'settings_skin', no: '05', label: '스킨' }
+  { key: 'employees', menuKey: 'settings_employees', no: '01', label: '사원목록', parent: null, defaultOn: true },
+  { key: 'employees_edit', menuKey: 'settings_employees_edit', no: '', label: '편집', parent: 'employees', defaultOn: false },
+  { key: 'employees_delete', menuKey: 'settings_employees_delete', no: '', label: '삭제', parent: 'employees', defaultOn: false },
+  { key: 'assign', menuKey: 'settings_assign', no: '02', label: '역할부여', parent: null, defaultOn: true },
+  { key: 'roles', menuKey: 'settings_roles', no: '03', label: '역할설정', parent: null, defaultOn: true },
+  { key: 'create', menuKey: 'settings_create', no: '04', label: '아이디생성', parent: null, defaultOn: true },
+  { key: 'skin', menuKey: 'settings_skin', no: '05', label: '스킨', parent: null, defaultOn: true },
+  { key: 'dump', menuKey: 'settings_dump', no: '06', label: '덤프파일', parent: null, defaultOn: false }
 ] as const
 export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
 export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
 // 역할설정 > 상세설정 > '하부': 켜져 있으면 아이디 생성의 소속 목록에 이 역할의 아이디가 나온다(행이 없으면 켜짐).
 export const AFFILIATION_MENU_KEY = 'aff_member'
+
+// 저장된 값(없으면 기본값)으로 이 역할이 쓸 수 있는 설정 메뉴·세부 권한 목록을 만든다. 부모가 꺼진 세부 권한은 뺀다.
+export function resolveSettingsSubs(stored: (menuKey: string) => boolean | undefined): SettingsSubKey[] {
+  const on = new Set<string>(SETTINGS_SUBS.filter((s) => stored(s.menuKey) ?? s.defaultOn).map((s) => s.key))
+  return SETTINGS_SUBS.filter((s) => on.has(s.key) && (!s.parent || on.has(s.parent))).map((s) => s.key)
+}
 
 export function isSettingsSubKey(v: string): v is SettingsSubKey {
   return (SETTINGS_SUB_KEYS as string[]).includes(v)

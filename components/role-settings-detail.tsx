@@ -63,15 +63,40 @@ export function RoleSettingsDetail({
       {open && (
         <span className="rsd-pop" role="dialog" aria-label={`${role.name} 상세설정`}>
           <span className="rsd-title">{role.name} · 상세설정</span>
-          {settingsOn && SETTINGS_SUBS.map((s) => (
-            <label key={s.key} className="rsd-row">
-              <span>
-                <b>{s.no}</b> {s.label}
-              </span>
-              <input type="checkbox" checked={role.locked || tabs.includes(s.key)} disabled={role.locked} onChange={() => toggle(s.key)} aria-label={`${role.name} - 설정 ${s.no} ${s.label}`} />
-            </label>
-          ))}
-          {settingsOn && <span className="rsd-note">{role.locked ? '총 관리자는 설정 01~05가 항상 전부 보입니다.' : '끄면 이 역할의 설정 화면에서 그 메뉴가 사라집니다.'}</span>}
+          {settingsOn &&
+            SETTINGS_SUBS.filter((s) => !s.parent).map((s) => {
+              const on = role.locked || tabs.includes(s.key)
+              const children = SETTINGS_SUBS.filter((c) => c.parent === s.key)
+              return (
+                <div key={s.key} className="rsd-row">
+                  <label className="rsd-row-label">
+                    <b>{s.no}</b> {s.label}
+                  </label>
+                  <span className="rsd-row-main">
+                    {/* 세부 권한(예: 사원목록의 편집·삭제): 부모가 켜져 있을 때만 보인다. 총 관리자는 항상 전부 켜짐 */}
+                    {children.length > 0 && on && (
+                      <span className="rsd-subs">
+                        {children.map((c) => (
+                          <label key={c.key} className="rsd-sub">
+                            <input
+                              type="checkbox"
+                              className="rsd-chk"
+                              checked={role.locked || tabs.includes(c.key)}
+                              disabled={role.locked}
+                              onChange={() => toggle(c.key)}
+                              aria-label={`${role.name} - 설정 ${s.no} ${s.label} ${c.label} 권한`}
+                            />
+                            {c.label}
+                          </label>
+                        ))}
+                      </span>
+                    )}
+                    <input type="checkbox" checked={on} disabled={role.locked} onChange={() => toggle(s.key)} aria-label={`${role.name} - 설정 ${s.no} ${s.label}`} />
+                  </span>
+                </div>
+              )
+            })}
+          {settingsOn && <span className="rsd-note">{role.locked ? '총 관리자는 설정 메뉴와 세부 권한(편집·삭제)이 항상 전부 켜져 있습니다.' : '끄면 이 역할의 설정 화면에서 그 메뉴가 사라집니다. 사원목록을 켜면 편집·삭제 권한을 따로 고를 수 있습니다.'}</span>}
           {onSaveAffiliation && (
             <>
               <label className="rsd-row rsd-row-sep">

@@ -4,8 +4,9 @@ import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, type CrmContext } from '@/lib/crm/server/context'
-import { assertAffiliationColumn, internalEmailFor } from '@/lib/crm/server/settings'
+import { INTERNAL_EMAIL_DOMAIN, assertAffiliationColumn, internalEmailFor } from '@/lib/crm/server/settings'
 import { assertAffiliationTarget } from '@/lib/crm/server/scope'
+import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/deleted'
 
 type Db = CrmContext['db']
 
@@ -69,4 +70,49 @@ export async function createCrmAccount(db: Db, body: NewAccountInput, grantedBy:
   if (staffRole) await db.from(TABLES.userRoles).insert({ user_id: user.id, role_id: staffRole.id, granted_by: grantedBy })
 
   return user.id as string
+}
+
+/* ───────── 사원 삭제(기록 보존) ─────────
+   직원 정보를 지우면 DB가 그 사람의 영상·근태 기록까지 같이 지우게 되어 있어서, 실제로 지우지 않고 "삭제됨"으로 표시한다.
+   - employment_status = 'suspended' 를 '삭제됨'으로 쓴다(DB 허용값 중 다른 곳에서 쓰지 않는 값).
+   - 아이디 뒤에 ~del~xxxxxx 를 붙여 같은 아이디로 다시 가입할 수 있게 비워 준다(아이디 규칙상 ~ 는 사람이 쓸 수 없다).
+   - 로그인 계정은 이메일을 바꾸고 막아서 다시 들어올 수 없게 한다.
+   - 영상·근태 기록은 그대로 남고, 설정 > 06 덤프파일에서 본다. 이름은 '홍길동(전)'으로 보인다. */
+
+export async function softDeleteAccount(db: Db, target: { id: string; auth_user_id: string; login_id: string }) {
+  const tag = Math.random().toString(36).slice(2, 8)
+  const parkedEmail = `deleted-${target.id}@${INTERNAL_EMAIL_DOMAIN}`
+  const { error: authError } = await db.auth.admin.updateUserById(target.auth_user_id, {
+    email: parkedEmail,
+    email_confirm: true,
+    password: `ycrm:${crypto.randomUUID()}`,
+    ban_duration: '876000h' // 약 100년: 다시 로그인할 수 없다
+  })
+  if (authError) throw new HttpError(400, authError.message)
+  const { error } = await db
+    .from(TABLES.crmUsers)
+    .update({ employment_status: DELETED_STATUS, login_id: `${displayLoginId(target.login_id)}${DEL_MARK}${tag}`, email: parkedEmail, updated_at: new Date().toISOString() })
+    .eq('id', target.id)
+  if (error) throw error
+}
+
+// 사원목록 > 편집: 이름·이메일·전화번호
+export const employeeEditSchema = z.object({
+  name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30, '이름은 30자까지 쓸 수 있어요.'),
+  // 빈칸이면 이메일은 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문)
+  email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional().default(''),
+  phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default('')
+})
+
+export async function updateEmployeeBasics(db: Db, target: { id: string; auth_user_id: string; email: string }, body: z.infer<typeof employeeEditSchema>) {
+  const patch: Record<string, unknown> = { name: body.name, phone: body.phone || null, updated_at: new Date().toISOString() }
+  if (body.email && body.email.toLowerCase() !== String(target.email).toLowerCase()) {
+    const other = await findAuthUserByEmail(db, body.email)
+    if (other && other.id !== target.auth_user_id) throw new HttpError(409, '이미 사용 중인 이메일입니다.')
+    const { error } = await db.auth.admin.updateUserById(target.auth_user_id, { email: body.email, email_confirm: true })
+    if (error) throw new HttpError(400, error.message)
+    patch.email = body.email
+  }
+  const { error } = await db.from(TABLES.crmUsers).update(patch).eq('id', target.id)
+  if (error) throw error
 }

@@ -2,6 +2,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
+import { isDeletedRow } from '@/lib/crm/server/deleted'
 
 export function requireSettings(ctx: CrmContext) {
   requireMenu(ctx, 'settings')
@@ -65,16 +66,18 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
     settingsTabs: subMap.get(r.code) || [],
     affiliationVisible: !affHidden.has(r.code),
-    holderCount: userRows.filter((u) => (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
+    holderCount: userRows.filter((u) => !isDeletedRow(u) && (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)
-    memberCount: userRows.filter((u) =>
-      u.affiliation_user_id
-        ? (rolesByUser.get(u.affiliation_user_id) || []).some((x) => x.id === r.id)
-        : u.affiliation_role_id === r.id
+    memberCount: userRows.filter(
+      (u) =>
+        !isDeletedRow(u) &&
+        (u.affiliation_user_id ? (rolesByUser.get(u.affiliation_user_id) || []).some((x) => x.id === r.id) : u.affiliation_role_id === r.id)
     ).length
   }))
 
-  const users = userRows.map((u) => ({
+  // 삭제된 사원은 역할부여·소속 목록에서 빼고, 이름만 따로 넘긴다(누가 그 사람에게 소속돼 있으면 '홍길동(전)'으로 보이게)
+  const formerUsers = userRows.filter(isDeletedRow).map((u) => ({ id: u.id as string, name: u.name as string }))
+  const users = userRows.filter((u) => !isDeletedRow(u)).map((u) => ({
     id: u.id,
     loginId: u.login_id,
     name: u.name,
@@ -86,7 +89,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     active: u.employment_status === 'active'
   }))
 
-  return { roles, users, migrated, affiliationUserReady, isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE) }
+  return { roles, users, formerUsers, migrated, affiliationUserReady, isSuperAdmin: ctx.roles.some((r) => r.code === LOCKED_ROLE_CODE) }
 }
 
 export async function assertRoleNameFree(ctx: CrmContext, name: string, exceptId?: string) {

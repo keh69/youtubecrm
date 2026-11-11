@@ -16,7 +16,8 @@ const TAB_COLORS: Record<SettingsTab, string> = {
   assign: 'bg-yellow',
   roles: 'bg-mint',
   create: 'bg-pink',
-  skin: 'bg-yellow'
+  skin: 'bg-yellow',
+  dump: 'bg-blue' // 06 덤프파일(이 스킨에는 탭이 나오지 않음, 타입 맞춤용)
 }
 
 export default function V4Settings() {

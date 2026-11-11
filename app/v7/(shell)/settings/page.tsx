@@ -33,7 +33,9 @@ const TAB_QUERY: Record<Tab, { file: string; sql: string }> = {
   skin: {
     file: 'skin.cookie',
     sql: "SET crm.skin = :skin;  -- 이 브라우저에만 저장됩니다"
-  }
+  },
+  // 06 덤프파일(이 스킨에는 탭이 나오지 않음, 타입 맞춤용)
+  dump: { file: 'dump.sql', sql: 'SELECT * FROM deleted_employees;' }
 }
 
 export default function V7Settings() {
