@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { ThemeToggle } from '@/lib/crm/client/theme'
+import { DateInput, dottedToIso } from '@/components/date-input'
 
 type Group = { role: string; people: Array<{ id: string; name: string; loginId: string }> }
-const EMPTY = { loginId: '', password: '', name: '', email: '', phone: '', affiliationUserId: '', website: '' }
+const EMPTY = { loginId: '', password: '', name: '', hireDate: '', email: '', phone: '', affiliationUserId: '', website: '' }
 
-// 회원가입: 설정 > 04 아이디 만들기와 같은 칸(아이디, 비밀번호, 이름, 이메일(선택), 전화번호, 소속).
+// 회원가입: 설정 > 04 아이디 만들기와 같은 칸(아이디, 비밀번호, 이름, 이메일(선택), 전화번호, 소속) + 입사일자.
 // 로그인 없이 열리고, 가입하면 바로 그 아이디로 로그인할 수 있다(기본 역할 '직원').
 export default function V5Signup() {
   const [form, setForm] = useState(EMPTY)
@@ -31,12 +32,17 @@ export default function V5Signup() {
       setError('아이디, 비밀번호, 이름은 꼭 입력해 주세요.')
       return
     }
+    const hireDate = dottedToIso(form.hireDate)
+    if (hireDate === null) {
+      setError('입사일자는 1987.05.27 처럼 적어 주세요.')
+      return
+    }
     setBusy(true)
     try {
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, affiliationUserId: form.affiliationUserId || null })
+        body: JSON.stringify({ ...form, hireDate, affiliationUserId: form.affiliationUserId || null })
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) setError(j.error || '가입하지 못했습니다.')
@@ -84,6 +90,10 @@ export default function V5Signup() {
               <label className="g-field">
                 <span>이름 *</span>
                 <input className="g-input" value={form.name} onChange={(e) => set('name', e.target.value)} autoComplete="name" />
+              </label>
+              <label className="g-field">
+                <span>입사일자</span>
+                <DateInput className="g-input" value={form.hireDate} onChange={(v) => set('hireDate', v)} ariaLabel="입사일자" />
               </label>
               <label className="g-field">
                 <span>이메일 (선택)</span>

@@ -2918,7 +2918,7 @@ html:has(.v5) {
 }
 .v5 .g-emp-edit {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 12px;
   align-items: end;
   padding: 6px 0;
@@ -2962,4 +2962,8 @@ html:has(.v5) {
 }
 .v5 .g-dump-head .g-h2 {
   margin: 0;
+}
+
+.v5 .g-num {
+  font-variant-numeric: tabular-nums;
 }

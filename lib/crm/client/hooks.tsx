@@ -530,6 +530,7 @@ export type Employee = {
   roles: string[]
   active: boolean
   isSuperAdmin: boolean
+  hireDate: string | null // 입사일자 YYYY-MM-DD
 }
 
 // 내 소속 하부 사원 목록 + "이 아이디로 로그인"(성공하면 그 사원의 스킨 첫 화면으로 새로 연다)
@@ -586,7 +587,7 @@ export function useEmployees() {
   }
 
   // 사원 편집(이름·이메일·전화번호)과 삭제(아이디만 지우고 영상·근태 기록은 06 덤프파일에 남긴다)
-  const editEmployee = async (userId: string, body: { name: string; email: string; phone: string }): Promise<ActionResult> => {
+  const editEmployee = async (userId: string, body: { name: string; email: string; phone: string; hireDate: string }): Promise<ActionResult> => {
     const res = await api(`/api/settings/employees/${userId}`, { method: 'PATCH', body })
     if (!res.ok) return { ok: false, error: res.error }
     setNotice('사원 정보를 저장했습니다.')

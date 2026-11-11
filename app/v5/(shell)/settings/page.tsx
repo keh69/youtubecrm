@@ -7,6 +7,7 @@ import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
 import { DumpTab } from './dump-tab'
+import { DateInput, dottedToIso, isoToDotted } from '@/components/date-input'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
@@ -89,21 +90,26 @@ function EmployeesTab() {
   const canEdit = (me.settingsTabs || []).includes('employees_edit')
   const canDelete = (me.settingsTabs || []).includes('employees_delete')
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', hireDate: '' })
   const [editErr, setEditErr] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const cols = 7
-  const startEdit = (u: { id: string; name: string; email: string; phone: string }) => {
+  const cols = 8
+  const startEdit = (u: { id: string; name: string; email: string; phone: string; hireDate: string | null }) => {
     setEditId(u.id)
-    setForm({ name: u.name, email: u.email, phone: u.phone })
+    setForm({ name: u.name, email: u.email, phone: u.phone, hireDate: isoToDotted(u.hireDate) })
     setEditErr('')
   }
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editId) return
+    const hireDate = dottedToIso(form.hireDate)
+    if (hireDate === null) {
+      setEditErr('입사일자는 1987.05.27 처럼 적어 주세요.')
+      return
+    }
     setSaving(true)
-    const res = await emp.editEmployee(editId, form)
+    const res = await emp.editEmployee(editId, { ...form, hireDate })
     setSaving(false)
     if (res.ok) setEditId(null)
     else setEditErr(res.error || '저장하지 못했습니다.')
@@ -135,6 +141,7 @@ function EmployeesTab() {
               <tr>
                 <th>아이디</th>
                 <th>이름</th>
+                <th>입사일자</th>
                 <th>소속</th>
                 <th>역할</th>
                 <th>전화번호</th>
@@ -151,6 +158,7 @@ function EmployeesTab() {
                     {!u.active && <span className="g-pill tone-absent g-ml">사용중지</span>}
                   </td>
                   <td className="nowrap">{u.name}</td>
+                  <td className="nowrap g-num">{isoToDotted(u.hireDate) || '-'}</td>
                   <td>{u.affiliationName || '-'}</td>
                   <td>{u.roles.join(', ') || '-'}</td>
                   <td className="nowrap">{u.phone || '-'}</td>
@@ -194,6 +202,10 @@ function EmployeesTab() {
                         <label className="g-field">
                           <span>이름</span>
                           <input className="g-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                        </label>
+                        <label className="g-field">
+                          <span>입사일자</span>
+                          <DateInput className="g-input" value={form.hireDate} onChange={(v) => setForm({ ...form, hireDate: v })} ariaLabel="입사일자" />
                         </label>
                         <label className="g-field">
                           <span>이메일 (비우면 그대로)</span>

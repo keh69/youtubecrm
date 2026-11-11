@@ -10,6 +10,28 @@ import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/delet
 
 type Db = CrmContext['db']
 
+// 입사일자: 화면에서는 1987.05.27 로 보이고, 서버에는 1987-05-27 로 온다. 비우면 저장하지 않는다.
+export const hireDateSchema = z
+  .union([
+    z.literal(''),
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/,'입사일자는 1987.05.27 처럼 적어 주세요.')
+      .refine((v) => {
+        const d = new Date(`${v}T00:00:00Z`)
+        return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v && v >= '1950-01-01' && v <= `${new Date().getUTCFullYear() + 1}-12-31`
+      }, '입사일자가 올바른 날짜가 아닙니다.')
+  ])
+  .optional()
+  .default('')
+
+export const HIRE_DATE_HINT = 'DB 업데이트가 필요합니다. supabase/sql/simple/220_hire_date.sql 을 Supabase SQL Editor에서 실행해 주세요. (그 전에는 입사일자가 저장되지 않습니다)'
+
+// 입사일자 칸이 아직 없으면(220 SQL 실행 전) 입사일자만 빼고 다시 저장한다
+function isMissingHireDate(error: any) {
+  return /hire_date/.test(String(error?.message || '')) && /column|schema cache|could not find/i.test(String(error?.message || ''))
+}
+
 // 아이디 만들기(설정 > 04)와 회원가입이 같이 쓰는 입력 규칙
 export const newAccountSchema = z.object({
   loginId: z
@@ -25,7 +47,8 @@ export const newAccountSchema = z.object({
   phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
   // 소속: 역할이 있는 아이디(사람)를 고른다. affiliationRoleId 는 예전 스킨 호환용(역할 소속).
   affiliationUserId: z.string().uuid().nullable().optional(),
-  affiliationRoleId: z.string().uuid().nullable().optional()
+  affiliationRoleId: z.string().uuid().nullable().optional(),
+  hireDate: hireDateSchema
 })
 export type NewAccountInput = z.infer<typeof newAccountSchema>
 
@@ -60,7 +83,12 @@ export async function createCrmAccount(db: Db, body: NewAccountInput, grantedBy:
   if (body.affiliationUserId) profile.affiliation_user_id = body.affiliationUserId
   else if (body.affiliationRoleId) profile.affiliation_role_id = body.affiliationRoleId
 
-  const { data: user, error: profileError } = await db.from(TABLES.crmUsers).insert(profile).select('id').single()
+  if (body.hireDate) profile.hire_date = body.hireDate
+  let { data: user, error: profileError } = await db.from(TABLES.crmUsers).insert(profile).select('id').single()
+  if (profileError && body.hireDate && isMissingHireDate(profileError)) {
+    delete profile.hire_date
+    ;({ data: user, error: profileError } = await db.from(TABLES.crmUsers).insert(profile).select('id').single())
+  }
   if (profileError || !user) {
     await db.auth.admin.deleteUser(created.user.id)
     throw profileError || new Error('프로필 생성 실패')
@@ -101,7 +129,8 @@ export const employeeEditSchema = z.object({
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30, '이름은 30자까지 쓸 수 있어요.'),
   // 빈칸이면 이메일은 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문)
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional().default(''),
-  phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default('')
+  phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
+  hireDate: hireDateSchema
 })
 
 export async function updateEmployeeBasics(db: Db, target: { id: string; auth_user_id: string; email: string }, body: z.infer<typeof employeeEditSchema>) {
@@ -113,6 +142,8 @@ export async function updateEmployeeBasics(db: Db, target: { id: string; auth_us
     if (error) throw new HttpError(400, error.message)
     patch.email = body.email
   }
+  patch.hire_date = body.hireDate || null
   const { error } = await db.from(TABLES.crmUsers).update(patch).eq('id', target.id)
+  if (error && isMissingHireDate(error)) throw new HttpError(409, HIRE_DATE_HINT)
   if (error) throw error
 }
