@@ -66,7 +66,7 @@ export default function SetupPage() {
               <input value={form.loginId} onChange={set('loginId')} autoComplete="username" />
             </label>
             <label className="field">
-              <span>비밀번호 (6자 이상)</span>
+              <span>비밀번호 (4자 이상)</span>
               <input type="password" value={form.password} onChange={set('password')} autoComplete="new-password" />
             </label>
             <label className="field">

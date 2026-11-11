@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { passwordSchema, toAuthPassword } from '@/lib/crm/server/password'
 import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
@@ -13,7 +14,7 @@ const bodySchema = z.object({
     .min(2, '아이디는 2자 이상이어야 합니다.')
     .max(30, '아이디는 30자까지 쓸 수 있어요.')
     .regex(/^[A-Za-z0-9._-]+$/, '아이디는 영문, 숫자, . _ - 만 쓸 수 있어요.'),
-  password: z.string().min(6, '비밀번호는 6자 이상이어야 합니다.').max(72, '비밀번호가 너무 길어요.'),
+  password: passwordSchema,
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30, '이름은 30자까지 쓸 수 있어요.'),
   email: z.string().trim().email('이메일 형식이 올바르지 않습니다.'),
   phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
 
     const { data: created, error: authError } = await ctx.db.auth.admin.createUser({
       email: body.email,
-      password: body.password,
+      password: toAuthPassword(body.password),
       email_confirm: true,
       user_metadata: { login_id: body.loginId, display_name: body.name }
     })

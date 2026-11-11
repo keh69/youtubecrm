@@ -78,18 +78,22 @@ export function useMenuGuard(menu: MenuKey) {
   return allowed
 }
 
-// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시
-export function useNav() {
+export type NavItem = { key: MenuKey | 'me'; label: string; path: string; description: string; href: string; active: boolean }
+
+// 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '내정보'는 누구에게나 보인다.
+export function useNav(): NavItem[] {
   const { me, base } = useSession()
   const pathname = usePathname()
-  return useMemo(
-    () =>
-      MENUS.filter((m) => me.menus.includes(m.key)).map((m) => {
-        const href = `${base}${m.path}`
-        return { ...m, href, active: pathname === href || pathname.startsWith(`${href}/`) }
-      }),
-    [base, me.menus, pathname]
-  )
+  return useMemo(() => {
+    const items: Array<Omit<NavItem, 'href' | 'active'>> = [
+      ...MENUS.filter((m) => me.menus.includes(m.key)),
+      { key: 'me', label: '내정보', path: '/me', description: '내 정보 확인, 비밀번호 변경' }
+    ]
+    return items.map((m) => {
+      const href = `${base}${m.path}`
+      return { ...m, href, active: pathname === href || pathname.startsWith(`${href}/`) }
+    })
+  }, [base, me.menus, pathname])
 }
 
 // 버전 루트(/ 또는 /v2 ...) → 볼 수 있는 첫 메뉴로
@@ -406,6 +410,45 @@ export function useSettings() {
 }
 
 export const EMPTY_ACCOUNT: NewAccount = { loginId: '', password: '', name: '', email: '', phone: '', affiliationRoleId: null }
+
+/* ───────────────────────── 내정보 (비밀번호 변경) ───────────────────────── */
+
+// 내정보 화면 주소: 메뉴 권한과 상관없이 로그인한 사람은 누구나 들어갈 수 있다.
+export const MY_PAGE_PATH = '/me'
+
+export function useChangePassword() {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+
+  const submit = async (e?: React.FormEvent): Promise<ActionResult> => {
+    e?.preventDefault()
+    if (busy) return { ok: false }
+    setDone(false)
+    const fail = (msg: string) => {
+      setError(msg)
+      return { ok: false, error: msg }
+    }
+    if (!current) return fail('현재 비밀번호를 입력해 주세요.')
+    if (next.length < 4) return fail('새 비밀번호는 4자 이상이어야 합니다.')
+    if (next !== confirm) return fail('새 비밀번호 확인이 일치하지 않습니다.')
+    setBusy(true)
+    setError('')
+    const res = await api('/api/me/password', { method: 'POST', body: { currentPassword: current, newPassword: next } })
+    setBusy(false)
+    if (!res.ok) return fail(res.error)
+    setCurrent('')
+    setNext('')
+    setConfirm('')
+    setDone(true)
+    return { ok: true }
+  }
+
+  return { current, setCurrent, next, setNext, confirm, setConfirm, busy, error, done, submit }
+}
 
 /* ───────────────────────── 버전 전환 (비교용) ───────────────────────── */
 

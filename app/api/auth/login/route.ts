@@ -6,6 +6,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/supabase/config'
 import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { handleError } from '@/lib/crm/server/context'
+import { toAuthPassword } from '@/lib/crm/server/password'
 
 // 아이디 + 비밀번호 로그인. 아이디→이메일 변환을 서버 안에서만 해서
 // 아이디로 이메일을 알아내는 통로(예전 resolve-login)를 없앴다.
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     if (!user?.email) return NextResponse.json({ error: FAIL }, { status: 401 })
 
     const anon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
-    const { data, error } = await anon.auth.signInWithPassword({ email: user.email, password: body.password })
+    const { data, error } = await anon.auth.signInWithPassword({ email: user.email, password: toAuthPassword(body.password) })
     if (error || !data.session) return NextResponse.json({ error: FAIL }, { status: 401 })
 
     if (user.employment_status !== 'active') {

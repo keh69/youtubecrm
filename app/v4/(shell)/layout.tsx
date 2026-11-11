@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 import type { MenuKey } from '@/lib/crm/menus'
 
-const NAV_ICON: Record<MenuKey, string> = {
+const NAV_ICON: Record<MenuKey | 'me', string> = {
   attendance: '⏰',
   attendance_team: '👥',
   videos: '🎬',
   stats: '📊',
-  settings: '⚙'
+  settings: '⚙',
+  me: '👤'
 }
 
 function Shell({ children }: { children: React.ReactNode }) {

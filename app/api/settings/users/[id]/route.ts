@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { passwordSchema, toAuthPassword } from '@/lib/crm/server/password'
 import { TABLES } from '@/lib/supabase/tables'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
@@ -12,7 +13,7 @@ const patchSchema = z.object({
   email: z.string().trim().email('이메일 형식이 올바르지 않습니다.').optional(),
   phone: z.string().trim().max(20).regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional(),
   affiliationRoleId: z.string().uuid().nullable().optional(),
-  password: z.string().min(6, '비밀번호는 6자 이상이어야 합니다.').max(72).optional(),
+  password: passwordSchema.optional(),
   active: z.boolean().optional()
 })
 
@@ -41,7 +42,7 @@ export async function PATCH(request: Request, context: Params) {
       authPatch.email = body.email
       authPatch.email_confirm = true
     }
-    if (body.password) authPatch.password = body.password
+    if (body.password) authPatch.password = toAuthPassword(body.password)
     if (Object.keys(authPatch).length) {
       const { error } = await ctx.db.auth.admin.updateUserById(target.auth_user_id, authPatch)
       if (error) throw new HttpError(400, error.message)

@@ -349,7 +349,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
         </label>
         <label className="field">
           <span>비밀번호 (PW) *</span>
-          <input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" placeholder="6자 이상" />
+          <input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" placeholder="4자 이상" />
         </label>
         <label className="field">
           <span>이름 *</span>
