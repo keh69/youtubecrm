@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
-import { SUPABASE_URL } from '@/lib/supabase/config'
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/supabase/config'
 
 // supabase.auth.getUser(token)는 호출마다 Supabase Auth 서버로 네트워크
 // 왕복을 한다. 이 프로젝트는 비대칭키(ES256)로 로그인 토큰을 서명하므로,
@@ -24,6 +24,22 @@ export async function verifyAccessToken(accessToken: string): Promise<VerifiedTo
     })
     if (!payload.sub) return null
     return { sub: payload.sub, email: typeof payload.email === 'string' ? payload.email : undefined }
+  } catch {
+    // 공개키(JWKS)로 확인이 안 되는 프로젝트(예전 방식 HS256 서명)를 위한 대비:
+    // Supabase 로그인 서버에 직접 물어본다(요청마다 왕복 1번 더 들지만 확실하다).
+    return verifyWithAuthServer(accessToken)
+  }
+}
+
+async function verifyWithAuthServer(accessToken: string): Promise<VerifiedTokenClaims | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${accessToken}`, apikey: SUPABASE_ANON_KEY },
+      cache: 'no-store'
+    })
+    if (!res.ok) return null
+    const user = (await res.json()) as { id?: string; email?: string }
+    return user.id ? { sub: user.id, email: user.email } : null
   } catch {
     return null
   }
