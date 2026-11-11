@@ -18,6 +18,8 @@ export async function GET(request: Request) {
       settingsTabs: ctx.settingsTabs, // 설정 안에서 보이는 하부 메뉴(01~07)
       canEditAttendance: ctx.canEditAttendance, // 근태통계 달력에서 근태 수정·삭제 가능
       canSeeAllStats: ctx.canSeeAllStats, // 영상통계에서 전 직원 영상을 본다
+      canEditVideos: ctx.canEditVideos, // 영상등록 수정권한
+      canDeleteVideos: ctx.canDeleteVideos, // 영상등록 삭제권한
       workHours: getWorkHours(), // 출퇴근 기준시간(지각·야근)
       // 디자인 고르는 기능을 없애서 저장된 값과 상관없이 모두 기본 디자인(v5)으로 연다.
       skin: DEFAULT_SKIN

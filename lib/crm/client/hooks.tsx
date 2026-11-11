@@ -520,6 +520,13 @@ export function useSettings() {
       if (!res.ok) await reload()
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },
+    // 영상등록 '수정권한'·'삭제권한' 켜기/끄기
+    saveRoleVideoPerm: async (id: string, field: 'videosEdit' | 'videosDelete', on: boolean): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, [field]: on } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { [field]: on } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
     // 영상통계 '관리자' 켜기/끄기
     saveRoleStatsAll: async (id: string, statsAll: boolean): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, statsAll } : r)) } : d))

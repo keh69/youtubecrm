@@ -8,7 +8,7 @@ import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { AttendanceEditToggle, StatsAllToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl, WorkHoursPanel } from '@/components/settings-extra'
+import { AttendanceEditToggle, StatsAllToggle, VideoPermToggles, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl, WorkHoursPanel } from '@/components/settings-extra'
 import { isoToDotted } from '@/components/date-input'
 
 type Msg = { tone: 'ok' | 'error'; text: string } | null
@@ -377,6 +377,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                       {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
                       {m.key === 'stats' && <StatsAllToggle role={r} s={s} report={report} />}
+                      {m.key === 'videos' && <VideoPermToggles role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num">

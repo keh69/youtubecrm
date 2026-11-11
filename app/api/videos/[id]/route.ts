@@ -10,7 +10,10 @@ const patchSchema = z.object({
   stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.')
 })
 
-async function loadOwned(ctx: CrmContext, id: string) {
+// 역할설정 '영상등록' 옆 '수정권한'(종목명 수정)·'삭제권한'(삭제)이 켜진 사람만. 그 위에 본인 영상이거나 관리자급이어야 한다.
+async function loadOwned(ctx: CrmContext, id: string, kind: 'edit' | 'delete') {
+  if (kind === 'edit' && !ctx.canEditVideos) throw new HttpError(403, '영상을 수정할 권한이 없습니다. 관리자에게 역할설정의 영상등록 \'수정권한\'을 켜 달라고 요청해 주세요.')
+  if (kind === 'delete' && !ctx.canDeleteVideos) throw new HttpError(403, '영상을 삭제할 권한이 없습니다. 관리자에게 역할설정의 영상등록 \'삭제권한\'을 켜 달라고 요청해 주세요.')
   if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, '잘못된 영상입니다.')
   const { data } = await ctx.db.from(TABLES.videos).select('id, primary_owner_user_id').eq('id', id).maybeSingle()
   if (!data) throw new HttpError(404, '영상을 찾을 수 없습니다.')
@@ -25,7 +28,7 @@ export async function PATCH(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
     const { id } = await context.params
-    await loadOwned(ctx, id)
+    await loadOwned(ctx, id, 'edit')
     const body = patchSchema.parse(await request.json())
     const { data, error } = await ctx.db
       .from(TABLES.videos)
@@ -45,7 +48,7 @@ export async function DELETE(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
     const { id } = await context.params
-    await loadOwned(ctx, id)
+    await loadOwned(ctx, id, 'delete')
     const { error } = await ctx.db.from(TABLES.videos).delete().eq('id', id)
     if (error) throw error
     await ctx.db

@@ -102,7 +102,7 @@ export default function V5Videos() {
       </section>
 
       <section className="g-glass">
-        <h2 className="g-h2">내가 최근 등록한 영상</h2>
+        <h2 className="g-h2">최근 등록 영상</h2>
         {listMsg && <p className="g-msg ok">{listMsg}</p>}
         {reg.recentLoading ? (
           <Loading />
@@ -143,22 +143,31 @@ export default function V5Videos() {
                     </div>
                   ) : (
                     <div className="g-meta-chips">
-                      {formatTag(v)}
-                      <span className="g-chip accent">{v.stockName}</span>
-                      <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
+                      {/* 순서: 업로드일자 · 종목명 · 영상길이 · 롱/숏폼 · 조회수 · 등록자 */}
                       <span className="g-chip">업로드 {fmtDate(v.publishedAt)}</span>
+                      <span className="g-chip accent">{v.stockName}</span>
+                      <span className="g-chip">{fmtDuration(v.durationSeconds)}</span>
+                      {formatTag(v)}
+                      <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
                       <span className="g-chip">등록자 {v.ownerName || me.name}</span>
                     </div>
                   )}
                 </div>
-                <div className="g-vlist-actions">
-                  <button className="g-btn ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                    종목명 수정
-                  </button>
-                  <button className="g-btn soft-danger sm" onClick={() => remove(v.id, v.title)}>
-                    삭제
-                  </button>
-                </div>
+                {/* 역할설정의 영상등록 '수정권한'·'삭제권한'이 켜진 사람에게만 버튼이 보인다 */}
+                {(me.canEditVideos || me.canDeleteVideos) && (
+                  <div className="g-vlist-actions">
+                    {me.canEditVideos && (
+                      <button className="g-btn ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
+                        수정
+                      </button>
+                    )}
+                    {me.canDeleteVideos && (
+                      <button className="g-btn soft-danger sm" onClick={() => remove(v.id, v.title)}>
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

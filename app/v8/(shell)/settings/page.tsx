@@ -5,7 +5,7 @@ import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { AttendanceEditToggle, StatsAllToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl, WorkHoursPanel } from '@/components/settings-extra'
+import { AttendanceEditToggle, StatsAllToggle, VideoPermToggles, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl, WorkHoursPanel } from '@/components/settings-extra'
 import { isoToDotted } from '@/components/date-input'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useDragReorder, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
@@ -386,6 +386,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                       {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
                       {m.key === 'stats' && <StatsAllToggle role={r} s={s} report={report} />}
+                      {m.key === 'videos' && <VideoPermToggles role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num">

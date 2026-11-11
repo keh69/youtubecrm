@@ -500,10 +500,10 @@ export function AttendanceEditToggle({ role, s, report }: { role: NonNullable<S[
         className="rsd-chk"
         checked={on}
         disabled={role.locked}
-        onChange={async () => report(await s.saveRoleAttendanceEdit(role.id, !on), `'${role.name}' 근태 수정 권한을 ${on ? '껐' : '켰'}습니다.`)}
-        aria-label={`${role.name} - 근태통계 수정가능`}
+        onChange={async () => report(await s.saveRoleAttendanceEdit(role.id, !on), `'${role.name}' 근태 수정권한을 ${on ? '껐' : '켰'}습니다.`)}
+        aria-label={`${role.name} - 근태통계 수정권한`}
       />
-      수정가능
+      수정권한
     </label>
   )
 }
@@ -565,5 +565,32 @@ export function WorkHoursPanel() {
       </div>
       {msg && <p className={msg.ok ? 'xs-ok' : 'xs-err'}>{msg.text}</p>}
     </form>
+  )
+}
+
+/* ───────── 역할설정 표: '영상등록' 스위치 옆 '수정권한'·'삭제권한' 체크칸 ───────── */
+// 수정권한: 등록한 영상의 종목명을 고칠 수 있다. 삭제권한: 등록한 영상을 지울 수 있다. 영상등록이 켜진 역할에만 보인다.
+export function VideoPermToggles({ role, s, report }: { role: NonNullable<S['data']>['roles'][number]; s: S; report: Report }) {
+  if (!role.menus.includes('videos')) return null
+  const items: Array<{ field: 'videosEdit' | 'videosDelete'; label: string; on: boolean; tip: string }> = [
+    { field: 'videosEdit', label: '수정권한', on: Boolean(role.locked || role.videosEdit), tip: '켜면 등록한 영상의 종목명을 고칠 수 있습니다' },
+    { field: 'videosDelete', label: '삭제권한', on: Boolean(role.locked || role.videosDelete), tip: '켜면 등록한 영상을 지울 수 있습니다' }
+  ]
+  return (
+    <>
+      {items.map((it) => (
+        <label key={it.field} className="xs-att-edit" title={it.tip}>
+          <input
+            type="checkbox"
+            className="rsd-chk"
+            checked={it.on}
+            disabled={role.locked}
+            onChange={async () => report(await s.saveRoleVideoPerm(role.id, it.field, !it.on), `'${role.name}' 영상 ${it.label}을 ${it.on ? '껐' : '켰'}습니다.`)}
+            aria-label={`${role.name} - 영상등록 ${it.label}`}
+          />
+          {it.label}
+        </label>
+      ))}
+    </>
   )
 }

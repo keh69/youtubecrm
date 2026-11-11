@@ -68,6 +68,9 @@ export const SIGNUP_ROLE_MENU_KEY = 'signup_role'
 export const ATTENDANCE_EDIT_MENU_KEY = 'attendance_team_edit'
 // 역할설정 표 '영상통계' 옆 '관리자': 켜진 역할은 영상통계에서 모든 계정의 영상을 본다. 꺼져 있으면 나와 내 소속 하부의 영상만(행이 없으면 꺼짐).
 export const STATS_ALL_MENU_KEY = 'stats_all'
+// 역할설정 표 '영상등록' 옆 '수정권한'·'삭제권한': 켜진 역할만 등록한 영상의 종목명 등을 고치거나 영상을 지울 수 있다(행이 없으면 꺼짐).
+export const VIDEOS_EDIT_MENU_KEY = 'videos_edit'
+export const VIDEOS_DELETE_MENU_KEY = 'videos_delete'
 
 // 저장된 값(없으면 기본값)으로 이 역할이 쓸 수 있는 설정 메뉴·세부 권한 목록을 만든다. 부모가 꺼진 세부 권한은 뺀다.
 export function resolveSettingsSubs(stored: (menuKey: string) => boolean | undefined): SettingsSubKey[] {
