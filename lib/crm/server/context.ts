@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin-client'
 import { TABLES } from '@/lib/supabase/tables'
 import { verifyAccessToken } from '@/lib/auth/verify-token'
 import { getBearerToken } from '@/lib/auth/session'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, defaultMenusForRole, isMenuKey, type MenuKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>
 
@@ -28,6 +28,7 @@ export type CrmContext = {
   menus: MenuKey[]
   isAdmin: boolean
   isSuperAdmin: boolean // 총관리자(super_admin): 모든 직원 데이터를 본다
+  settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~04)
 }
 
 // 화면에 보여줄 수 있는 에러. 이 클래스로 던지면 status 와 메시지가 그대로 응답된다.
@@ -162,9 +163,39 @@ export async function getContext(request: Request): Promise<CrmContext> {
 
   const isSuperAdmin = roles.some((r) => r.code === LOCKED_ROLE_CODE)
 
-  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin }
+  // 설정 하부 메뉴: '설정'이 켜진 역할들의 허용 하부 메뉴 합집합(행이 없으면 허용). 총관리자는 전부.
+  let settingsTabs: SettingsSubKey[] = []
+  if (menus.has('settings')) {
+    if (isSuperAdmin) settingsTabs = [...SETTINGS_SUB_KEYS]
+    else {
+      const codes = roles.filter((r) => menuMap.get(r.code)?.has('settings')).map((r) => r.code)
+      const subMap = await loadSettingsSubMap(db, codes)
+      const set = new Set<SettingsSubKey>()
+      for (const c of codes) for (const k of subMap.get(c) || []) set.add(k)
+      settingsTabs = SETTINGS_SUB_KEYS.filter((k) => set.has(k))
+    }
+  }
+
+  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin, settingsTabs }
 }
 
 export function requireMenu(ctx: CrmContext, key: MenuKey) {
   if (!ctx.menus.includes(key)) throw new HttpError(403, '이 메뉴를 사용할 권한이 없습니다.')
+}
+
+// 역할 code → 설정 안에서 보이는 하부 메뉴(01~04). 저장된 행이 없으면 보임, can_view=false 면 숨김.
+export async function loadSettingsSubMap(db: Admin, roleCodes: string[]) {
+  const map = new Map<string, SettingsSubKey[]>()
+  if (roleCodes.length === 0) return map
+  const { data, error } = await db
+    .from(TABLES.roleMenuPermissions)
+    .select('role_type, menu_key, can_view')
+    .in('role_type', roleCodes)
+    .in('menu_key', SETTINGS_SUBS.map((s) => s.menuKey))
+  if (error) throw error
+  const hidden = new Set((data || []).filter((r: any) => !r.can_view).map((r: any) => `${r.role_type}|${r.menu_key}`))
+  for (const code of roleCodes) {
+    map.set(code, code === LOCKED_ROLE_CODE ? [...SETTINGS_SUB_KEYS] : SETTINGS_SUBS.filter((s) => !hidden.has(`${code}|${s.menuKey}`)).map((s) => s.key))
+  }
+  return map
 }

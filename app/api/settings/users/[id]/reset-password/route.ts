@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { audit, requireSettings } from '@/lib/crm/server/settings'
+import { audit, requireSettingsTab } from '@/lib/crm/server/settings'
 import { loadSubordinates } from '@/lib/crm/server/scope'
 import { toAuthPassword } from '@/lib/crm/server/password'
 
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function POST(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'employees')
     const { id } = await context.params
     if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, '잘못된 사원입니다.')
 

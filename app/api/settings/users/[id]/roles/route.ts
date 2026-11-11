@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettings } from '@/lib/crm/server/settings'
+import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettingsTab } from '@/lib/crm/server/settings'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -13,7 +13,7 @@ const bodySchema = z.object({ roleIds: z.array(z.string().uuid()).max(50) })
 export async function PUT(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'assign')
     const { id } = await context.params
     if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, '잘못된 계정입니다.')
     const body = bodySchema.parse(await request.json())

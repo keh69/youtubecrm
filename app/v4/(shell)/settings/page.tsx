@@ -2,11 +2,12 @@
 
 import { Fragment, useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
-import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
+import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useEmployees, useMenuGuard, useSession, useSettings, useSettingsTabs, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { SkinPicker } from '@/components/skin-picker'
 import { BlockTitle, Empty, Loading, Msg, PageHead, Sticker, type MsgState } from '../../_components/ui'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
+import { RoleSettingsDetail } from '@/components/role-settings-detail'
 
 // 탭마다 켜졌을 때의 색 (01 사원목록 · 02 역할부여 · 03 역할설정 · 04 아이디생성 · 05 스킨)
 const TAB_COLORS: Record<SettingsTab, string> = {
@@ -20,7 +21,9 @@ const TAB_COLORS: Record<SettingsTab, string> = {
 export default function V4Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const [tab, setTab] = useState<SettingsTab>('employees')
+  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
+  const [tabState, setTab] = useState<SettingsTab | null>(null)
+  const tab: SettingsTab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<MsgState>(null)
   if (!allowed) return null
 
@@ -40,7 +43,7 @@ export default function V4Settings() {
       )}
 
       <div className="tabs" role="tablist">
-        {SETTINGS_TABS.map((t) => (
+        {st.tabs.map((t) => (
           <button
             key={t.key}
             role="tab"
@@ -394,7 +397,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                     )}
                   </td>
                   {MENUS.map((m) => (
-                    <td key={m.key} className="center">
+                    <td key={m.key} className="center" style={m.key === 'settings' ? { whiteSpace: 'nowrap' } : undefined}>
                       <input
                         type="checkbox"
                         className="tog"
@@ -403,6 +406,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         onChange={() => toggle(r, m.key)}
                         aria-label={`${r.name} - ${m.label}`}
                       />
+                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} />}
                     </td>
                   ))}
                   <td className="num strong">

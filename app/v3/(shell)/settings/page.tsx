@@ -2,16 +2,19 @@
 
 import { Fragment, useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
-import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
+import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useEmployees, useMenuGuard, useSession, useSettings, useSettingsTabs, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { SkinPicker } from '@/components/skin-picker'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
+import { RoleSettingsDetail } from '@/components/role-settings-detail'
 
 export default function V3Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const [tab, setTab] = useState<SettingsTab>('employees')
+  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
+  const [tabState, setTab] = useState<SettingsTab | null>(null)
+  const tab: SettingsTab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
 
@@ -36,7 +39,7 @@ export default function V3Settings() {
       )}
 
       <div className="j-tabs" role="tablist" aria-label="설정 항목">
-        {SETTINGS_TABS.map((t, i) => (
+        {st.tabs.map((t, i) => (
           <Fragment key={t.key}>
             {i > 0 && <span className="j-tab-sep" aria-hidden="true">|</span>}
             <button
@@ -377,7 +380,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                     )}
                   </td>
                   {MENUS.map((m) => (
-                    <td key={m.key} className="center">
+                    <td key={m.key} className="center" style={m.key === 'settings' ? { whiteSpace: 'nowrap' } : undefined}>
                       <input
                         type="checkbox"
                         className="j-check"
@@ -386,6 +389,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         onChange={() => toggle(r, m.key)}
                         aria-label={`${r.name} - ${m.label}`}
                       />
+                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} />}
                     </td>
                   ))}
                   <td className="num">

@@ -1,9 +1,27 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, type MenuKey } from '@/lib/crm/menus'
-import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, requireMenu, type CrmContext } from '@/lib/crm/server/context'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { HttpError, MIGRATION_HINT, isMissingSchema, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 
 export function requireSettings(ctx: CrmContext) {
   requireMenu(ctx, 'settings')
+}
+
+// 설정 안의 하부 메뉴(01 사원목록, 02 역할부여, 03 역할설정, 04 아이디생성) 권한 검사
+export function requireSettingsTab(ctx: CrmContext, tab: SettingsSubKey) {
+  requireSettings(ctx)
+  if (!ctx.settingsTabs.includes(tab)) {
+    const label = SETTINGS_SUBS.find((s) => s.key === tab)?.label || tab
+    throw new HttpError(403, `설정의 '${label}' 메뉴를 사용할 권한이 없습니다.`)
+  }
+}
+
+// 역할 하나의 설정 하부 메뉴 보이기/안 보이기 저장
+export async function saveRoleSettingsTabs(ctx: CrmContext, code: string, tabs: SettingsSubKey[]) {
+  if (code === LOCKED_ROLE_CODE) throw new HttpError(400, '총 관리자는 항상 설정 메뉴 전부를 봅니다(변경 불가).')
+  const now = new Date().toISOString()
+  const rows = SETTINGS_SUBS.map((s) => ({ role_type: code, menu_key: s.menuKey, can_view: tabs.includes(s.key), updated_at: now }))
+  const { error } = await ctx.db.from(TABLES.roleMenuPermissions).upsert(rows, { onConflict: 'role_type,menu_key' })
+  if (error) throw error
 }
 
 export function isSystemRole(code: string) {
@@ -33,6 +51,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
 
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, userRows)
   const menuMap = await loadMenuMap(db, allRoles.map((r) => r.code))
+  const subMap = await loadSettingsSubMap(db, allRoles.map((r) => r.code))
 
   const roles = allRoles.map((r) => ({
     id: r.id,
@@ -41,6 +60,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     system: isSystemRole(r.code),
     locked: r.code === LOCKED_ROLE_CODE,
     menus: MENU_KEYS.filter((k) => menuMap.get(r.code)?.has(k)),
+    settingsTabs: subMap.get(r.code) || [],
     holderCount: userRows.filter((u) => (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     memberCount: userRows.filter((u) => u.affiliation_role_id === r.id).length
   }))

@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/supabase/config'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { audit, requireSettings } from '@/lib/crm/server/settings'
+import { audit, requireSettingsTab } from '@/lib/crm/server/settings'
 import { loadSubordinates } from '@/lib/crm/server/scope'
 
 const bodySchema = z.object({ userId: z.string().uuid('잘못된 사원입니다.') })
@@ -14,7 +14,7 @@ const bodySchema = z.object({ userId: z.string().uuid('잘못된 사원입니다
 export async function POST(request: Request) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'employees')
     const { userId } = bodySchema.parse(await request.json())
 
     const target = (await loadSubordinates(ctx)).find((u) => u.id === userId)

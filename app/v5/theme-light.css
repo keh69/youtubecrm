@@ -1998,15 +1998,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root[data-theme='light'] .v5 *,
-  :root[data-theme='light'] .v5 *::before,
-  :root[data-theme='light'] .v5 *::after {
-    transition: none !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-
 /* 역할 순서 끌어서 바꾸기 */
 :root[data-theme='light'] .v5 .drag-col {
   width: 28px;

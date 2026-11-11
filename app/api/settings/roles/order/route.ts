@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { audit, requireSettings } from '@/lib/crm/server/settings'
+import { audit, requireSettingsTab } from '@/lib/crm/server/settings'
 
 const bodySchema = z.object({ roleIds: z.array(z.string().uuid()).min(1).max(200) })
 
@@ -10,7 +10,7 @@ const bodySchema = z.object({ roleIds: z.array(z.string().uuid()).min(1).max(200
 export async function PUT(request: Request) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'roles')
     const { roleIds } = bodySchema.parse(await request.json())
     const { data: roles, error } = await ctx.db.from(TABLES.roles).select('id')
     if (error) throw error

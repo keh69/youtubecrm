@@ -1834,15 +1834,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root[data-theme='light'] .v4 *,
-  :root[data-theme='light'] .v4 *::before,
-  :root[data-theme='light'] .v4 *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* ───────── 직원근태: 주간/월간 · 합계 · 지각/야근 배지 ───────── */
 :root[data-theme='light'] .v4 .team-bar {
   display: flex;

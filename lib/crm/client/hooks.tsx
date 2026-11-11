@@ -5,7 +5,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { MENUS, firstAllowedPath, type MenuKey } from '@/lib/crm/menus'
+import { MENUS, firstAllowedPath, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
@@ -485,7 +485,20 @@ export function useSettings() {
     roleName: (id: string | null | undefined) => (id ? data?.roles.find((r) => r.id === id)?.name || '-' : '-'),
     createRole: (name: string) => run('/api/settings/roles', 'POST', { name }),
     renameRole: (id: string, name: string) => run(`/api/settings/roles/${id}`, 'PATCH', { name }),
-    saveRoleMenus: (id: string, menus: MenuKey[]) => run(`/api/settings/roles/${id}`, 'PATCH', { menus }),
+    // 스위치가 바로 움직이도록 화면부터 바꾸고(낙관적 갱신) 서버에 저장한다. 실패하면 다시 불러와 되돌린다.
+    // 설정 하부 메뉴(01~04) 보이기/안 보이기 저장 (스위치가 바로 움직이게 화면부터 바꾼다)
+    saveRoleSettingsTabs: async (id: string, settingsTabs: SettingsSubKey[]): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, settingsTabs } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { settingsTabs } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
+    saveRoleMenus: async (id: string, menus: MenuKey[]): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, menus } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { menus } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
     deleteRole: (id: string) => run(`/api/settings/roles/${id}`, 'DELETE'),
     setUserRoles: (userId: string, roleIds: string[]) => run(`/api/settings/users/${userId}/roles`, 'PUT', { roleIds }),
     createAccount: (account: NewAccount) => run('/api/settings/users', 'POST', account),
@@ -577,6 +590,14 @@ export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label:
   { key: 'create', no: '04', label: '아이디생성' },
   { key: 'skin', no: '05', label: '스킨' }
 ]
+
+// 이 사람이 볼 수 있는 설정 탭(01~04 는 역할별 권한, 05 스킨은 항상) + 처음 열 탭
+export function useSettingsTabs() {
+  const { me } = useSession()
+  const allowed = new Set<string>([...(me.settingsTabs || []), 'skin'])
+  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key))
+  return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
+}
 
 export const EMPLOYEE_TABS_NOTE = '내 소속 하부에 있는 사원만 보입니다. "이 아이디로 로그인"을 누르면 그 사원 화면으로 바로 들어가고, 오른쪽 위 "관리자로 복귀"로 돌아옵니다.'
 

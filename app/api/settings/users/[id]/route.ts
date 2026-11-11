@@ -4,7 +4,7 @@ import { passwordSchema, toAuthPassword } from '@/lib/crm/server/password'
 import { TABLES } from '@/lib/supabase/tables'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettings } from '@/lib/crm/server/settings'
+import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettingsTab } from '@/lib/crm/server/settings'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -22,7 +22,7 @@ const patchSchema = z.object({
 export async function PATCH(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'assign')
     const { id } = await context.params
     if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, '잘못된 계정입니다.')
     const body = patchSchema.parse(await request.json())

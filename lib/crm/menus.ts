@@ -40,3 +40,18 @@ export function firstAllowedPath(base: string, menus: string[]) {
   const first = MENUS.find((m) => menus.includes(m.key))
   return first ? `${base}${first.path}` : `${base}/login`
 }
+
+// ── 설정 안의 하부 메뉴(01~04) 권한 ──
+// 역할설정 표에서 '설정'이 켜진 역할마다 [상세]로 01~04 를 보이기/안 보이기 할 수 있다.
+// role_menu_permissions 에 menu_key 'settings_<key>' 로 저장(행이 없으면 보임). 05 스킨은 항상 보인다.
+export const SETTINGS_SUBS = [
+  { key: 'employees', menuKey: 'settings_employees', no: '01', label: '사원목록' },
+  { key: 'assign', menuKey: 'settings_assign', no: '02', label: '역할부여' },
+  { key: 'roles', menuKey: 'settings_roles', no: '03', label: '역할설정' },
+  { key: 'create', menuKey: 'settings_create', no: '04', label: '아이디생성' }
+] as const
+export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
+export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
+export function isSettingsSubKey(v: string): v is SettingsSubKey {
+  return (SETTINGS_SUB_KEYS as string[]).includes(v)
+}

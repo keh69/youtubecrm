@@ -4,14 +4,17 @@ import { useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
-import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
+import { RoleSettingsDetail } from '@/components/role-settings-detail'
+import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 
 export default function V5Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const [tab, setTab] = useState<SettingsTab>('employees')
+  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
+  const [tabState, setTab] = useState<SettingsTab | null>(null)
+  const tab: SettingsTab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
 
@@ -36,7 +39,7 @@ export default function V5Settings() {
 
       <div className="g-tabs-wrap">
         <div className="g-tabs" role="tablist" aria-label="설정 메뉴">
-          {SETTINGS_TABS.map((t) => (
+          {st.tabs.map((t) => (
             <button
               key={t.key}
               role="tab"
@@ -373,6 +376,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${m.label}`} />
                         <span aria-hidden="true" />
                       </label>
+                      {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} />}
                     </td>
                   ))}
                   <td className="num">

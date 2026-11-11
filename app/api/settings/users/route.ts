@@ -5,7 +5,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { escapeLikePattern } from '@/lib/supabase/query-utils'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { assertAffiliationColumn, audit, internalEmailFor, requireSettings } from '@/lib/crm/server/settings'
+import { assertAffiliationColumn, audit, internalEmailFor, requireSettingsTab } from '@/lib/crm/server/settings'
 
 const bodySchema = z.object({
   loginId: z
@@ -26,7 +26,7 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   try {
     const ctx = await getContext(request)
-    requireSettings(ctx)
+    requireSettingsTab(ctx, 'create')
     const body = bodySchema.parse(await request.json())
     await assertAffiliationColumn(ctx) // 마이그레이션 전에는 계정 생성을 막는다(역할 데이터가 섞이지 않게).
 
