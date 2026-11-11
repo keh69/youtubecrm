@@ -43,3 +43,18 @@ export function pathWithoutSkin(pathname: string) {
   const rest = base ? pathname.slice(base.length) : pathname
   return rest === '/' ? '' : rest
 }
+
+// ── 스킨은 이 컴퓨터(브라우저)에 쿠키로 저장한다 (설정 → 05 스킨) ──
+// 쿠키가 없으면 기본 디자인(v5). 서버(proxy.ts)도 이 쿠키를 읽어 / 와 /login 을 그 스킨으로 보낸다.
+export const SKIN_COOKIE = 'ycrm_skin'
+
+export function readSkinCookie(): SkinKey {
+  if (typeof document === 'undefined') return DEFAULT_SKIN
+  const m = document.cookie.match(new RegExp(`(?:^|; )${SKIN_COOKIE}=([^;]*)`))
+  const v = m ? decodeURIComponent(m[1]) : ''
+  return isSkinKey(v) ? v : DEFAULT_SKIN
+}
+
+export function writeSkinCookie(key: SkinKey) {
+  document.cookie = `${SKIN_COOKIE}=${encodeURIComponent(key)}; path=/; max-age=${60 * 60 * 24 * 365 * 5}; samesite=lax`
+}

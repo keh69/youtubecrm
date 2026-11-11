@@ -121,3 +121,111 @@ a {
     display: none;
   }
 }
+
+/* 설정 → 05 스킨 (모든 스킨 공통 부품). 화이트 기본, 블랙 테마에서 어둡게 */
+.skin-pick {
+  --sp-bg: #ffffff;
+  --sp-line: rgba(0, 0, 0, 0.12);
+  --sp-text: #1f2328;
+  --sp-muted: #5f6672;
+  --sp-accent: #4f46e5;
+  color: var(--sp-text);
+  font-family: system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+}
+:root[data-theme='dark'] .skin-pick {
+  --sp-bg: #1b1b1f;
+  --sp-line: rgba(255, 255, 255, 0.12);
+  --sp-text: #e8e8ec;
+  --sp-muted: #a1a1aa;
+  --sp-accent: #8b85ff;
+}
+.skin-pick-note {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--sp-muted);
+}
+.skin-pick-note strong {
+  color: var(--sp-text);
+}
+.skin-pick-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.skin-pick-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--sp-line);
+  background: var(--sp-bg);
+}
+.skin-pick-card.on {
+  border-color: var(--sp-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sp-accent) 30%, transparent);
+}
+.skin-pick-key {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sp-muted);
+}
+.skin-pick-card strong {
+  font-size: 16px;
+}
+.skin-pick-desc {
+  font-size: 13px;
+  color: var(--sp-muted);
+  flex: 1;
+}
+.skin-pick-card button {
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--sp-accent);
+  background: var(--sp-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.skin-pick-card button:disabled {
+  background: transparent;
+  color: var(--sp-accent);
+  cursor: default;
+}
+
+/* 설정 → 01 사원목록 "직원양식 복사" 버튼 (모든 스킨 공통, 스킨이 className 으로 덧칠할 수 있음) */
+.copy-form-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  color: #1f2328;
+  font: 600 13px/1.2 system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  white-space: nowrap;
+}
+.copy-form-btn:hover {
+  border-color: rgba(0, 0, 0, 0.35);
+}
+:root[data-theme='dark'] .copy-form-btn {
+  background: #222226;
+  color: #e8e8ec;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+:root[data-theme='dark'] .copy-form-btn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.copy-form-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}

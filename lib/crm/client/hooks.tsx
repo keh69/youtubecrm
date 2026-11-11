@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname, useRouter } from 'next/navigation'
 import { MENUS, firstAllowedPath, type MenuKey } from '@/lib/crm/menus'
 import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
-import { SKINS, pathWithoutSkin, skinBase, skinOfPath, type SkinKey } from '@/lib/crm/skins'
+import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
 import type { AccountPatch, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
 
@@ -19,12 +19,13 @@ type SessionValue = { me: Me; base: string; logout: () => Promise<void>; refresh
 const SessionContext = createContext<SessionValue | null>(null)
 
 // 로그인한 사람이 처음 들어갈 주소: 그 사람이 고른 스킨의, 볼 수 있는 첫 메뉴
-export function homeFor(me: Pick<Me, 'menus' | 'skin'>) {
-  return firstAllowedPath(skinBase(me.skin), me.menus)
+// 스킨은 사람별이 아니라 이 컴퓨터(쿠키)별이다.
+export function homeFor(me: Pick<Me, 'menus'>) {
+  return firstAllowedPath(skinBase(readSkinCookie()), me.menus)
 }
 
 // 버전별 (shell) 레이아웃에서 감싼다. 로그인 안 했으면 그 버전의 로그인 화면으로 보낸다.
-// 다른 디자인 주소로 들어오면 기본 디자인(v5) 주소로 옮겨 준다(같은 메뉴 유지).
+// 이 컴퓨터에 저장된 스킨(쿠키, 없으면 v5)과 다른 디자인 주소로 들어오면 그 스킨 주소로 옮겨 준다(같은 메뉴 유지).
 export function CrmSessionProvider({ base, children, loading = null }: { base: string; children: React.ReactNode; loading?: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -54,10 +55,11 @@ export function CrmSessionProvider({ base, children, loading = null }: { base: s
     void load()
   }, [base, load])
 
-  const wrongSkin = Boolean(me && skinOfPath(pathname) !== me.skin)
+  const wantSkin = me ? readSkinCookie() : null
+  const wrongSkin = Boolean(me && skinOfPath(pathname) !== wantSkin)
   useEffect(() => {
-    if (me && wrongSkin) router.replace(`${skinBase(me.skin)}${pathWithoutSkin(pathname)}` || '/')
-  }, [me, wrongSkin, pathname, router])
+    if (me && wrongSkin) router.replace(`${skinBase(wantSkin)}${pathWithoutSkin(pathname)}` || '/')
+  }, [me, wrongSkin, wantSkin, pathname, router])
 
   const logout = useCallback(async () => {
     await doLogout()
@@ -545,16 +547,35 @@ export function useEmployees() {
     return { ok: true }
   }
 
-  return { items, loading, error, reload, loginAs, busyId }
+  // 비밀번호 초기화: 그 사원의 비밀번호를 아이디와 같게 만든다. 확인 창은 화면에서 띄운다.
+  const [notice, setNotice] = useState('')
+  const [resetId, setResetId] = useState<string | null>(null)
+  const resetPassword = async (userId: string): Promise<ActionResult> => {
+    if (resetId) return { ok: false }
+    setResetId(userId)
+    setNotice('')
+    const res = await api<{ loginId: string }>(`/api/settings/users/${userId}/reset-password`, { method: 'POST', body: {} })
+    setResetId(null)
+    if (!res.ok) {
+      setError(res.error)
+      return { ok: false, error: res.error }
+    }
+    setError('')
+    setNotice(`'${res.data.loginId}' 의 비밀번호를 아이디와 같게(${res.data.loginId}) 초기화했습니다.`)
+    return { ok: true }
+  }
+
+  return { items, loading, error, reload, loginAs, busyId, resetPassword, resetId, notice }
 }
 
 // 설정 화면 탭(모든 스킨 공통 순서·번호)
-export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create'
+export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin'
 export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label: string }> = [
   { key: 'employees', no: '01', label: '사원목록' },
   { key: 'assign', no: '02', label: '역할부여' },
   { key: 'roles', no: '03', label: '역할설정' },
-  { key: 'create', no: '04', label: '아이디생성' }
+  { key: 'create', no: '04', label: '아이디생성' },
+  { key: 'skin', no: '05', label: '스킨' }
 ]
 
 export const EMPLOYEE_TABS_NOTE = '내 소속 하부에 있는 사원만 보입니다. "이 아이디로 로그인"을 누르면 그 사원 화면으로 바로 들어가고, 오른쪽 위 "관리자로 복귀"로 돌아옵니다.'
@@ -566,6 +587,7 @@ export const EMPTY_ACCOUNT: NewAccount = { loginId: '', password: '', name: '', 
 // 내정보 화면 주소: 메뉴 권한과 상관없이 로그인한 사람은 누구나 들어갈 수 있다.
 export const MY_PAGE_PATH = '/me'
 
+// 내정보 → 비밀번호 변경: 현재 비밀번호 없이 새 비밀번호(4자 이상) + 확인만 넣는다.
 export function useChangePassword() {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
@@ -582,12 +604,11 @@ export function useChangePassword() {
       setError(msg)
       return { ok: false, error: msg }
     }
-    if (!current) return fail('현재 비밀번호를 입력해 주세요.')
     if (next.length < 4) return fail('새 비밀번호는 4자 이상이어야 합니다.')
     if (next !== confirm) return fail('새 비밀번호 확인이 일치하지 않습니다.')
     setBusy(true)
     setError('')
-    const res = await api('/api/me/password', { method: 'POST', body: { currentPassword: current, newPassword: next } })
+    const res = await api('/api/me/password', { method: 'POST', body: { newPassword: next } })
     setBusy(false)
     if (!res.ok) return fail(res.error)
     setCurrent('')
@@ -597,6 +618,7 @@ export function useChangePassword() {
     return { ok: true }
   }
 
+  // current/setCurrent 는 예전 화면 호환용(이제 현재 비밀번호는 묻지 않는다)
   return { current, setCurrent, next, setNext, confirm, setConfirm, busy, error, done, submit }
 }
 
@@ -680,7 +702,23 @@ export function useSkins() {
   return { skins: SKINS, current: me.skin, apply, busy, error }
 }
 
-/* ───────────────────────── 하단 버전·스킨 전환 (최고관리자 전용) ───────────────────────── */
+/* ───────────────────────── 설정 05 스킨 (이 컴퓨터에 쿠키로 저장) ───────────────────────── */
+
+export function useSkinCookie() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [current, setCurrent] = useState<SkinKey>('v5')
+  useEffect(() => setCurrent(readSkinCookie()), [])
+  // 저장하면 같은 화면을 그 스킨으로 다시 연다
+  const apply = (key: SkinKey) => {
+    writeSkinCookie(key)
+    setCurrent(key)
+    router.replace(`${skinBase(key)}${pathWithoutSkin(pathname)}` || '/')
+  }
+  return { skins: SKINS, current, apply }
+}
+
+/* ───────────────────────── 하단 버전·스킨 전환 (예전 기능, 지금은 쓰지 않음) ───────────────────────── */
 
 export function useVersionLinks() {
   const pathname = usePathname()

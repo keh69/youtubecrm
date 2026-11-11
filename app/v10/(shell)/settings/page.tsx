@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
+import { SkinPicker } from '@/components/skin-picker'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useDragReorder, useEmployees, useMenuGuard, useSession, useSettings, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
+import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 
 type Tab = SettingsTab
 type Msg = { tone: 'ok' | 'error'; text: string } | null
@@ -56,6 +58,11 @@ export default function V10Settings() {
       {s.data && tab === 'assign' && <AssignTab s={s} report={report} />}
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
+      {tab === 'skin' && (
+        <section className="card">
+          <SkinPicker />
+        </section>
+      )}
     </>
   )
 }
@@ -65,8 +72,12 @@ function EmployeesTab() {
   const emp = useEmployees()
   return (
     <section className="card">
-      <p className="muted small">{EMPLOYEE_TABS_NOTE}</p>
+      <div className="copy-form-bar">
+        <p className="muted small">{EMPLOYEE_TABS_NOTE}</p>
+        <CopyEmployeeFormButton />
+      </div>
       {emp.error && <p className="msg error">{emp.error}</p>}
+      {emp.notice && <p className="msg ok" role="status">{emp.notice}</p>}
       {emp.loading ? (
         <p className="muted">불러오는 중…</p>
       ) : emp.items.length === 0 ? (
@@ -98,7 +109,17 @@ function EmployeesTab() {
                     <td>{u.roles.join(', ') || '-'}</td>
                     <td className="nowrap">{u.phone || '-'}</td>
                     <td>{u.email || '-'}</td>
-                    <td className="right">
+                    <td className="right nowrap">
+                      <button
+                        className="btn ghost small"
+                        disabled={u.isSuperAdmin || emp.resetId !== null}
+                        title="비밀번호를 아이디와 같게 바꿉니다"
+                        onClick={() => {
+                          if (window.confirm(`${u.name}(${u.loginId})의 비밀번호를 아이디와 같게(${u.loginId}) 초기화할까요?`)) void emp.resetPassword(u.id)
+                        }}
+                      >
+                        {emp.resetId === u.id ? '초기화 중…' : '비밀번호 초기화'}
+                      </button>{' '}
                       <button className="btn primary small" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
                         {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
                       </button>

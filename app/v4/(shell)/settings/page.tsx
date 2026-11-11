@@ -4,14 +4,17 @@ import { Fragment, useState } from 'react'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, SETTINGS_TABS, useEmployees, useMenuGuard, useSession, useSettings, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
+import { SkinPicker } from '@/components/skin-picker'
 import { BlockTitle, Empty, Loading, Msg, PageHead, Sticker, type MsgState } from '../../_components/ui'
+import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 
-// 탭마다 켜졌을 때의 색 (01 사원목록 · 02 역할부여 · 03 역할설정 · 04 아이디생성)
+// 탭마다 켜졌을 때의 색 (01 사원목록 · 02 역할부여 · 03 역할설정 · 04 아이디생성 · 05 스킨)
 const TAB_COLORS: Record<SettingsTab, string> = {
   employees: 'bg-blue',
   assign: 'bg-yellow',
   roles: 'bg-mint',
-  create: 'bg-pink'
+  create: 'bg-pink',
+  skin: 'bg-yellow'
 }
 
 export default function V4Settings() {
@@ -65,6 +68,12 @@ export default function V4Settings() {
       {s.data && tab === 'assign' && <AssignTab s={s} report={report} />}
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
+      {tab === 'skin' && (
+        <section className="blk">
+          <BlockTitle color="yellow">스킨</BlockTitle>
+          <SkinPicker />
+        </section>
+      )}
     </>
   )
 }
@@ -75,8 +84,16 @@ function EmployeesTab() {
   return (
     <section className="blk">
       <BlockTitle color="blue">내 소속 하부 사원</BlockTitle>
-      <p className="note">{EMPLOYEE_TABS_NOTE}</p>
+      <div className="copy-form-bar">
+        <p className="note">{EMPLOYEE_TABS_NOTE}</p>
+        <CopyEmployeeFormButton />
+      </div>
       {emp.error && <Msg tone="error">{emp.error}</Msg>}
+      {emp.notice && (
+        <Msg tone="ok" live="status">
+          {emp.notice}
+        </Msg>
+      )}
       {emp.loading ? (
         <Loading />
       ) : emp.items.length === 0 ? (
@@ -112,7 +129,17 @@ function EmployeesTab() {
                   <td>{u.roles.join(', ') || '-'}</td>
                   <td className="nowrap">{u.phone || '-'}</td>
                   <td>{u.email || '-'}</td>
-                  <td className="right">
+                  <td className="right nowrap">
+                    <button
+                      className="btn white sm"
+                      disabled={u.isSuperAdmin || emp.resetId !== null}
+                      title="비밀번호를 아이디와 같게 바꿉니다"
+                      onClick={() => {
+                        if (window.confirm(`${u.name}(${u.loginId})의 비밀번호를 아이디와 같게(${u.loginId}) 초기화할까요?`)) void emp.resetPassword(u.id)
+                      }}
+                    >
+                      {emp.resetId === u.id ? '초기화 중…' : '비밀번호 초기화'}
+                    </button>{' '}
                     <button className="btn mint sm" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
                       {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
                     </button>

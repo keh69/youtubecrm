@@ -30,10 +30,6 @@ export default function V2Me() {
       <Panel label="비밀번호 변경">
         <form className="cmd-form" onSubmit={pw.submit}>
           <label className="fld">
-            <span className="lbl">현재 비밀번호</span>
-            <input type="password" value={pw.current} onChange={(e) => pw.setCurrent(e.target.value)} autoComplete="current-password" />
-          </label>
-          <label className="fld">
             <span className="lbl">새 비밀번호 (4자 이상)</span>
             <input type="password" value={pw.next} onChange={(e) => pw.setNext(e.target.value)} autoComplete="new-password" />
           </label>

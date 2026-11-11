@@ -41,10 +41,6 @@ export default function V7Me() {
         <h2>비밀번호 변경</h2>
         <form className="grid-form" onSubmit={pw.submit} style={{ maxWidth: 520, gridTemplateColumns: '1fr' }}>
           <label className="field">
-            <span>현재 비밀번호</span>
-            <input type="password" value={pw.current} onChange={(e) => pw.setCurrent(e.target.value)} autoComplete="current-password" />
-          </label>
-          <label className="field">
             <span>새 비밀번호 (4자 이상)</span>
             <input type="password" value={pw.next} onChange={(e) => pw.setNext(e.target.value)} autoComplete="new-password" />
           </label>

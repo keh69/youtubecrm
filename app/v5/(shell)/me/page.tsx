@@ -23,10 +23,6 @@ export default function V5Me() {
         <h2 className="g-h2">비밀번호 변경</h2>
         <form className="g-row-form" onSubmit={pw.submit}>
           <label className="g-field">
-            <span>현재 비밀번호</span>
-            <input className="g-input" type="password" value={pw.current} onChange={(e) => pw.setCurrent(e.target.value)} autoComplete="current-password" />
-          </label>
-          <label className="g-field">
             <span>새 비밀번호 (4자 이상)</span>
             <input className="g-input" type="password" value={pw.next} onChange={(e) => pw.setNext(e.target.value)} autoComplete="new-password" />
           </label>

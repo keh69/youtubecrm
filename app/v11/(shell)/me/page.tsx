@@ -49,15 +49,6 @@ export default function V11Me() {
         <form className="flag-list" onSubmit={pw.submit}>
           <label className="flag">
             <span className="flag-body">
-              <span className="flag-title">현재 비밀번호</span>
-              <code className="flag-id">#password-current</code>
-            </span>
-            <span className="flag-ctl">
-              <input type="password" value={pw.current} onChange={(e) => pw.setCurrent(e.target.value)} autoComplete="current-password" />
-            </span>
-          </label>
-          <label className="flag">
-            <span className="flag-body">
               <span className="flag-title">새 비밀번호 (4자 이상)</span>
               <code className="flag-id">#password-new</code>
             </span>

@@ -1,14 +1,8 @@
 import type { NextConfig } from 'next'
 
+// 홈페이지(/)·로그인(/login) 주소의 스킨 이동은 proxy.ts 가 쿠키를 보고 처리한다.
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  // 기본 디자인은 v5. 예전 주소(/, /login)로 들어와도 v5 로 보낸다.
-  async redirects() {
-    return [
-      { source: '/', destination: '/v5', permanent: false },
-      { source: '/login', destination: '/v5/login', permanent: false }
-    ]
-  }
+  reactStrictMode: true
 }
 
 export default nextConfig

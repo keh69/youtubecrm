@@ -27,6 +27,7 @@ export type CrmContext = {
   roles: RoleRow[]
   menus: MenuKey[]
   isAdmin: boolean
+  isSuperAdmin: boolean // 총관리자(super_admin): 모든 직원 데이터를 본다
 }
 
 // 화면에 보여줄 수 있는 에러. 이 클래스로 던지면 status 와 메시지가 그대로 응답된다.
@@ -159,7 +160,9 @@ export async function getContext(request: Request): Promise<CrmContext> {
   for (const set of menuMap.values()) for (const key of set) menus.add(key)
   const isAdmin = roles.some((r) => (ADMIN_ROLE_CODES as readonly string[]).includes(r.code))
 
-  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin }
+  const isSuperAdmin = roles.some((r) => r.code === LOCKED_ROLE_CODE)
+
+  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin }
 }
 
 export function requireMenu(ctx: CrmContext, key: MenuKey) {
