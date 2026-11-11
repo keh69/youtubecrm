@@ -114,7 +114,7 @@ export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideo
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   return (
     <div className="vf-bar" role="group" aria-label="영상 필터">
-      {/* 표 열 순서대로: 올린 날짜 · 영상 · 재생시간 · 형식 · 담당자 · 종목 · 조회수 */}
+      {/* 표 열 순서대로: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 담당자 · 종목 · 조회수 */}
       <div className="vf-field">
         <span className="vf-label">올린 날짜</span>
         <span className="vf-range">
@@ -133,7 +133,7 @@ export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideo
           <input className="vf-input" inputMode="decimal" value={f.durMax} onChange={(e) => set({ durMax: e.target.value.replace(/[^\d.]/g, '') })} placeholder="최대" aria-label="재생시간 최대(분)" />
         </span>
       </div>
-      <MultiPick label="형식" all={options.formats} value={f.formats} onChange={(formats) => set({ formats })} />
+      <MultiPick label="폼종류" all={options.formats} value={f.formats} onChange={(formats) => set({ formats })} />
       <MultiPick label="담당자" all={options.owners} value={f.owners} onChange={(owners) => set({ owners })} />
       <MultiPick label="종목" all={options.stocks} value={f.stocks} onChange={(stocks) => set({ stocks })} />
       <div className="vf-field">

@@ -167,11 +167,12 @@ export default function V5Stats() {
           <div className="g-table-wrap">
             <table className="g-table g-vtable">
               <thead>
-                {/* 열 순서: 올린 날짜 · 영상 · 재생시간(형식 표시 포함) · 담당자 · 종목 · 조회수 */}
+                {/* 열 순서: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 담당자 · 종목 · 조회수 */}
                 <tr>
                   <th>올린 날짜</th>
                   <th>영상</th>
                   <th className="num">재생시간</th>
+                  <th>폼종류</th>
                   <th>담당자</th>
                   <th>종목</th>
                   <th className="num">조회수</th>
@@ -193,11 +194,9 @@ export default function V5Stats() {
                           </a>
                         </div>
                       </td>
-                      <td className="num nowrap">
-                        <span className="g-dur-cell">
-                          {fmtDuration(v.durationSeconds)}
-                          <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
-                        </span>
+                      <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
+                      <td>
+                        <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
                       </td>
                       <td className="nowrap">
                         <span className="g-who">
