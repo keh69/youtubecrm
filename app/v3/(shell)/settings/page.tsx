@@ -9,12 +9,15 @@ import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
+import { DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
+import { isoToDotted } from '@/components/date-input'
 
 export default function V3Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs() // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
+  const st = useSettingsTabs({ dump: true, unresolved: true }) // 역할별로 허용된 설정 하부 메뉴만(05 스킨은 항상)
   const [tabState, setTab] = useState<SettingsTab | null>(null)
+  useSettingsTabFromUrl(setTab) // 알림의 '처리하러 가기'나 ?tab= 으로 탭 열기
   const tab: SettingsTab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
   const [msg, setMsg] = useState<Msg>(null)
   if (!allowed) return null
@@ -68,7 +71,10 @@ export default function V3Settings() {
       {s.data && tab === 'assign' && <AssignTab s={s} report={report} />}
       {s.data && tab === 'roles' && <RolesTab s={s} report={report} />}
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
-      {tab === 'skin' && (
+      {tab === 'dump' && <DumpPanel />}
+      {tab === 'unresolved' && <UnresolvedPanel />}
+      {st.tabs.length === 0 && <p className="xs-empty">설정 안에서 볼 수 있는 메뉴가 없습니다. 관리자에게 역할설정 &gt; 상세설정에서 켜 달라고 요청해 주세요.</p>}
+      {tab === 'skin' && st.tabs.length > 0 && (
         <section className="j-section">
           <SkinPicker />
         </section>
@@ -99,6 +105,7 @@ function EmployeesTab() {
               <tr>
                 <th>아이디</th>
                 <th>이름</th>
+                <th>입사일자</th>
                 <th>소속</th>
                 <th>역할</th>
                 <th>전화번호</th>
@@ -114,6 +121,7 @@ function EmployeesTab() {
                     {!u.active && <span className="j-stamp tone-absent">사용중지</span>}
                   </td>
                   <td className="nowrap">{u.name}</td>
+                  <td className="nowrap">{isoToDotted(u.hireDate) || '-'}</td>
                   <td>{u.affiliationName || '-'}</td>
                   <td>{u.roles.join(', ') || '-'}</td>
                   <td className="nowrap">{u.phone || '-'}</td>
@@ -133,6 +141,7 @@ function EmployeesTab() {
                     <button type="button" className="j-btn ink small" disabled={!u.active || u.isSuperAdmin || emp.busyId !== null} onClick={() => emp.loginAs(u.id)}>
                       {emp.busyId === u.id ? '들어가는 중…' : '이 아이디로 로그인'}
                     </button>
+                    <EmployeeManage user={u} emp={emp} btnClass="j-btn plain small" />
                   </td>
                 </tr>
               ))}
@@ -332,7 +341,8 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
       <hr className="j-double" />
 
       <section className="j-section">
-        <h2 className="j-h2">역할별로 볼 수 있는 메뉴</h2>
+        <h2 className="j-h2">상세설정</h2>
+        <SignupRoleSelect s={s} report={report} />
         <p className="j-aside">체크한 메뉴만 보입니다. 여러 역할을 가진 사람은 모든 역할의 메뉴를 합쳐서 봅니다. 왼쪽 ⠿ 부분을 마우스로 끌어 놓으면 역할 순서가 바뀌고 바로 저장됩니다.</p>
         <div className="j-table-wrap">
           <table className="j-table matrix">
@@ -342,7 +352,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                 <th>역할</th>
                 {MENUS.map((m) => (
                   <th key={m.key} className="center" title={m.description}>
-                    {m.label}
+                    {m.key === 'attendance_team' ? '근태통계' : m.label}
                   </th>
                 ))}
                 <th className="num">보유 / 소속</th>
@@ -401,10 +411,22 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                         이름 변경
                       </button>
                     )}
-                    {!r.system && (
+                    {!r.system && r.signupRole && (
+                      <button
+                        type="button"
+                        className="j-textbtn xs-signup-btn"
+                        style={{ minWidth: 84 }}
+                        title="회원가입·아이디 만들기에서 새 아이디가 받는 역할이라 삭제할 수 없습니다. 바꾸려면 위의 '회원가입 시 역할'에서 다른 역할을 고르세요."
+                        onClick={() => document.querySelector<HTMLSelectElement>('.xs-signup-role select')?.focus()}
+                      >
+                        가입역할
+                      </button>
+                    )}
+                    {!r.system && !r.signupRole && (
                       <button
                         type="button"
                         className="j-textbtn danger"
+                        style={{ minWidth: 84 }}
                         onClick={async () => {
                           if (!window.confirm(`'${r.name}' 역할을 삭제할까요? 이 역할을 가진 사람에게서 빠지고, 이 역할이 소속인 직원은 소속이 비워집니다.`)) return
                           report(await s.deleteRole(r.id), '역할을 삭제했습니다.')
@@ -433,7 +455,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
   return (
     <section className="j-section">
       <h2 className="j-h2">아이디 만들기</h2>
-      <p className="j-aside">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;사원&rsquo; 역할을 받습니다.</p>
+      <p className="j-aside">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;{s.data!.roles.find((r) => r.signupRole)?.name || '사원'}&rsquo; 역할을 받습니다.</p>
       <form
         className="j-form-grid"
         onSubmit={async (e) => {

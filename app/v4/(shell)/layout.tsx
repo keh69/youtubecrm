@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 import type { MenuKey } from '@/lib/crm/menus'
+import { UnresolvedAlert } from '@/components/settings-extra'
 
 const NAV_ICON: Record<MenuKey | 'skin' | 'me', string> = {
   attendance: '⏰',
@@ -65,6 +66,8 @@ function Shell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
+      {/* 07 미처리 권한이 있으면 미처리가 남아 있는 동안 화면 위에 늘 뜨는 알림 */}
+      <UnresolvedAlert base="/v4" />
       <main className="main">
         <div className="theme-slot">
           <ThemeToggle />

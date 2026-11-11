@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession, type NavItem } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
+import { UnresolvedAlert } from '@/components/settings-extra'
 
 // 메뉴 → 스키마 트리의 "테이블 이름" (장식용)
 const TABLE: Record<NavItem['key'], string> = {
@@ -109,6 +110,8 @@ function Shell({ children }: { children: React.ReactNode }) {
           <ThemeToggle className="mobile-theme" />
         </header>
         {open && <div className="side-dim" onClick={() => setOpen(false)} />}
+        {/* 07 미처리 권한이 있으면 미처리가 남아 있는 동안 화면 위에 늘 뜨는 알림 */}
+        <UnresolvedAlert base="/v7" />
         <main className="content">{children}</main>
       </div>
     </div>

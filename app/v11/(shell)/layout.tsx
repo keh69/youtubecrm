@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { UnresolvedAlert } from '@/components/settings-extra'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, base, logout } = useSession()
@@ -76,6 +77,8 @@ function Shell({ children }: { children: React.ReactNode }) {
             {view && <span className="omni-label">{view.label}</span>}
           </div>
         </div>
+        {/* 07 미처리 권한이 있으면 미처리가 남아 있는 동안 화면 위에 늘 뜨는 알림 */}
+        <UnresolvedAlert base="/v11" />
         <main className="content">{children}</main>
       </div>
     </div>

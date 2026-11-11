@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
+import { UnresolvedAlert } from '@/components/settings-extra'
 
 function koreanToday() {
   return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())
@@ -60,6 +61,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <hr className="j-rule" />
       </header>
+      {/* 07 미처리 권한이 있으면 미처리가 남아 있는 동안 화면 위에 늘 뜨는 알림 */}
+      <UnresolvedAlert base="/v3" />
       <main className="j-content">{children}</main>
       <footer className="j-colophon">— 여왕개미미디어 사내 업무 일지 —</footer>
     </div>

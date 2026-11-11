@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 import { Ico } from '../_ui'
+import { UnresolvedAlert } from '@/components/settings-extra'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, logout } = useSession()
@@ -140,6 +141,8 @@ function Shell({ children }: { children: React.ReactNode }) {
               </span>
             )}
           </div>
+          {/* 07 미처리 권한이 있으면 미처리가 남아 있는 동안 화면 위에 늘 뜨는 알림 */}
+          <UnresolvedAlert base="/v9" />
           <main className="content">{children}</main>
           <footer className="statusbar">
             <span>

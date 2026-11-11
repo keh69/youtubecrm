@@ -583,3 +583,302 @@ a {
   padding: 0;
   cursor: pointer;
 }
+
+/* ───────── 공용 설정 부품(components/settings-extra.tsx, v1~v4·v6~v11) ─────────
+   스킨마다 색이 달라서 글자색(currentColor)을 따라가는 중립 디자인. 강조색은 파랑, 위험은 빨강. */
+.xs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.xs-panel h4 {
+  margin: 14px 0 2px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.xs-h {
+  margin: 0;
+  font-size: 18px;
+}
+.xs-muted {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.xs-empty {
+  margin: 0;
+  padding: 18px;
+  text-align: center;
+  opacity: 0.65;
+  border: 1px dashed color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 10px;
+}
+.xs-ok {
+  margin: 0;
+  color: #15803d;
+  font-weight: 700;
+}
+.xs-err {
+  margin: 4px 0 0;
+  color: #d93025;
+  font-weight: 700;
+  font-size: 13px;
+}
+.xs-bar,
+.xs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.xs-head {
+  justify-content: space-between;
+}
+.xs-head h4 {
+  margin: 10px 0 0;
+}
+.xs-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+.xs-input {
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 8px;
+  padding: 7px 10px;
+  min-height: 36px;
+  min-width: 0;
+}
+.xs-input.sm {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.xs-input option,
+.xs-input optgroup {
+  color: #111;
+  background: #fff;
+}
+.xs-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.xs-btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.xs-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* 스킨 버튼에 덧붙이는 위험(삭제) 표시 */
+.xs-danger {
+  color: #d93025 !important;
+  border-color: rgba(217, 48, 37, 0.45) !important;
+}
+.xs-table-wrap {
+  overflow-x: auto;
+}
+.xs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.xs-table th,
+.xs-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  text-align: left;
+  vertical-align: middle;
+}
+.xs-table th {
+  font-weight: 700;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+.xs-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.xs-table .nowrap {
+  white-space: nowrap;
+}
+.xs-resolve {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.xs-seg {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.xs-seg button {
+  font: inherit;
+  font-size: 12.5px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+.xs-seg button + button {
+  border-left: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.xs-seg button.on {
+  background: #2563eb;
+  color: #fff;
+}
+.xs-signup-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+  font-weight: 700;
+}
+/* 편집 창 */
+.xs-modal-back {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.45);
+}
+.xs-modal {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1f2328;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+:root[data-theme='dark'] .xs-modal {
+  background: #1f1f23;
+  color: #f2f2f2;
+}
+.xs-modal h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.xs-modal h3 small {
+  opacity: 0.6;
+  font-weight: 500;
+}
+.xs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.xs-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+/* 미처리 알림(화면 위에 늘 떠 있음) */
+.xs-alert {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 9px 10px 9px 14px;
+  border-radius: 14px;
+  background: #fff7ed;
+  color: #7c2d12;
+  border: 1px solid rgba(234, 88, 12, 0.4);
+  box-shadow: 0 10px 28px rgba(234, 88, 12, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-family: system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+}
+:root[data-theme='dark'] .xs-alert {
+  background: #2a1a10;
+  color: #fed7aa;
+  border-color: rgba(251, 146, 60, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+.xs-alert-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.xs-alert-text b {
+  font-size: 14px;
+}
+.xs-alert-text small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.xs-alert-dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: #ea580c;
+  animation: xs-pulse 1.6s infinite;
+}
+@keyframes xs-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(234, 88, 12, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+  }
+}
+@media (max-width: 760px) {
+  .xs-alert {
+    top: auto;
+    bottom: 60px;
+  }
+}
+
+/* 상세설정: 삭제 자리에 나오는 '가입역할' 버튼(삭제가 아니라는 표시로 파란색) */
+.xs-signup-btn {
+  color: #2563eb !important;
+  border-color: rgba(37, 99, 235, 0.45) !important;
+}
+:root[data-theme='dark'] .xs-signup-btn {
+  color: #93c5fd !important;
+  border-color: rgba(147, 197, 253, 0.45) !important;
+}
