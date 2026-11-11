@@ -11,12 +11,14 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   SETTINGS_TAB_EVENT,
   useDump,
   useSession,
   useUnresolved,
   useUnresolvedCount,
+  useWorkTimes,
   type ResolveAction,
   type SettingsTab,
   type UnresolvedItem,
@@ -25,6 +27,7 @@ import {
 } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtHourMin, fmtNumber, fmtTime, fmtTimeSec, fmtYmdShort, statusLabel } from '@/lib/crm/client/format'
 import { DateInput, dottedToIso, isoToDotted } from '@/components/date-input'
+import { api } from '@/lib/crm/client/api'
 
 type Emp = ReturnType<typeof useEmployees>
 type S = ReturnType<typeof useSettings>
@@ -93,7 +96,8 @@ export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][num
           </button>
         </>
       )}
-      {open && (
+      {open &&
+        createPortal(
         <div className="xs-modal-back" onClick={() => setOpen(false)}>
           <form className="xs-modal" onClick={(e) => e.stopPropagation()} onSubmit={save} aria-label={`${user.name} 정보 편집`}>
             <h3>
@@ -125,8 +129,9 @@ export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][num
               </button>
             </div>
           </form>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </>
   )
 }
@@ -368,18 +373,26 @@ export function DumpPanel() {
 }
 
 /* ───────── 07 미처리 ───────── */
-const IN_ACTIONS: Array<{ key: ResolveAction; label: string; time: string | null }> = [
-  { key: 'in', label: '출근', time: '09:00' },
-  { key: 'in_late', label: '출근(지각)', time: '09:30' },
-  { key: 'absent', label: '결근', time: null },
-  { key: 'off', label: '휴무', time: null }
-]
-const OUT_ACTIONS: Array<{ key: ResolveAction; label: string; time: string | null }> = [
-  { key: 'out', label: '퇴근', time: '18:00' },
-  { key: 'out_overtime', label: '퇴근(야근)', time: '21:00' }
-]
+// 처리 방법별 기본 시간은 출퇴근 기준시간(설정 > 08)을 따른다
+type ActionDef = { key: ResolveAction; label: string; time: string | null }
+function useResolveActions(): { IN_ACTIONS: ActionDef[]; OUT_ACTIONS: ActionDef[] } {
+  const d = useWorkTimes().defaults
+  return {
+    IN_ACTIONS: [
+      { key: 'in', label: '출근', time: d.in },
+      { key: 'in_late', label: '출근(지각)', time: d.in_late },
+      { key: 'absent', label: '결근', time: null },
+      { key: 'off', label: '휴무', time: null }
+    ],
+    OUT_ACTIONS: [
+      { key: 'out', label: '퇴근', time: d.out },
+      { key: 'out_overtime', label: '퇴근(야근)', time: d.out_overtime }
+    ]
+  }
+}
 
 function ResolveRow({ item, onResolve }: { item: UnresolvedItem; onResolve: ReturnType<typeof useUnresolved>['resolve'] }) {
+  const { IN_ACTIONS, OUT_ACTIONS } = useResolveActions()
   const actions = item.kind === 'in' ? IN_ACTIONS : OUT_ACTIONS
   const [action, setAction] = useState<ResolveAction>(actions[0].key)
   const [time, setTime] = useState(actions[0].time || '')
@@ -461,7 +474,7 @@ export function UnresolvedPanel() {
     <div className="xs-panel">
       <h3 className="xs-h">07 미처리</h3>
       <p className="xs-muted">
-        최근 2주({fmtYmdShort(d.from)} ~ {fmtYmdShort(d.to)}) 동안 평일(월~금)에 출근을 안 누른 날과, 퇴근을 안 눌러 23:59에 자동 퇴근된 날입니다. 오늘 출근은 09:00이 지나야 나타납니다. 출근·출근(지각)·퇴근·퇴근(야근)·결근·휴무 중 하나로 처리하면 목록에서 사라집니다.
+        최근 2주({fmtYmdShort(d.from)} ~ {fmtYmdShort(d.to)}) 동안 평일(월~금)에 출근을 안 누른 날과, 퇴근을 안 눌러 23:59에 자동 퇴근된 날입니다. 오늘 출근은 출근 기준시간(설정 &gt; 08)이 지나야 나타납니다. 출근·출근(지각)·퇴근·퇴근(야근)·결근·휴무 중 하나로 처리하면 목록에서 사라집니다.
       </p>
       <h4>
         출근미처리 <span className="xs-chip">{d.checkIn.length}건</span>
@@ -492,5 +505,65 @@ export function AttendanceEditToggle({ role, s, report }: { role: NonNullable<S[
       />
       수정가능
     </label>
+  )
+}
+
+/* ───────── 역할설정 표: '영상통계' 스위치 옆 '관리자' 체크칸 ───────── */
+// 켜진 역할은 영상통계에서 전 직원의 영상을 보고, 꺼져 있으면 내가 올린 영상만 본다.
+export function StatsAllToggle({ role, s, report }: { role: NonNullable<S['data']>['roles'][number]; s: S; report: Report }) {
+  if (!role.menus.includes('stats')) return null
+  const on = Boolean(role.locked || role.statsAll)
+  return (
+    <label className="xs-att-edit" title="켜면 영상통계에서 전 직원의 영상을 봅니다. 끄면 내가 올린 영상만 봅니다.">
+      <input
+        type="checkbox"
+        className="rsd-chk"
+        checked={on}
+        disabled={role.locked}
+        onChange={async () => report(await s.saveRoleStatsAll(role.id, !on), `'${role.name}' 영상통계를 ${on ? '내 영상만' : '전 직원'} 보도록 바꿨습니다.`)}
+        aria-label={`${role.name} - 영상통계 관리자`}
+      />
+      관리자
+    </label>
+  )
+}
+
+/* ───────── 08 출퇴근시간(지각·야근 기준) ───────── */
+export function WorkHoursPanel() {
+  const work = useWorkTimes()
+  const [start, setStart] = useState(work.start)
+  const [end, setEnd] = useState(work.end)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (end <= start) return setMsg({ ok: false, text: '퇴근 기준시간은 출근 기준시간보다 늦어야 합니다.' })
+    setBusy(true)
+    const res = await api<{ start: string; end: string }>('/api/settings/work-hours', { method: 'PUT', body: { start, end } })
+    setBusy(false)
+    if (!res.ok) return setMsg({ ok: false, text: res.error })
+    setMsg({ ok: true, text: `저장했습니다. 출근 ${res.data.start} 이후 = 지각, 퇴근 ${res.data.end} 이후 = 야근. 다른 화면은 새로고침하면 바로 반영됩니다.` })
+  }
+  return (
+    <form className="xs-panel" onSubmit={save}>
+      <h3 className="xs-h">08 출퇴근시간</h3>
+      <p className="xs-muted">
+        출근 기준시간 이후에 출근하면 <b>지각</b>, 퇴근 기준시간 이후에 퇴근하면 <b>야근</b>으로 표시됩니다(23:59 자동 퇴근은 야근이 아니라 퇴근(미처리)). 근태처리·미처리 버튼의 기본 시간도 이 기준을 따릅니다. 바꾸면 지난 기록의 지각·야근 표시도 새 기준으로 다시 계산됩니다.
+      </p>
+      <div className="xs-bar">
+        <label className="xs-field">
+          <span>출근 기준시간</span>
+          <input className="xs-input" type="time" value={start} onChange={(e) => setStart(e.target.value)} required />
+        </label>
+        <label className="xs-field">
+          <span>퇴근 기준시간</span>
+          <input className="xs-input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
+        </label>
+        <button className="xs-btn primary" disabled={busy} style={{ alignSelf: 'flex-end' }}>
+          {busy ? '저장 중…' : '저장'}
+        </button>
+      </div>
+      {msg && <p className={msg.ok ? 'xs-ok' : 'xs-err'}>{msg.text}</p>}
+    </form>
   )
 }

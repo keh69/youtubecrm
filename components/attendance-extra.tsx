@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useNow } from '@/lib/crm/client/hooks'
+import { useNow, useWorkTimes } from '@/lib/crm/client/hooks'
 import { fmtHourMin, fmtYmdShort, liveWorkedMinutes, statusLabel } from '@/lib/crm/client/format'
 import type { DayRecord } from '@/lib/crm/client/types'
 
@@ -25,10 +25,9 @@ export function AttendanceSummary({ record }: { record: DayRecord | null }) {
 
 /* ───────── 근태통계 > 근태처리 버튼(모든 스킨 공통) ─────────
    출근 / 출근(지각) / 퇴근 / 퇴근(야근) 을 바로 적용한다. 이미 기록이 있으면 버튼이 꺼지고, 서버도 거절한다.
-   시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00). */
-const DEFAULT_TIME = { in: '09:00', in_late: '09:30', out: '18:00', out_overtime: '21:00' } as const
+   시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 = 출근 기준시간 · 지각 = +30분 · 퇴근 = 퇴근 기준시간 · 야근 = +2시간, 설정 > 08 출퇴근시간). */
 const APPLY_LABEL = { in: '출근', in_late: '출근(지각)', out: '퇴근', out_overtime: '퇴근(야근)' } as const
-type ApplyAction = keyof typeof DEFAULT_TIME
+type ApplyAction = keyof typeof APPLY_LABEL
 type TeamLike = {
   data: { rows: Array<{ user: { id: string }; records: Record<string, DayRecord> }> } | null
   applyDay: (userId: string, workDate: string, action: ApplyAction, time: string) => Promise<{ ok: boolean; error?: string }>
@@ -36,6 +35,7 @@ type TeamLike = {
 
 export function AttendanceApplyButtons({ team, userId, workDate, time, btnClass }: { team: TeamLike; userId: string; workDate: string; time: string; btnClass: string }) {
   const [busy, setBusy] = useState<ApplyAction | null>(null)
+  const DEFAULT_TIME = useWorkTimes().defaults // 출퇴근 기준시간(설정 > 08)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const rec = userId ? team.data?.rows.find((r) => r.user.id === userId)?.records[workDate] : undefined
   const hasIn = Boolean(rec?.checkInAt)

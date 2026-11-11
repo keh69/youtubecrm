@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
+import { TEAM_PERIODS, useMenuGuard, useTeamAttendance, useWorkTimes } from '@/lib/crm/client/hooks'
 import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 import { TeamCalendar } from '@/components/team-calendar'
@@ -9,6 +9,7 @@ import { TeamCalendar } from '@/components/team-calendar'
 export default function V5TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
+  const work = useWorkTimes() // 출퇴근 기준시간(설정 > 08)
   const [openUser, setOpenUser] = useState<string | null>(null)
   const [form, setForm] = useState({ userId: '', workDate: todayKst(), time: '', reason: '' })
   const [msg, setMsg] = useState<Msg>(null)
@@ -21,8 +22,8 @@ export default function V5TeamAttendance() {
   const hasOut = Boolean(rec?.checkOutAt && !rec?.autoCheckout)
   const closed = rec?.status === 'absent' || rec?.status === 'vacation'
 
-  // 근태처리 버튼: 시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)
-  const DEFAULT_TIME = { in: '09:00', in_late: '09:30', out: '18:00', out_overtime: '21:00' } as const
+  // 근태처리 버튼: 시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 = 출근 기준시간 · 지각 = +30분 · 퇴근 = 퇴근 기준시간 · 야근 = +2시간, 설정 > 08 출퇴근시간)
+  const DEFAULT_TIME = work.defaults
   const LABEL = { in: '출근', in_late: '출근(지각)', out: '퇴근', out_overtime: '퇴근(야근)' } as const
   const nowHm = () => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
   const apply = async (action: keyof typeof DEFAULT_TIME) => {
@@ -56,7 +57,7 @@ export default function V5TeamAttendance() {
 
   return (
     <>
-      <PageHead emoji="👥" title="직원근태 > 근태통계" desc="출근(지각 포함) · 지각(09:00 이후 출근) · 퇴근 · 야근(19:00 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
+      <PageHead emoji="👥" title="직원근태 > 근태통계" desc="출근(지각 포함) · 지각(출근 기준시간 이후 출근) · 퇴근 · 야근(퇴근 기준시간 이후 퇴근) · 결근 횟수와 근무 시간입니다. 지각한 날은 출근과 지각이 함께, 야근한 날은 퇴근과 야근이 함께 1씩 올라갑니다. 이름을 누르면 날짜별 출퇴근 시간이 보입니다." />
 
       <section className="g-glass" id="g-absence-form">
         <h2 className="g-h2">근태처리</h2>
@@ -86,7 +87,7 @@ export default function V5TeamAttendance() {
             <input className="g-input" value={form.reason} maxLength={300} placeholder="예) 무단 결근, 병가 등" onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </label>
         </form>
-        <p id="g-time-hint" className="g-muted g-small">시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 09:00 · 지각 09:30 · 퇴근 18:00 · 야근 21:00)으로 들어갑니다.</p>
+        <p id="g-time-hint" className="g-muted g-small">시간을 비우면 오늘은 지금 시각, 지난 날은 기본 시간(출근 = 출근 기준시간 · 지각 = +30분 · 퇴근 = 퇴근 기준시간 · 야근 = +2시간, 설정 &gt; 08 출퇴근시간)으로 들어갑니다.</p>
         <div className="g-apply-btns">
           {(['in', 'in_late'] as const).map((a) => (
             <button key={a} type="button" className="g-btn primary" disabled={saving !== null || hasIn || closed} title={hasIn ? '이미 출근 기록이 있습니다' : closed ? '결근·휴무로 처리된 날입니다' : ''} onClick={() => apply(a)}>

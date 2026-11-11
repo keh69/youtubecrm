@@ -55,7 +55,8 @@ export const SETTINGS_SUBS = [
   { key: 'create', menuKey: 'settings_create', no: '04', label: '아이디생성', parent: null, defaultOn: true },
   { key: 'skin', menuKey: 'settings_skin', no: '05', label: '스킨', parent: null, defaultOn: true },
   { key: 'dump', menuKey: 'settings_dump', no: '06', label: '덤프파일', parent: null, defaultOn: false },
-  { key: 'unresolved', menuKey: 'settings_unresolved', no: '07', label: '미처리', parent: null, defaultOn: false }
+  { key: 'unresolved', menuKey: 'settings_unresolved', no: '07', label: '미처리', parent: null, defaultOn: false },
+  { key: 'workhours', menuKey: 'settings_workhours', no: '08', label: '출퇴근시간', parent: null, defaultOn: false }
 ] as const
 export type SettingsSubKey = (typeof SETTINGS_SUBS)[number]['key']
 export const SETTINGS_SUB_KEYS = SETTINGS_SUBS.map((s) => s.key) as SettingsSubKey[]
@@ -65,6 +66,8 @@ export const AFFILIATION_MENU_KEY = 'aff_member'
 export const SIGNUP_ROLE_MENU_KEY = 'signup_role'
 // 역할설정 표 '근태통계' 옆 '수정가능': 켜진 역할은 근태통계 달력에서 날짜를 오른쪽 클릭해 근태를 고치거나 지울 수 있다(행이 없으면 꺼짐).
 export const ATTENDANCE_EDIT_MENU_KEY = 'attendance_team_edit'
+// 역할설정 표 '영상통계' 옆 '관리자': 켜진 역할은 영상통계에서 전 직원의 영상을 본다. 꺼져 있으면 내가 올린 영상만(행이 없으면 꺼짐).
+export const STATS_ALL_MENU_KEY = 'stats_all'
 
 // 저장된 값(없으면 기본값)으로 이 역할이 쓸 수 있는 설정 메뉴·세부 권한 목록을 만든다. 부모가 꺼진 세부 권한은 뺀다.
 export function resolveSettingsSubs(stored: (menuKey: string) => boolean | undefined): SettingsSubKey[] {

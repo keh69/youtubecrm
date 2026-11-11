@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { addDays, fmtTime, todayKst, fmtYmdShort } from '@/lib/crm/client/format'
-import { useSession, type useTeamAttendance } from '@/lib/crm/client/hooks'
+import { useSession, useWorkTimes, type useTeamAttendance } from '@/lib/crm/client/hooks'
 import type { DayRecord, TeamAttendance } from '@/lib/crm/client/types'
 
 // 근태통계 맨 아래 달력(모든 스킨 공통).
@@ -31,8 +32,9 @@ function EditDialog({ name, date, record, onClose, onSave }: { name: string; dat
   const [reason, setReason] = useState(record?.absenceReason || '')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
-  const late = kind === 'normal' && checkIn > '09:00'
-  const overtime = kind === 'normal' && checkOut > '19:00'
+  const work = useWorkTimes() // 출퇴근 기준시간(설정 > 08)
+  const late = kind === 'normal' && Boolean(checkIn) && checkIn > work.start
+  const overtime = kind === 'normal' && Boolean(checkOut) && checkOut > work.end
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,7 +77,7 @@ function EditDialog({ name, date, record, onClose, onSave }: { name: string; dat
               </span>
               <input className="xs-input" type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
             </label>
-            <p className="xs-muted">09:00 이후 출근은 지각, 19:00 이후 퇴근은 야근으로 자동 표시됩니다. 둘 다 비우면 기록 없음으로 저장됩니다.</p>
+            <p className="xs-muted">{work.start} 이후 출근은 지각, {work.end} 이후 퇴근은 야근으로 자동 표시됩니다. 둘 다 비우면 기록 없음으로 저장됩니다.</p>
           </>
         ) : (
           <label className="xs-field">
@@ -207,7 +209,9 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
         })}
       </div>
 
-      {menu && (
+      {/* 오른쪽 클릭 메뉴·수정 창은 body 에 그린다. 카드에 흐림 효과(backdrop-filter)가 있으면 fixed 위치가 카드 기준으로 바뀌어 커서에서 떨어져 보였다 */}
+      {menu &&
+        createPortal(
         <div className="xs-ctx" style={{ left: Math.min(menu.x, window.innerWidth - 150), top: Math.min(menu.y, window.innerHeight - 100) }} role="menu" onClick={(e) => e.stopPropagation()}>
           <div className="xs-ctx-title">{fmtYmdShort(menu.date)}</div>
           <button
@@ -223,10 +227,12 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
           <button type="button" role="menuitem" className="danger" disabled={!row.records[menu.date]} onClick={() => remove(menu.date)}>
             🗑 삭제
           </button>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
-      {editing && (
+      {editing &&
+        createPortal(
         <EditDialog
           name={row.user.name}
           date={editing}
@@ -239,8 +245,9 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
             setEditing(null)
             return null
           }}
-        />
-      )}
+        />,
+          document.body
+        )}
     </section>
   )
 }

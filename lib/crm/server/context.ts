@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin-client'
+import { loadWorkHours } from '@/lib/crm/server/work-hours'
 import { TABLES } from '@/lib/supabase/tables'
 import { verifyAccessToken } from '@/lib/auth/verify-token'
 import { getBearerToken } from '@/lib/auth/session'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>
 
@@ -30,6 +31,7 @@ export type CrmContext = {
   isSuperAdmin: boolean // 총관리자(super_admin): 모든 직원 데이터를 본다
   settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~05)
   canEditAttendance: boolean // 근태통계 '수정가능': 달력에서 근태를 고치거나 지울 수 있다
+  canSeeAllStats: boolean // 영상통계 '관리자': 전 직원 영상을 본다(아니면 내 영상만)
 }
 
 // 화면에 보여줄 수 있는 에러. 이 클래스로 던지면 status 와 메시지가 그대로 응답된다.
@@ -148,6 +150,7 @@ export async function getContext(request: Request): Promise<CrmContext> {
   const claims = await verifyAccessToken(getBearerToken(request))
   if (!claims) throw new HttpError(401, '로그인이 필요합니다.')
   const db = createSupabaseAdminClient()
+  await loadWorkHours(db) // 지각·야근 기준시간(설정 > 08 출퇴근시간)
   const profile = await loadProfileByAuthId(db, claims.sub)
   if (!profile) throw new HttpError(401, 'CRM 계정을 찾을 수 없습니다.')
   if (profile.employment_status !== 'active') throw new HttpError(403, '사용이 중지된 계정입니다. 관리자에게 문의해 주세요.')
@@ -181,15 +184,21 @@ export async function getContext(request: Request): Promise<CrmContext> {
   let canEditAttendance = isSuperAdmin
   if (!canEditAttendance && menus.has('attendance_team')) {
     const codes = roles.filter((r) => menuMap.get(r.code)?.has('attendance_team')).map((r) => r.code)
-    canEditAttendance = (await loadAttendanceEditCodes(db, codes)).size > 0
+    canEditAttendance = (await loadRoleFlagCodes(db, ATTENDANCE_EDIT_MENU_KEY, codes)).size > 0
+  }
+  // 영상통계 '관리자': 총 관리자는 항상, 그 외에는 영상통계가 켜진 역할 중 하나라도 '관리자'가 켜져 있으면
+  let canSeeAllStats = isSuperAdmin
+  if (!canSeeAllStats && menus.has('stats')) {
+    const codes = roles.filter((r) => menuMap.get(r.code)?.has('stats')).map((r) => r.code)
+    canSeeAllStats = (await loadRoleFlagCodes(db, STATS_ALL_MENU_KEY, codes)).size > 0
   }
 
-  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin, settingsTabs, canEditAttendance }
+  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin, settingsTabs, canEditAttendance, canSeeAllStats }
 }
 
-// 근태통계 '수정가능'이 켜진 역할 code 목록
-export async function loadAttendanceEditCodes(db: Admin, roleCodes?: string[]) {
-  let q = db.from(TABLES.roleMenuPermissions).select('role_type').eq('menu_key', ATTENDANCE_EDIT_MENU_KEY).eq('can_view', true)
+// 역할별 켜기/끄기 표시(근태 '수정가능', 영상통계 '관리자' 등)가 켜진 역할 code 목록
+export async function loadRoleFlagCodes(db: Admin, menuKey: string, roleCodes?: string[]) {
+  let q = db.from(TABLES.roleMenuPermissions).select('role_type').eq('menu_key', menuKey).eq('can_view', true)
   if (roleCodes) {
     if (!roleCodes.length) return new Set<string>()
     q = q.in('role_type', roleCodes)

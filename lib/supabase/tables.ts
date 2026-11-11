@@ -22,5 +22,6 @@ export const TABLES = {
   videoSnapshots: `${PREFIX}video_snapshots`,
   videoAnalyticsDaily: `${PREFIX}video_analytics_daily`,
   channelAnalyticsDaily: `${PREFIX}channel_analytics_daily`,
-  auditLogs: `${PREFIX}audit_logs`
+  auditLogs: `${PREFIX}audit_logs`,
+  appSettings: `${PREFIX}app_settings` // 앱 설정값(출퇴근 기준시간 등)
 } as const

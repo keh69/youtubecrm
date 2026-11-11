@@ -5,7 +5,7 @@ import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { AttendanceEditToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl } from '@/components/settings-extra'
+import { AttendanceEditToggle, StatsAllToggle, DumpPanel, EmployeeManage, SignupRoleSelect, UnresolvedPanel, useSettingsTabFromUrl, WorkHoursPanel } from '@/components/settings-extra'
 import { isoToDotted } from '@/components/date-input'
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useDragReorder, useSettingsTabs, useEmployees, useMenuGuard, useSession, useSettings, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
@@ -18,7 +18,7 @@ type Msg = { tone: 'ok' | 'error'; text: string } | null
 export default function V8Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs({ dump: true, unresolved: true }) // 역할별로 허용된 설정 하부 메뉴만
+  const st = useSettingsTabs({ dump: true, unresolved: true, workhours: true }) // 역할별로 허용된 설정 하부 메뉴만
   const [tabState, setTab] = useState<Tab | null>(null)
   useSettingsTabFromUrl(setTab) // 알림의 '처리하러 가기'나 ?tab= 으로 탭 열기
   const tab: Tab = tabState && st.tabs.some((x) => x.key === tabState) ? tabState : st.first
@@ -69,6 +69,7 @@ export default function V8Settings() {
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
       {tab === 'dump' && <DumpPanel />}
       {tab === 'unresolved' && <UnresolvedPanel />}
+      {tab === 'workhours' && <WorkHoursPanel />}
       {st.tabs.length === 0 && <p className="xs-empty">설정 안에서 볼 수 있는 메뉴가 없습니다. 관리자에게 역할설정 &gt; 상세설정에서 켜 달라고 요청해 주세요.</p>}
       {tab === 'skin' && st.tabs.length > 0 && (
         <section className="card">
@@ -384,6 +385,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${m.label}`} />
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                       {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
+                      {m.key === 'stats' && <StatsAllToggle role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num">

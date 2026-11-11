@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstIsoAtTime, getKstYmd, isLateCheckIn, isOvertimeCheckOut } from '@/lib/attendance/time'
+import { getAutoCheckoutIso, getAttendanceWorkedSeconds, getKstIsoAtTime, getKstYmd, getWorkHours, isLateCheckIn, isOvertimeCheckOut } from '@/lib/attendance/time'
 import { HttpError, MIGRATION_HINT, isMissingSchema, type Admin, type CrmContext } from '@/lib/crm/server/context'
 
 export type DayRecord = {
@@ -208,8 +208,8 @@ export async function resolveDay(ctx: CrmContext, userId: string, workDate: stri
     const iso = at(time)
     if (action === 'in' || action === 'in_late') {
       const late = isLateCheckIn(iso, workDate)
-      if (action === 'in' && late) throw new HttpError(400, '09:00 이후는 출근(지각)으로 골라 주세요.')
-      if (action === 'in_late' && !late) throw new HttpError(400, '출근(지각)은 09:00 이후 시간이어야 합니다.')
+      if (action === 'in' && late) throw new HttpError(400, `${getWorkHours().start} 이후는 출근(지각)으로 골라 주세요.`)
+      if (action === 'in_late' && !late) throw new HttpError(400, `출근(지각)은 ${getWorkHours().start} 이후 시간이어야 합니다.`)
       const out = existing?.check_out_at || null
       if (out && new Date(out) <= new Date(iso)) throw new HttpError(400, '출근 시간이 퇴근 시간보다 늦습니다.')
       patch = {
@@ -224,8 +224,8 @@ export async function resolveDay(ctx: CrmContext, userId: string, workDate: stri
       if (!existing?.check_in_at) throw new HttpError(400, '출근 기록이 없습니다. 출근을 먼저 정해 주세요.')
       if (time === '23:59') throw new HttpError(400, '23:59 는 자동 퇴근 시각이라 쓸 수 없습니다. 23:58 까지 적어 주세요.')
       const overtime = isOvertimeCheckOut(iso, workDate)
-      if (action === 'out' && overtime) throw new HttpError(400, '19:00 이후는 퇴근(야근)으로 골라 주세요.')
-      if (action === 'out_overtime' && !overtime) throw new HttpError(400, '퇴근(야근)은 19:00 이후 시간이어야 합니다.')
+      if (action === 'out' && overtime) throw new HttpError(400, `${getWorkHours().end} 이후는 퇴근(야근)으로 골라 주세요.`)
+      if (action === 'out_overtime' && !overtime) throw new HttpError(400, `퇴근(야근)은 ${getWorkHours().end} 이후 시간이어야 합니다.`)
       if (new Date(iso) <= new Date(existing.check_in_at)) throw new HttpError(400, '퇴근 시간이 출근 시간보다 빠릅니다.')
       patch = { check_out_at: iso, worked_minutes: Math.floor(getAttendanceWorkedSeconds(existing.check_in_at, iso) / 60), updated_at: nowIso }
     }

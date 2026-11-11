@@ -74,14 +74,28 @@ export function getAutoCheckoutIso(ymd: string) {
   return getKstIsoAtTime(ymd, 23, 59, 0)
 }
 
-// 지각 기준: 오전 9시 정각 이후 출근
+// 출퇴근 기준시간(설정 > 08 출퇴근시간). 서버가 요청마다 DB 값으로 맞춘다(lib/crm/server/work-hours.ts).
+export type WorkHours = { start: string; end: string } // "HH:MM"
+export const DEFAULT_WORK_HOURS: WorkHours = { start: '10:00', end: '19:00' }
+let workHours: WorkHours = { ...DEFAULT_WORK_HOURS }
+export function setWorkHours(next: WorkHours) {
+  workHours = { ...next }
+}
+export function getWorkHours(): WorkHours {
+  return { ...workHours }
+}
+const hm = (v: string) => v.split(':').map(Number) as [number, number]
+
+// 지각 기준: 출근 기준시간 이후 출근
 export function getLateThresholdIso(ymd: string) {
-  return getKstIsoAtTime(ymd, 9, 0, 0)
+  const [h, m] = hm(workHours.start)
+  return getKstIsoAtTime(ymd, h, m, 0)
 }
 
-// 야근 기준: 저녁 7시 이후 퇴근(자동 퇴근 제외는 호출하는 쪽에서 판단)
+// 야근 기준: 퇴근 기준시간 이후 퇴근(자동 퇴근 제외는 호출하는 쪽에서 판단)
 export function getOvertimeThresholdIso(ymd: string) {
-  return getKstIsoAtTime(ymd, 19, 0, 0)
+  const [h, m] = hm(workHours.end)
+  return getKstIsoAtTime(ymd, h, m, 0)
 }
 
 export function isOvertimeCheckOut(checkOutAt: string | null, workDate: string) {

@@ -12,6 +12,8 @@ export type Me = {
   skin: SkinKey // 이 사람이 고른 스킨(로그인하면 이 스킨 주소로 들어간다)
   settingsTabs: SettingsSubKey[] // 설정 안에서 볼 수 있는 하부 메뉴(01~07)
   canEditAttendance?: boolean // 근태통계 '수정가능': 달력에서 근태 수정·삭제
+  canSeeAllStats?: boolean // 영상통계 '관리자': 전 직원 영상
+  workHours?: { start: string; end: string } // 출퇴근 기준시간: 이후 출근 = 지각, 이후 퇴근 = 야근
 }
 
 export type DayRecord = {
@@ -100,6 +102,7 @@ export type SettingsRole = {
   affiliationVisible: boolean // 상세설정 '하부': 아이디 생성 소속 목록에 이 역할의 아이디가 나오는지
   signupRole?: boolean // 상세설정 '회원가입 시 역할': 새 아이디가 받는 역할(삭제 불가)
   attendanceEdit?: boolean // 근태통계 옆 '수정가능'
+  statsAll?: boolean // 영상통계 옆 '관리자'
   holderCount: number
   memberCount: number
 }

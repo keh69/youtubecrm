@@ -254,7 +254,7 @@ export const TEAM_PERIODS: ReadonlyArray<{ key: TeamPeriod; label: string }> = [
 ]
 
 // 직원근태: 주간/월간 통계. date 는 보고 있는 주/달 안의 아무 날짜.
-// 집계(summary): 출근(지각 포함) / 지각(09:00 이후) / 퇴근 / 야근(19:00 이후) / 결근 / 근무시간
+// 집계(summary): 출근(지각 포함) / 지각(출근 기준시간 이후) / 퇴근 / 야근(퇴근 기준시간 이후) / 결근 / 근무시간
 export function useTeamAttendance() {
   const [period, setPeriodState] = useState<TeamPeriod>('month')
   const [date, setDate] = useState(() => todayKst())
@@ -512,6 +512,13 @@ export function useSettings() {
       if (!res.ok) await reload()
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },
+    // 영상통계 '관리자' 켜기/끄기
+    saveRoleStatsAll: async (id: string, statsAll: boolean): Promise<ActionResult> => {
+      setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, statsAll } : r)) } : d))
+      const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { statsAll } })
+      if (!res.ok) await reload()
+      return res.ok ? { ok: true } : { ok: false, error: res.error }
+    },
     // 근태통계 '수정가능' 켜기/끄기
     saveRoleAttendanceEdit: async (id: string, attendanceEdit: boolean): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, attendanceEdit } : r)) } : d))
@@ -642,6 +649,20 @@ export function useEmployees() {
   return { items, loading, error, reload, loginAs, busyId, resetPassword, resetId, notice, editEmployee, deleteEmployee }
 }
 
+/* ───────────────────────── 출퇴근 기준시간 (설정 > 08) ───────────────────────── */
+// start 이후 출근 = 지각, end 이후 퇴근 = 야근. 버튼 기본 시간: 출근 = start, 지각 = start+30분, 퇴근 = end, 야근 = end+2시간
+const addMin = (hm: string, min: number) => {
+  const [h, m] = hm.split(':').map(Number)
+  const t = Math.min(23 * 60 + 58, h * 60 + m + min)
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+}
+export function useWorkTimes() {
+  const { me } = useSession()
+  const start = me.workHours?.start || '10:00'
+  const end = me.workHours?.end || '19:00'
+  return { start, end, defaults: { in: start, in_late: addMin(start, 30), out: end, out_overtime: addMin(end, 120) } }
+}
+
 /* ───────────────────────── 07 미처리 (근태) ───────────────────────── */
 export type UnresolvedItem = { kind: 'in' | 'out'; userId: string; name: string; loginId: string; workDate: string; checkInAt: string | null }
 export type UnresolvedData = { checkIn: UnresolvedItem[]; checkOut: UnresolvedItem[]; from: string; to: string }
@@ -731,7 +752,7 @@ export function useDump() {
 }
 
 // 설정 화면 탭(모든 스킨 공통 순서·번호)
-export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin' | 'dump' | 'unresolved'
+export type SettingsTab = 'employees' | 'assign' | 'roles' | 'create' | 'skin' | 'dump' | 'unresolved' | 'workhours'
 export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label: string }> = [
   { key: 'employees', no: '01', label: '사원목록' },
   { key: 'assign', no: '02', label: '역할부여' },
@@ -739,15 +760,16 @@ export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label:
   { key: 'create', no: '04', label: '아이디생성' },
   { key: 'skin', no: '05', label: '스킨' },
   { key: 'dump', no: '06', label: '덤프파일' },
-  { key: 'unresolved', no: '07', label: '미처리' }
+  { key: 'unresolved', no: '07', label: '미처리' },
+  { key: 'workhours', no: '08', label: '출퇴근시간' }
 ]
 
 // 이 사람이 볼 수 있는 설정 탭(01~06 모두 역할별 권한) + 처음 열 탭
 // 06 덤프파일·07 미처리는 화면이 있는 스킨(v5)만 opts 로 켠다.
-export function useSettingsTabs(opts: { dump?: boolean; unresolved?: boolean } = {}) {
+export function useSettingsTabs(opts: { dump?: boolean; unresolved?: boolean; workhours?: boolean } = {}) {
   const { me } = useSession()
   const allowed = new Set<string>(me.settingsTabs || [])
-  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump) && (t.key !== 'unresolved' || opts.unresolved))
+  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump) && (t.key !== 'unresolved' || opts.unresolved) && (t.key !== 'workhours' || opts.workhours))
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }
 

@@ -23,7 +23,8 @@ export async function GET(request: Request) {
     if (from > to) [from, to] = [to, from]
     if (getYmdList(from, to).length > MAX_DAYS) from = addDaysToYmd(to, -(MAX_DAYS - 1))
 
-    const people = await loadVisibleUsers(ctx)
+    // 영상통계 범위: 역할설정 '관리자'가 켜져 있으면 전 직원, 아니면 내가 올린 영상만
+    const people = ctx.canSeeAllStats ? await loadVisibleUsers(ctx, { all: true }) : (await loadVisibleUsers(ctx)).filter((p) => p.id === ctx.profile.id)
     const who = url.searchParams.get('who') || 'me'
     let ids: string[]
     if (who === 'me') ids = [ctx.profile.id]

@@ -6,7 +6,7 @@ import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
-import { AttendanceEditToggle } from '@/components/settings-extra'
+import { AttendanceEditToggle, StatsAllToggle, WorkHoursPanel } from '@/components/settings-extra'
 import { DumpTab } from './dump-tab'
 import { UnresolvedTab } from './unresolved-tab'
 import { DateInput, dottedToIso, isoToDotted } from '@/components/date-input'
@@ -17,7 +17,7 @@ import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 export default function V5Settings() {
   const allowed = useMenuGuard('settings')
   const s = useSettings()
-  const st = useSettingsTabs({ dump: true, unresolved: true }) // 역할별로 허용된 설정 하부 메뉴만(01~07)
+  const st = useSettingsTabs({ dump: true, unresolved: true, workhours: true }) // 역할별로 허용된 설정 하부 메뉴만(01~07)
   const [tabState, setTab] = useState<SettingsTab | null>(null)
   // 상단 미처리 알림에서 들어오면(?tab=unresolved 또는 이미 설정 화면이면 알림 이벤트) 그 탭을 연다
   useEffect(() => {
@@ -84,6 +84,7 @@ export default function V5Settings() {
       {s.data && tab === 'create' && <CreateTab s={s} report={report} onDone={() => setTab('assign')} />}
       {tab === 'dump' && <DumpTab />}
       {tab === 'unresolved' && <UnresolvedTab />}
+      {tab === 'workhours' && <WorkHoursPanel />}
       {tab === 'skin' && (
         <section className="g-glass">
           <SkinPicker />
@@ -514,6 +515,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       </label>
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
                       {m.key === 'attendance_team' && <AttendanceEditToggle role={r} s={s} report={report} />}
+                      {m.key === 'stats' && <StatsAllToggle role={r} s={s} report={report} />}
                     </td>
                   ))}
                   <td className="num">

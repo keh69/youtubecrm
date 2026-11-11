@@ -74,7 +74,7 @@ export function affiliationNameOf(u: any, nameById: Map<string, string>, roleNam
 // 내가 볼 수 있는 직원 목록.
 // - 총관리자(super_admin): 전체 직원
 // - 그 외(관리자 포함): 나 자신 + 나에게 소속된 직원 + 그 직원에게 소속된 직원 ... (아래로 계속)
-export async function loadVisibleUsers(ctx: CrmContext): Promise<ScopedUser[]> {
+export async function loadVisibleUsers(ctx: CrmContext, opts: { all?: boolean } = {}): Promise<ScopedUser[]> {
   const { db } = ctx
   const { rows } = await selectUserRows(db, 'id, name, login_id, role_type, custom_role_code, employment_status', 'name')
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
@@ -91,7 +91,7 @@ export async function loadVisibleUsers(ctx: CrmContext): Promise<ScopedUser[]> {
     active: u.employment_status === 'active'
   })
 
-  if (ctx.isSuperAdmin) return rows.map(toScoped)
+  if (ctx.isSuperAdmin || opts.all) return rows.map(toScoped)
   const visible = collectUnder(rows, rolesByUser, ctx.profile.id)
   visible.add(ctx.profile.id)
   return rows.filter((u) => visible.has(u.id)).map(toScoped)

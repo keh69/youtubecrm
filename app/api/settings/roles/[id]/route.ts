@@ -4,7 +4,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { MENU_KEYS, SETTINGS_SUB_KEYS, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, getContext, handleError, type CrmContext } from '@/lib/crm/server/context'
 import { pickDefaultRole } from '@/lib/crm/server/accounts'
-import { assertRoleNameFree, audit, isSystemRole, requireSettingsTab, saveRoleAffiliationVisible, saveRoleAttendanceEdit, saveRoleMenus, saveRoleSettingsTabs } from '@/lib/crm/server/settings'
+import { assertRoleNameFree, audit, isSystemRole, requireSettingsTab, saveRoleAffiliationVisible, saveRoleAttendanceEdit, saveRoleMenus, saveRoleStatsAll, saveRoleSettingsTabs } from '@/lib/crm/server/settings'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -13,7 +13,8 @@ const patchSchema = z.object({
   menus: z.array(z.enum(MENU_KEYS)).optional(),
   settingsTabs: z.array(z.enum(SETTINGS_SUB_KEYS as [SettingsSubKey, ...SettingsSubKey[]])).optional(),
   affiliationVisible: z.boolean().optional(), // 상세설정 '하부'
-  attendanceEdit: z.boolean().optional() // 근태통계 '수정가능'
+  attendanceEdit: z.boolean().optional(), // 근태통계 '수정가능'
+  statsAll: z.boolean().optional() // 영상통계 '관리자'
 })
 
 async function loadRole(ctx: CrmContext, id: string) {
@@ -40,7 +41,8 @@ export async function PATCH(request: Request, context: Params) {
     if (body.settingsTabs) await saveRoleSettingsTabs(ctx, role.code, body.settingsTabs)
     if (body.affiliationVisible !== undefined) await saveRoleAffiliationVisible(ctx, role.code, body.affiliationVisible)
     if (body.attendanceEdit !== undefined) await saveRoleAttendanceEdit(ctx, role.code, body.attendanceEdit)
-    await audit(ctx, 'update_role', 'role', role.id, { name: body.name, menus: body.menus, settingsTabs: body.settingsTabs, affiliationVisible: body.affiliationVisible, attendanceEdit: body.attendanceEdit })
+    if (body.statsAll !== undefined) await saveRoleStatsAll(ctx, role.code, body.statsAll)
+    await audit(ctx, 'update_role', 'role', role.id, { name: body.name, menus: body.menus, settingsTabs: body.settingsTabs, affiliationVisible: body.affiliationVisible, attendanceEdit: body.attendanceEdit, statsAll: body.statsAll })
     return NextResponse.json({ ok: true })
   } catch (e) {
     return handleError(e, '역할 저장 실패')

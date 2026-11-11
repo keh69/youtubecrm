@@ -1,23 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import { useUnresolved, type ResolveAction, type UnresolvedItem } from '@/lib/crm/client/hooks'
+import { useUnresolved, useWorkTimes, type ResolveAction, type UnresolvedItem } from '@/lib/crm/client/hooks'
 import { fmtTime, fmtYmdShort } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, type Msg } from '../../_components/ui'
 
 // 처리 방법: 고르면 기본 시간이 채워진다(고칠 수 있음). 결근·휴무는 시간 대신 사유.
-const IN_ACTIONS: Array<{ key: ResolveAction; label: string; time: string | null }> = [
-  { key: 'in', label: '출근', time: '09:00' },
-  { key: 'in_late', label: '출근(지각)', time: '09:30' },
-  { key: 'absent', label: '결근', time: null },
-  { key: 'off', label: '휴무', time: null }
-]
-const OUT_ACTIONS: Array<{ key: ResolveAction; label: string; time: string | null }> = [
-  { key: 'out', label: '퇴근', time: '18:00' },
-  { key: 'out_overtime', label: '퇴근(야근)', time: '21:00' }
-]
+// 처리 방법별 기본 시간은 출퇴근 기준시간(설정 > 08)을 따른다
+type ActionDef = { key: ResolveAction; label: string; time: string | null }
+function useResolveActions(): { IN_ACTIONS: ActionDef[]; OUT_ACTIONS: ActionDef[] } {
+  const d = useWorkTimes().defaults
+  return {
+    IN_ACTIONS: [
+      { key: 'in', label: '출근', time: d.in },
+      { key: 'in_late', label: '출근(지각)', time: d.in_late },
+      { key: 'absent', label: '결근', time: null },
+      { key: 'off', label: '휴무', time: null }
+    ],
+    OUT_ACTIONS: [
+      { key: 'out', label: '퇴근', time: d.out },
+      { key: 'out_overtime', label: '퇴근(야근)', time: d.out_overtime }
+    ]
+  }
+}
 
 function ResolveRow({ item, onResolve }: { item: UnresolvedItem; onResolve: ReturnType<typeof useUnresolved>['resolve'] }) {
+  const { IN_ACTIONS, OUT_ACTIONS } = useResolveActions()
   const actions = item.kind === 'in' ? IN_ACTIONS : OUT_ACTIONS
   const [action, setAction] = useState<ResolveAction>(actions[0].key)
   const [time, setTime] = useState(actions[0].time || '')
@@ -86,7 +94,7 @@ export function UnresolvedTab() {
       <section className="g-glass">
         <h2 className="g-h2">미처리</h2>
         <p className="g-muted g-small">
-          최근 2주({fmtYmdShort(d.from)} ~ {fmtYmdShort(d.to)}) 동안 평일(월~금)에 출근을 안 누른 날과, 퇴근을 안 눌러 23:59에 자동 퇴근된 날입니다. 오늘 출근은 09:00이 지나야 나타납니다. 출근·출근(지각)·퇴근·퇴근(야근)·결근·휴무 중 하나로 처리하면 목록에서 사라집니다.
+          최근 2주({fmtYmdShort(d.from)} ~ {fmtYmdShort(d.to)}) 동안 평일(월~금)에 출근을 안 누른 날과, 퇴근을 안 눌러 23:59에 자동 퇴근된 날입니다. 오늘 출근은 출근 기준시간(설정 &gt; 08)이 지나야 나타납니다. 출근·출근(지각)·퇴근·퇴근(야근)·결근·휴무 중 하나로 처리하면 목록에서 사라집니다.
         </p>
         <Note msg={msg} />
       </section>
