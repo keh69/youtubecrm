@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/supabase/config'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
-import { passwordSchema, toAuthPassword } from '@/lib/crm/server/password'
+import { passwordSchema, signInCompat, toAuthPassword } from '@/lib/crm/server/password'
 
 const bodySchema = z.object({
   currentPassword: z.string().min(1, '현재 비밀번호를 입력해 주세요.'),
@@ -18,11 +16,10 @@ export async function POST(request: Request) {
     const body = bodySchema.parse(await request.json())
     if (body.currentPassword === body.newPassword) throw new HttpError(400, '새 비밀번호가 현재 비밀번호와 같습니다.')
 
-    const anon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
-    const check = await anon.auth.signInWithPassword({ email: ctx.profile.email, password: toAuthPassword(body.currentPassword) })
-    if (check.error || !check.data.user) throw new HttpError(400, '현재 비밀번호가 맞지 않습니다.')
+    const check = await signInCompat(ctx.profile.email, body.currentPassword)
+    if (!check?.user) throw new HttpError(400, '현재 비밀번호가 맞지 않습니다.')
 
-    const { error } = await ctx.db.auth.admin.updateUserById(check.data.user.id, { password: toAuthPassword(body.newPassword) })
+    const { error } = await ctx.db.auth.admin.updateUserById(check.user.id, { password: toAuthPassword(body.newPassword) })
     if (error) throw new HttpError(400, error.message)
 
     await ctx.db.from(TABLES.auditLogs).insert({
