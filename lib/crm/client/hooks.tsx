@@ -606,7 +606,7 @@ export function useSettingsTabs() {
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }
 
-export const EMPLOYEE_TABS_NOTE = '내 소속 하부에 있는 사원만 보입니다. "이 아이디로 로그인"을 누르면 그 사원 화면으로 바로 들어가고, 오른쪽 위 "관리자로 복귀"로 돌아옵니다.'
+export const EMPLOYEE_TABS_NOTE = '내 소속 하부에 있는 사원만 보입니다(총 관리자는 하부와 상관없이 모든 사원이 보입니다). "이 아이디로 로그인"을 누르면 그 사원 화면으로 바로 들어가고, 오른쪽 위 "관리자로 복귀"로 돌아옵니다.'
 
 export const EMPTY_ACCOUNT: NewAccount = { loginId: '', password: '', name: '', email: '', phone: '', affiliationRoleId: null }
 

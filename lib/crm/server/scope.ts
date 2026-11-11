@@ -106,13 +106,14 @@ export async function assertCanSeeUser(ctx: CrmContext, userId: string) {
 export type Subordinate = ScopedUser & { email: string; phone: string; roles: string[]; isSuperAdmin: boolean }
 
 // 내 소속 하부 직원(나 제외): 관리자라도 "소속" 연결을 따라 내려간 사람만.
+// 총 관리자(super_admin)는 하부와 상관없이 나를 뺀 모든 직원.
 export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> {
   const { db } = ctx
   const { rows } = await selectUserRows(db, 'id, name, login_id, email, phone, role_type, custom_role_code, employment_status', 'name')
   const { allRoles, rolesByUser } = await loadRolesForUsers(db, rows)
   const roleName = new Map(allRoles.map((r: RoleRow) => [r.id, r.name]))
   const nameById = new Map(rows.map((u) => [u.id, u.name]))
-  const under = collectUnder(rows, rolesByUser, ctx.profile.id)
+  const under = ctx.isSuperAdmin ? new Set(rows.filter((u) => u.id !== ctx.profile.id).map((u) => u.id)) : collectUnder(rows, rolesByUser, ctx.profile.id)
 
   return rows
     .filter((u) => under.has(u.id))
