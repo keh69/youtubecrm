@@ -1,6 +1,6 @@
 'use client'
 
-import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
+import { STAT_PERIODS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
@@ -49,16 +49,6 @@ export default function V5Stats() {
           <span>특정날짜</span>
           <input className="g-input g-date" type="date" value={st.date} max={todayKst()} onChange={(e) => st.setDate(e.target.value)} />
         </label>
-        <div className="g-field">
-          <span>정렬</span>
-          <div className="g-seg" role="group" aria-label="정렬">
-            {STAT_SORTS.map((o) => (
-              <button key={o.key} type="button" className={st.sort === o.key ? 'on' : ''} aria-pressed={st.sort === o.key} onClick={() => st.setSort(o.key)}>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
         {st.loading && st.data && <span className="g-spinner g-filters-spin" aria-label="새로 불러오는 중" />}
       </section>
 
@@ -72,7 +62,6 @@ export default function V5Stats() {
       <section className="g-glass">
         <div className="g-card-head">
           <h2 className="g-h2">영상리스트 ({fmtNumber(videos.length)})</h2>
-          <span className="g-muted g-small">{STAT_SORTS.find((o) => o.key === st.sort)?.label}</span>
         </div>
         {/* 영상 표: 열별 필터 + 영상통계 '수정권한'이면 줄마다 수정·삭제 */}
         {st.loading && !st.data ? (
