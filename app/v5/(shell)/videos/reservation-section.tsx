@@ -31,6 +31,7 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<Msg>(null)
   const waiting = r.items.filter((x) => x.status === 'waiting')
+  const showOwner = Boolean(me.isSuperAdmin) // 총관리자는 모든 직원의 예약이 보이므로 등록자 열을 단다
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,7 +62,9 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
 
   return (
     <section className="g-glass g-register">
-      <h2 className="g-h2">예약등록 (공개 대기 {waiting.length})</h2>
+      <h2 className="g-h2">
+        예약등록 (공개 대기 {waiting.length}){showOwner && <small className="g-muted"> · 전체 직원</small>}
+      </h2>
       <p className="g-muted g-small">유튜브에서 예약 업로드한 뒤 나오는 링크를 넣어 두세요. 영상이 공개되면 자동으로 아래 &apos;내가 등록한 영상&apos;에 들어갑니다(영상등록·영상통계 화면을 열 때 확인합니다).</p>
       <form className="g-row-form" onSubmit={submit}>
         <div className="g-field">
@@ -109,6 +112,7 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
             <thead>
               <tr>
                 <th>예약한 날</th>
+                {showOwner && <th>등록자</th>}
                 <th>예약 링크</th>
                 <th>폼종류</th>
                 <th>종목</th>
@@ -120,6 +124,7 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
               {r.items.map((x) => (
                 <tr key={x.id}>
                   <td className="nowrap">{fmtKst(x.createdAt)}</td>
+                  {showOwner && <td className="nowrap">{x.ownerName || '-'}</td>}
                   <td className="nowrap">
                     <a href={x.url} target="_blank" rel="noreferrer">
                       {x.url.replace('https://', '')}

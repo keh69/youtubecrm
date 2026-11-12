@@ -87,6 +87,8 @@ export type Reservation = {
   registeredAt: string | null
   lastCheckedAt: string | null
   videoId: string | null
+  ownerUserId: string
+  ownerName: string | null // 등록자(예약한 직원)
 }
 
 export type Video = {

@@ -22,11 +22,13 @@ export type ReservationDto = {
   registeredAt: string | null
   lastCheckedAt: string | null
   videoId: string | null
+  ownerUserId: string
+  ownerName: string | null
 }
 
 const FIELDS = 'id, youtube_video_id, youtube_url, stock_name, content_type, owner_user_id, scheduled_at, status, video_id, last_checked_at, registered_at, created_at'
 
-function toDto(r: any): ReservationDto {
+function toDto(r: any, ownerName: string | null = null): ReservationDto {
   return {
     id: r.id,
     youtubeVideoId: r.youtube_video_id,
@@ -38,7 +40,9 @@ function toDto(r: any): ReservationDto {
     createdAt: r.created_at,
     registeredAt: r.registered_at || null,
     lastCheckedAt: r.last_checked_at || null,
-    videoId: r.video_id || null
+    videoId: r.video_id || null,
+    ownerUserId: r.owner_user_id,
+    ownerName
   }
 }
 
@@ -150,19 +154,26 @@ export async function reserveVideo(ctx: CrmContext, input: { youtubeUrl: string;
   return { registered: false as const, reservation: toDto(data) }
 }
 
-// 내 예약 목록(공개 대기 중 + 최근 옮겨진 것 30일)
+// 예약 목록(공개 대기 중 + 최근 옮겨진 것 30일). 보통은 내 것만, 총관리자는 모든 직원 것.
 export async function listMyReservations(ctx: CrmContext) {
   await processReservations(ctx)
   const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
-  const { data, error } = await ctx.db
-    .from(TABLES.videoReservations)
-    .select(FIELDS)
-    .eq('owner_user_id', ctx.profile.id)
+  let q = ctx.db.from(TABLES.videoReservations).select(FIELDS)
+  if (!ctx.isSuperAdmin) q = q.eq('owner_user_id', ctx.profile.id)
+  const { data, error } = await q
     .or(`status.eq.waiting,registered_at.gte.${since}`)
     .order('created_at', { ascending: false })
-    .limit(300)
+    .limit(500)
   if (error) tableError(error)
-  return (data || []).map(toDto)
+  const rows = (data || []) as any[]
+  // 등록자 이름 붙이기
+  const ids = [...new Set(rows.map((r) => r.owner_user_id))]
+  const names = new Map<string, string>()
+  if (ids.length) {
+    const { data: users } = await ctx.db.from(TABLES.crmUsers).select('id, name').in('id', ids)
+    for (const u of users || []) names.set(u.id, u.name)
+  }
+  return rows.map((r) => toDto(r, names.get(r.owner_user_id) || null))
 }
 
 // 예약 삭제(예약 목록에서만 지운다. 이미 등록된 영상은 그대로). 본인 것, 또는 영상등록 수정권한이 있으면 남의 것도.
