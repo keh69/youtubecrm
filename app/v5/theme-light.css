@@ -3355,7 +3355,13 @@ html:root .v5 .g-vtable.no-title .thumb-col .g-vcell {
   justify-content: center;
 }
 html:root .v5 .g-vtable.no-title .thumb-col .g-thumb {
-  width: 132px;
+  width: 106px; /* 2026-11-12: 132px → 106px(20% 줄임). 16:9 라 세로도 74px → 60px */
+  border-radius: 12px;
+}
+/* 줄 위아래 여백도 20% 줄임(10px → 8px): 한 줄 높이 약 95px → 76px */
+html:root .v5 .g-vtable.no-title td {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 html:root .v5 .g-vtable.no-title .g-who {
   justify-content: center;
