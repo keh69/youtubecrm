@@ -3334,3 +3334,28 @@ html:root .v5 .g-vtable .g-thumb {
 html:root .v5 .g-vtable .g-vtitle {
   min-width: 140px;
 }
+
+/* ───────── 영상 표: 제목 열을 뺀 v5 표(no-title) 칸 나누기 (2026-11-12) ─────────
+   썸네일 칸은 썸네일 크기만큼만 차지하고, 남는 폭은 나머지 칸에 고르게 나눈다. 글자는 가운데 정렬. */
+html:root .v5 .g-vtable.no-title th,
+html:root .v5 .g-vtable.no-title td {
+  text-align: center;
+}
+html:root .v5 .g-vtable.no-title td.right {
+  text-align: right;
+}
+html:root .v5 .g-vtable.no-title .thumb-col {
+  width: 1%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+html:root .v5 .g-vtable.no-title .thumb-col .g-vcell {
+  min-width: 0 !important;
+  justify-content: center;
+}
+html:root .v5 .g-vtable.no-title .thumb-col .g-thumb {
+  width: 132px;
+}
+html:root .v5 .g-vtable.no-title .g-who {
+  justify-content: center;
+}

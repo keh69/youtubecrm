@@ -114,11 +114,11 @@ export function VideoTable({
       <VideoFilterBar ctl={vf} total={videos.length} hideTitle={hideTitle} />
       {msg && <p className={c.msg} role="status">{msg}</p>}
       <div className={c.wrap}>
-        <table className={c.table}>
+        <table className={hideTitle ? cx(c.table, 'no-title') : c.table}>
           <thead>
             <tr>
               <th>올린 날짜</th>
-              <th>{hideTitle ? '썸네일' : '영상'}</th>
+              <th className={hideTitle ? 'thumb-col' : undefined}>{hideTitle ? '썸네일' : '영상'}</th>
               <th className="num">재생시간</th>
               <th>폼종류</th>
               <th>종목</th>
@@ -134,7 +134,7 @@ export function VideoTable({
               return (
                 <tr key={v.id}>
                   <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
-                  <td>
+                  <td className={hideTitle ? 'thumb-col' : undefined}>
                     <div className={c.vcell}>
                       <a href={v.url} target="_blank" rel="noreferrer" className={c.thumb} aria-label={`${v.title} 유튜브에서 보기`} title={v.title}>
                         <img src={v.thumbnailUrl} alt="" loading="lazy" />
