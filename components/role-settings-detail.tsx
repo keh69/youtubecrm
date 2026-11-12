@@ -132,11 +132,11 @@ export function RoleSettingsDetail({
             <>
               <label className="rsd-row rsd-row-sep">
                 <span>
-                  <b>하부</b> 소속 목록에 보이기
+                  <b>하부</b> 회원가입 시 소속 보이기
                 </span>
-                <input type="checkbox" checked={affVisible} onChange={toggleAff} aria-label={`${role.name} - 하부(아이디 생성 소속 목록에 보이기)`} />
+                <input type="checkbox" checked={affVisible} onChange={toggleAff} aria-label={`${role.name} - 하부(회원가입 시 소속 보이기)`} />
               </label>
-              <span className="rsd-note">켜면 아이디 생성의 &lsquo;소속&rsquo;에 이 역할의 아이디가 나오고, 끄면 나오지 않습니다.</span>
+              <span className="rsd-note">켜면 회원가입과 아이디 생성의 &lsquo;소속&rsquo;에 이 역할의 아이디가 나오고, 끄면 나오지 않습니다.</span>
             </>
           )}
           {error && <span className="rsd-error">{error}</span>}

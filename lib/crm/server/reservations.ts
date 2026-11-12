@@ -125,7 +125,7 @@ export async function reserveVideo(ctx: CrmContext, input: { youtubeUrl: string;
   if (!videoId) throw new HttpError(400, '유튜브 예약 링크가 올바르지 않습니다. (예: https://youtu.be/영상ID)')
 
   const { data: video } = await db.from(TABLES.videos).select('id').eq('youtube_video_id', videoId).maybeSingle()
-  if (video) throw new HttpError(409, '이미 영상등록에 있는 영상입니다.')
+  if (video) throw new HttpError(409, '이미 올라간 영상입니다.')
   const { data: dup, error: dupError } = await db.from(TABLES.videoReservations).select('id, status').eq('youtube_video_id', videoId).maybeSingle()
   if (dupError) tableError(dupError)
   if (dup) throw new HttpError(409, '이미 예약등록된 영상입니다.')

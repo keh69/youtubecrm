@@ -50,10 +50,11 @@ export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockNa
   const videoId = extractYoutubeVideoId(youtubeUrl)
   if (!videoId) throw new HttpError(400, '유튜브 영상 주소가 올바르지 않습니다. (예: https://youtu.be/영상ID)')
 
+  // 이미 영상리스트에 있는 영상(직접 등록·예약 공개로 등록 모두)은 누가 올리든 다시 등록하지 않는다
   const { data: existing } = await db.from(TABLES.videos).select('id, primary_owner_user_id').eq('youtube_video_id', videoId).maybeSingle()
-  if (existing && existing.primary_owner_user_id !== profile.id) {
+  if (existing) {
     const { data: owner } = await db.from(TABLES.crmUsers).select('name').eq('id', existing.primary_owner_user_id).maybeSingle()
-    throw new HttpError(409, `이미 ${owner?.name || '다른 직원'}님이 등록한 영상입니다.`)
+    throw new HttpError(409, `이미 올라간 영상입니다.${owner?.name ? ` (등록자: ${owner.name})` : ''}`)
   }
 
   const { account, apiKey } = await getActiveYoutubeKey(db)
