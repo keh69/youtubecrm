@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { fmtDate, videoFormatLabel } from '@/lib/crm/client/format'
 
 // 영상통계 > 영상 표 필터(모든 스킨 공통).
@@ -80,10 +80,25 @@ export function useVideoFilters<T extends V>(videos: T[]) {
 
 function MultiPick({ label, all, value, onChange }: { label: string; all: string[]; value: string[]; onChange: (v: string[]) => void }) {
   const [q, setQ] = useState('')
+  const ref = useRef<HTMLDetailsElement>(null)
+  // 열려 있을 때 바깥(다른 필터 포함)을 누르거나 Esc 를 누르면 닫는다
+  useEffect(() => {
+    const close = (e: Event) => {
+      const el = ref.current
+      if (!el?.open) return
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !el.contains(e.target as Node)) el.open = false
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
   const shown = all.filter((x) => x.toLowerCase().includes(q.trim().toLowerCase()))
   const summary = value.length === 0 ? '전체' : value.length <= 2 ? value.join(', ') : `${value.slice(0, 2).join(', ')} 외 ${value.length - 2}`
   return (
-    <details className="vf-multi">
+    <details className="vf-multi" ref={ref}>
       <summary>
         <span className="vf-label">{label}</span>
         <span className={value.length ? 'vf-on' : ''}>{summary}</span>
