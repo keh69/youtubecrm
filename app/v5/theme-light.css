@@ -3660,3 +3660,38 @@ html:root .v5 .g-ds-kpi dl > div.period {
 html:root .v5 .g-ds-kpi dd.small {
   font-size: clamp(9px, 1.35cqi, 15px);
 }
+
+/* ───────── 영상통계 > 담당자별 표: 가로 스크롤 없이 카드 폭에 맞추기 (2026-11-13) ─────────
+   g-table 기본 여백(12~14px)이 이 표에선 이겨서 넘쳤다 → 더 센 선택자로 여백을 줄이고,
+   표 칸 폭(cqi)에 따라 여백 → 글자 순으로 줄인다. */
+html:root .v5 .g-table-wrap:has(> table.g-ds-person) {
+  container-type: inline-size;
+}
+html:root .v5 table.g-table.g-ds-person {
+  font-size: clamp(11px, 1.3cqi, 13px);
+}
+html:root .v5 table.g-table.g-ds-person th,
+html:root .v5 table.g-table.g-ds-person td {
+  padding: 6px clamp(3px, 0.65cqi, 8px);
+}
+html:root .v5 table.g-table.g-ds-person thead th {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: clamp(10px, 1.15cqi, 12px);
+}
+html:root .v5 table.g-table.g-ds-person .vt-sort {
+  gap: 2px;
+}
+html:root .v5 table.g-table.g-ds-person .ds-bar {
+  width: clamp(24px, 4cqi, 48px);
+}
+html:root .v5 table.g-table.g-ds-person .ds-pct {
+  min-width: 28px;
+  margin-left: 4px;
+}
+html:root .v5 table.g-table.g-ds-person .ds-sub {
+  margin-left: 3px;
+}
+html:root .v5 table.g-table.g-ds-person .ds-link {
+  padding: 2px 0;
+}
