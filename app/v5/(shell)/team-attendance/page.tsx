@@ -6,6 +6,13 @@ import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 import { TeamCalendar } from '@/components/team-calendar'
 
+// 오늘 현재 상태 → 동그라미 글자·색
+function nowState(r: { checkInAt: string | null; checkOutAt: string | null; autoCheckout?: boolean } | null | undefined) {
+  if (r?.checkInAt && r.checkOutAt && !r.autoCheckout) return { text: '퇴', bg: '#4b5058', title: '퇴근' }
+  if (r?.checkInAt) return { text: '출', bg: '#f97316', title: '출근(근무중)' }
+  return { text: '미', bg: '#c3c7cd', title: '미등록' }
+}
+
 export default function V5TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')
   const team = useTeamAttendance()
@@ -178,7 +185,16 @@ export default function V5TeamAttendance() {
               return (
                 <li key={row.user.id} className={isOpen ? 'open' : ''}>
                   <button type="button" className="g-person" aria-expanded={isOpen} onClick={() => setOpenUser(isOpen ? null : row.user.id)}>
-                    <span className="g-avatar sm">{row.user.name.slice(0, 1)}</span>
+                    {(() => {
+                      // 이름 왼쪽 동그라미 = 오늘 현재 상태 (출: 주황, 퇴: 짙은 회색, 미: 밝은 회색). 오늘이 없는 기간을 보면 이름 첫 글자.
+                      if (!days.includes(todayKst())) return <span className="g-avatar sm">{row.user.name.slice(0, 1)}</span>
+                      const st = nowState(row.records[todayKst()])
+                      return (
+                        <span className="g-avatar sm" style={{ background: st.bg, color: '#fff' }} title={st.title}>
+                          {st.text}
+                        </span>
+                      )
+                    })()}
                     <span className="g-person-name">
                       <strong>{row.user.name}</strong>
                       <small className="g-muted">
