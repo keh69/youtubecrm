@@ -3309,3 +3309,28 @@ html:root .v5 .g-emp-table th,
 html:root .v5 .g-emp-table td {
   white-space: nowrap;
 }
+
+/* ───────── 영상등록·영상통계: 화면 폭 20% 넓게(1000px → 1200px), 영상 표 가로 스크롤 없게 (2026-11-12) ─────────
+   영상 표(g-vtable)가 있는 화면은 내용 폭을 1200px(화면이 좁으면 화면 폭)까지 넓힌다.
+   표는 그 폭을 꽉 채우고, 제목 칸만 줄어들며 줄바꿈해서 나머지 칸이 한 줄로 다 들어오게 한다. */
+html:root .v5 .g-content:has(.g-vtable) {
+  max-width: min(1200px, calc(100vw - 32px));
+}
+html:root .v5 .g-vtable {
+  width: 100%;
+}
+html:root .v5 .g-vtable th,
+html:root .v5 .g-vtable td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+html:root .v5 .g-vtable .g-vcell {
+  min-width: 0;
+}
+html:root .v5 .g-vtable .g-thumb {
+  width: 96px;
+  flex: none;
+}
+html:root .v5 .g-vtable .g-vtitle {
+  min-width: 140px;
+}
