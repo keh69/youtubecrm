@@ -4,6 +4,7 @@ import { addDaysToYmd, getKstYmd, getYmdList } from '@/lib/attendance/time'
 import { HttpError, getContext, handleError, requireMenu } from '@/lib/crm/server/context'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
 import { VIDEO_FIELDS, refreshStaleVideos, toVideoDto } from '@/lib/crm/server/videos'
+import { processReservations } from '@/lib/crm/server/reservations'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
 const MAX_DAYS = 366
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   try {
     const ctx = await getContext(request)
     requireMenu(ctx, 'stats')
+    await processReservations(ctx) // 공개된 예약 영상을 먼저 영상등록으로 옮긴다
     const url = new URL(request.url)
     const today = getKstYmd(new Date())
     let to = url.searchParams.get('to') || today

@@ -109,6 +109,7 @@ export async function fetchYoutubeVideoMeta(youtubeUrl: string, apiKey: string) 
         channelId?: string
         channelTitle?: string
         thumbnails?: Record<string, { url: string }>
+        liveBroadcastContent?: string
       }
       contentDetails?: { duration?: string }
       status?: { privacyStatus?: string }
@@ -130,6 +131,8 @@ export async function fetchYoutubeVideoMeta(youtubeUrl: string, apiKey: string) 
     publishedAt: item.snippet.publishedAt || null,
     durationSeconds: item.contentDetails?.duration ? parseIsoDuration(item.contentDetails.duration) : null,
     privacyStatus: item.status?.privacyStatus || null,
+    // 'upcoming' = 최초 공개(프리미어) 예정. 아직 공개 전이다
+    liveBroadcastContent: item.snippet.liveBroadcastContent || 'none',
     thumbnailUrl:
       item.snippet.thumbnails?.maxres?.url ||
       item.snippet.thumbnails?.high?.url ||

@@ -5,6 +5,7 @@ import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hoo
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Loading, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
+import { ReservationSection } from './reservation-section'
 
 export default function V5Videos() {
   const allowed = useMenuGuard('videos')
@@ -87,6 +88,9 @@ export default function V5Videos() {
           </div>
         )}
       </section>
+
+      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '내가 등록한 영상'에 들어간다 */}
+      <ReservationSection onMoved={reg.reloadRecent} />
 
       {/* 내가 등록한 영상 표(영상통계와 같은 표). 영상등록 '수정권한'이면 줄마다 수정·삭제 */}
       <section className="g-glass">

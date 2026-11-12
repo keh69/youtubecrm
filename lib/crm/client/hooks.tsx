@@ -9,7 +9,7 @@ import { MENUS, V5_ONLY_MENUS, firstAllowedPath, type MenuKey, type SettingsSubK
 import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
-import type { AccountPatch, MealPay, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
+import type { AccountPatch, MealPay, Me, Reservation, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
 import { isMobileDevice } from '@/lib/crm/client/device'
 
 export type ActionResult = { ok: boolean; error?: string }
@@ -1021,4 +1021,33 @@ export function useMealPay() {
     goThisMonth: () => setMonth(todayKst().slice(0, 7)),
     canGoNext: month < todayKst().slice(0, 7)
   }
+}
+
+// 영상등록 > 예약등록: 내 예약 목록, 예약하기, 취소
+export function useReservations() {
+  const [items, setItems] = useState<Reservation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const reload = useCallback(async () => {
+    const res = await api<{ items: Reservation[] }>('/api/videos/reservations')
+    if (res.ok) {
+      setItems(res.data.items)
+      setError('')
+    } else setError(res.error)
+    setLoading(false)
+  }, [])
+  useEffect(() => {
+    void reload()
+  }, [reload])
+  const reserve = async (input: { youtubeUrl: string; stockName: string; contentType: 'longform' | 'shortform'; scheduledAt?: string | null }) => {
+    const res = await api<{ ok: true; registered: boolean }>('/api/videos/reservations', { method: 'POST', body: input })
+    if (res.ok) await reload()
+    return res
+  }
+  const cancel = async (id: string) => {
+    const res = await api<{ ok: true }>(`/api/videos/reservations/${id}`, { method: 'DELETE' })
+    if (res.ok) await reload()
+    return res
+  }
+  return { items, loading, error, reload, reserve, cancel }
 }

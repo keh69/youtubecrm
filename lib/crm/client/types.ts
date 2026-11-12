@@ -74,6 +74,21 @@ export type MealPay = {
   totals: { days: number; amount: number; people: number }
 }
 
+// 영상등록 > 예약등록
+export type Reservation = {
+  id: string
+  youtubeVideoId: string
+  url: string
+  stockName: string
+  contentType: 'longform' | 'shortform'
+  scheduledAt: string | null
+  status: 'waiting' | 'registered'
+  createdAt: string
+  registeredAt: string | null
+  lastCheckedAt: string | null
+  videoId: string | null
+}
+
 export type Video = {
   id: string
   youtubeVideoId: string
