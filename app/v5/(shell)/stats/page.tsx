@@ -5,6 +5,15 @@ import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKs
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
 
+// 일자별 표 도우미
+const weekdayOf = (ymd: string) => ['일', '월', '화', '수', '목', '금', '토'][new Date(`${ymd}T12:00:00Z`).getUTCDay()]
+const isWeekend = (ymd: string) => {
+  const w = new Date(`${ymd}T12:00:00Z`).getUTCDay()
+  return w === 0 || w === 6
+}
+// 1만 이상은 1.2만처럼 줄여 좁은 칸에 들어가게
+const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만` : n.toLocaleString('ko-KR'))
+
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
@@ -14,8 +23,6 @@ export default function V5Stats() {
   const videos = st.videos
   const daily = st.data?.daily || []
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
-  const labelStep = Math.max(1, Math.ceil(daily.length / 15))
-  const dense = daily.length > 31
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
@@ -68,46 +75,73 @@ export default function V5Stats() {
 
       {st.error && <Note msg={{ tone: 'error', text: st.error }} role="alert" />}
 
-      <section className="g-kpis">
-        <div className="g-kpi k1">
-          <span className="g-kpi-icon" aria-hidden="true">
-            🎞️
-          </span>
-          <small>올린 영상 · {rangeText}</small>
-          <strong>{fmtNumber(st.data?.summary.videoCount)}개</strong>
-        </div>
-        <div className="g-kpi k2">
-          <span className="g-kpi-icon" aria-hidden="true">
-            👀
-          </span>
-          <small>총 조회수</small>
-          <strong>{fmtNumber(st.data?.summary.totalViews)}</strong>
-        </div>
-        <div className="g-kpi k3">
-          <span className="g-kpi-icon" aria-hidden="true">
-            ⏱️
-          </span>
-          <small>총 재생시간(영상 길이 합)</small>
-          <strong>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</strong>
-        </div>
+      {/* 요약: 큰 카드 대신 한 줄 수치표 */}
+      <section className="g-glass g-ds-kpi" aria-label="기간 요약">
+        <dl>
+          <div>
+            <dt>기간</dt>
+            <dd className="small">{rangeText}</dd>
+          </div>
+          <div>
+            <dt>올린 영상</dt>
+            <dd>{fmtNumber(st.data?.summary.videoCount)}개</dd>
+          </div>
+          <div>
+            <dt>총 조회수</dt>
+            <dd>{fmtNumber(st.data?.summary.totalViews)}</dd>
+          </div>
+          <div>
+            <dt>영상당 평균 조회수</dt>
+            <dd>{st.data && st.data.summary.videoCount > 0 ? fmtNumber(Math.round(st.data.summary.totalViews / st.data.summary.videoCount)) : '-'}</dd>
+          </div>
+          <div>
+            <dt>총 재생시간(영상 길이 합)</dt>
+            <dd>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</dd>
+          </div>
+        </dl>
       </section>
 
-      {daily.length > 1 && (
+      {/* 일자별: 날짜를 가로로, 올린 개수·조회수를 줄로 보는 표. 개수 칸은 많을수록 진한 보라(한 색 농도) */}
+      {daily.length > 0 && (
         <section className="g-glass">
-          <h2 className="g-h2">일자별 올린 개수</h2>
-          <div className="g-chart-wrap">
-            <div className={`g-chart ${dense ? 'dense' : ''}`} role="img" aria-label="일자별 업로드 개수 막대">
-              {daily.map((d, i) => (
-                <div key={d.date} className="g-col" title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}>
-                  <span className="g-col-val">{d.count > 0 && !dense ? d.count : ''}</span>
-                  <div className="g-col-track">
-                    <div className={`g-col-bar ${d.count > 0 ? '' : 'zero'}`} style={{ height: d.count > 0 ? `${(d.count / maxCount) * 100}%` : undefined }} />
-                  </div>
-                  <span className="g-col-label">{i % labelStep === 0 || i === daily.length - 1 ? Number(d.date.slice(8)) : ''}</span>
-                </div>
-              ))}
-            </div>
+          <h2 className="g-h2">일자별</h2>
+          <div className="g-table-wrap">
+            <table className="g-table g-ds-daily">
+              <thead>
+                <tr>
+                  <th scope="col">날짜</th>
+                  {daily.map((d) => (
+                    <th key={d.date} scope="col" className={isWeekend(d.date) ? 'we' : undefined} title={fmtYmdShort(d.date)}>
+                      {Number(d.date.slice(8))}
+                      <small>{weekdayOf(d.date)}</small>
+                    </th>
+                  ))}
+                  <th scope="col" className="sum">합계</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">올린 개수</th>
+                  {daily.map((d) => (
+                    <td key={d.date} className={d.count > 0 ? (d.count / maxCount > 0.55 ? 'heat hi' : 'heat') : 'zero'} style={d.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (d.count / maxCount)).toFixed(2) } : undefined} title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}>
+                      {d.count > 0 ? <span className="ds-cell">{d.count}</span> : '·'}
+                    </td>
+                  ))}
+                  <td className="sum">{fmtNumber(daily.reduce((n, d) => n + d.count, 0))}</td>
+                </tr>
+                <tr>
+                  <th scope="row">조회수</th>
+                  {daily.map((d) => (
+                    <td key={d.date} className={d.views > 0 ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · 조회수 ${fmtNumber(d.views)}`}>
+                      {d.views > 0 ? shortNum(d.views) : '·'}
+                    </td>
+                  ))}
+                  <td className="sum">{shortNum(daily.reduce((n, d) => n + d.views, 0))}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          <p className="g-muted g-small">올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.</p>
         </section>
       )}
 

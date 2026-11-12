@@ -3393,3 +3393,93 @@ html:root .v5 .g-table.g-compact .g-btn.sm {
   padding: 0 12px;
   font-size: 12.5px;
 }
+
+/* ───────── 영상통계: 요약 한 줄 수치표(g-ds-kpi) + 일자별 표(g-ds-daily) (2026-11-12) ───────── */
+html:root .v5 .g-ds-kpi {
+  padding: 12px 18px;
+}
+html:root .v5 .g-ds-kpi dl {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+}
+html:root .v5 .g-ds-kpi dl > div {
+  flex: 1 1 140px;
+  padding: 2px 16px;
+  border-left: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+html:root .v5 .g-ds-kpi dl > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+html:root .v5 .g-ds-kpi dt {
+  font-size: 12px;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+html:root .v5 .g-ds-kpi dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html:root .v5 .g-ds-kpi dd.small {
+  font-size: 15px;
+  font-weight: 600;
+  padding-top: 3px;
+}
+html:root .v5 .g-ds-daily {
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .g-ds-daily th,
+html:root .v5 .g-ds-daily td {
+  padding: 5px 2px;
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+html:root .v5 .g-ds-daily thead th {
+  line-height: 1.15;
+}
+html:root .v5 .g-ds-daily thead th small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.6;
+}
+html:root .v5 .g-ds-daily thead th.we {
+  color: #e8795f;
+}
+html:root .v5 .g-ds-daily th[scope='row'],
+html:root .v5 .g-ds-daily thead th:first-child {
+  width: 66px;
+  text-align: left;
+  padding-left: 10px;
+  font-weight: 600;
+}
+html:root .v5 .g-ds-daily .sum {
+  width: 58px;
+  font-weight: 700;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+html:root .v5 .g-ds-daily td.heat {
+  padding: 3px 2px;
+}
+/* 개수 칸 색: 보라 한 색의 농도(--a). 옆 칸과 2px 띄워 칸마다 구분 */
+html:root .v5 .g-ds-daily td.heat .ds-cell {
+  display: block;
+  margin: 0 1px;
+  padding: 2px 0;
+  border-radius: 5px;
+  background: rgb(139 92 246 / var(--a, 0.3));
+  font-weight: 700;
+}
+html:root .v5 .g-ds-daily td.heat.hi .ds-cell {
+  color: #fff;
+}
+html:root .v5 .g-ds-daily td.zero {
+  opacity: 0.35;
+}
