@@ -586,6 +586,7 @@ export type Employee = {
   active: boolean
   isSuperAdmin: boolean
   hireDate: string | null // 입사일자 YYYY-MM-DD
+  affiliationTitle?: string | null // 소속 직급(소속된 사람의 역할, 예: 센터장)
 }
 
 // 내 소속 하부 사원 목록 + "이 아이디로 로그인"(성공하면 그 사원의 스킨 첫 화면으로 새로 연다)

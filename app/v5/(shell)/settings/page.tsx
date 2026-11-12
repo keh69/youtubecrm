@@ -136,10 +136,7 @@ function EmployeesTab() {
   }
   return (
     <section className="g-glass">
-      <div className="copy-form-bar">
-        <p className="g-hint">💡 {EMPLOYEE_TABS_NOTE}</p>
-        <CopyEmployeeFormButton />
-      </div>
+      <p className="g-hint">💡 {EMPLOYEE_TABS_NOTE}</p>
       {emp.error && <Note msg={{ tone: 'error', text: emp.error }} role="alert" />}
       {emp.notice && <Note msg={{ tone: 'ok', text: emp.notice }} />}
       {emp.loading ? (
@@ -171,7 +168,7 @@ function EmployeesTab() {
                   </td>
                   <td className="nowrap">{u.name}</td>
                   <td className="nowrap g-num">{isoToDotted(u.hireDate) || '-'}</td>
-                  <td>{u.affiliationName || '-'}</td>
+                  <td title={u.affiliationName ? `소속: ${u.affiliationName}` : undefined}>{u.affiliationTitle || u.affiliationName || '-'}</td>
                   <td>{u.roles.join(', ') || '-'}</td>
                   <td className="nowrap">{u.phone || '-'}</td>
                   <td>{u.email || '-'}</td>
@@ -563,7 +560,11 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
   const set = (k: keyof NewAccount, v: string) => setForm((f) => ({ ...f, [k]: v }))
   return (
     <section className="g-glass">
-      <h2 className="g-h2">아이디 만들기</h2>
+      {/* 직원양식 [편집] [복사]: 새 직원에게 보낼 가입 양식(사원목록에서 옮겨 옴) */}
+      <div className="copy-form-bar">
+        <h2 className="g-h2">아이디 만들기</h2>
+        <CopyEmployeeFormButton />
+      </div>
       <p className="g-muted g-small">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;{s.data!.roles.find((r) => r.signupRole)?.name || '사원'}&rsquo; 역할을 받습니다.</p>
       <form
         onSubmit={async (e) => {

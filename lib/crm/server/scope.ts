@@ -105,7 +105,14 @@ export async function assertCanSeeUser(ctx: CrmContext, userId: string) {
   }
 }
 
-export type Subordinate = ScopedUser & { email: string; phone: string; roles: string[]; isSuperAdmin: boolean; hireDate: string | null }
+export type Subordinate = ScopedUser & {
+  email: string
+  phone: string
+  roles: string[]
+  isSuperAdmin: boolean
+  hireDate: string | null
+  affiliationTitle: string | null // 소속 직급: 내가 소속된 사람의 역할 이름(예: 센터장). 예전 역할 소속이면 그 역할 이름
+}
 
 // 내 소속 하부 직원(나 제외): 관리자라도 "소속" 연결을 따라 내려간 사람만.
 // 총 관리자(super_admin)는 하부와 상관없이 나를 뺀 모든 직원.
@@ -132,6 +139,11 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
       affiliationUserId: u.affiliation_user_id || null,
       affiliationRoleId: u.affiliation_role_id || null,
       affiliationName: affiliationNameOf(u, nameById, roleName),
+      affiliationTitle: u.affiliation_user_id
+        ? (rolesByUser.get(u.affiliation_user_id) || []).map((r) => r.name).join(', ') || null
+        : u.affiliation_role_id
+          ? roleName.get(u.affiliation_role_id) || null
+          : null,
       active: u.employment_status === 'active',
       roles: (rolesByUser.get(u.id) || []).map((r) => r.name),
       isSuperAdmin: (rolesByUser.get(u.id) || []).some((r) => r.code === 'super_admin'),
