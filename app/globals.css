@@ -1308,6 +1308,19 @@ html {
   opacity: 0.85;
 }
 
+/* 영상 표 '보기 N개씩' 고르기(필터 줄 위 개수 안내 옆) */
+.vf-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+.vf-size .vf-input {
+  min-height: 28px;
+  padding: 3px 6px;
+}
+
 /* 상세설정 창을 표 밖(body)에 띄울 때: 화면 기준 위치, 맨 위에 */
 .rsd-pop.rsd-floating {
   position: fixed;

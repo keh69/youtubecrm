@@ -125,7 +125,7 @@ export function MultiPick({ label, all, value, onChange }: { label: string; all:
 }
 
 // oneLine: 필터를 한 줄로(개수·지우기 안내는 필터 줄 위 오른쪽으로). v5전용: 0 때 해제
-export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean; oneLine?: boolean }) {
+export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false, extra }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean; oneLine?: boolean; extra?: React.ReactNode }) {
   const { f, setF, options } = ctl
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   const status = (
@@ -144,6 +144,7 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false 
           필터 모두 지우기
         </button>
       )}
+      {extra}
     </div>
   )
   return (

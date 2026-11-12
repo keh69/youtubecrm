@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { deleteVideo, updateVideo } from '@/lib/crm/client/hooks'
 import type { Video } from '@/lib/crm/client/types'
@@ -8,6 +8,8 @@ import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 
 // 영상 표(영상통계·영상등록이 함께 쓴다).
+const PAGE_SIZES = [10, 20, 30, 50, 100]
+
 // 올린 시간: 한국 시간 24시간 표기(예: 13:05, 00:30)
 function fmtHm24(iso: string | null | undefined) {
   if (!iso) return '-'
@@ -91,6 +93,16 @@ export function VideoTable({
   const showTime = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
   const vf = useVideoFilters(videos)
   const list = vf.filtered
+  // v5전용: 0 때 해제 — 몇 개씩 보기(기본 10개) + 아래 페이지 번호
+  const paged = ui.key === 'v5'
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage] = useState(1)
+  useEffect(() => setPage(1), [vf.f, pageSize]) // 필터·보기 개수를 바꾸면 1쪽으로
+  const pages = paged ? Math.max(1, Math.ceil(list.length / pageSize)) : 1
+  const cur = Math.min(page, pages)
+  const rows = paged ? list.slice((cur - 1) * pageSize, cur * pageSize) : list
+  const winStart = Math.max(1, Math.min(cur - 4, pages - 9)) // 페이지 번호는 최대 10개까지 보인다
+  const pageNums = Array.from({ length: Math.min(10, pages) }, (_, i) => winStart + i)
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
@@ -120,7 +132,26 @@ export function VideoTable({
 
   return (
     <>
-      <VideoFilterBar ctl={vf} total={videos.length} hideTitle={hideTitle} oneLine={hideTitle} />
+      <VideoFilterBar
+        ctl={vf}
+        total={videos.length}
+        hideTitle={hideTitle}
+        oneLine={hideTitle}
+        extra={
+          paged && (
+            <label className="vf-size">
+              보기
+              <select className="vf-input" value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} aria-label="한 쪽에 보일 영상 수">
+                {PAGE_SIZES.map((n) => (
+                  <option key={n} value={n}>
+                    {n}개씩
+                  </option>
+                ))}
+              </select>
+            </label>
+          )
+        }
+      />
       {msg && <p className={c.msg} role="status">{msg}</p>}
       <div className={c.wrap}>
         <table className={hideTitle ? cx(c.table, 'no-title') : c.table}>
@@ -138,7 +169,7 @@ export function VideoTable({
             </tr>
           </thead>
           <tbody>
-            {list.map((v) => {
+            {rows.map((v) => {
               const fmt = videoFormatLabel(v)
               const ed = editing?.id === v.id ? editing : null
               return (
@@ -230,6 +261,21 @@ export function VideoTable({
         </table>
       </div>
       {list.length === 0 && <p className={c.empty}>필터에 맞는 영상이 없습니다.</p>}
+      {paged && pages > 1 && (
+        <nav className="g-pager" aria-label="영상 페이지">
+          <button type="button" className={c.btn} disabled={cur === 1} onClick={() => setPage(cur - 1)}>
+            ◀ 이전
+          </button>
+          {pageNums.map((n) => (
+            <button key={n} type="button" className={n === cur ? c.btnPrimary : c.btn} aria-current={n === cur ? 'page' : undefined} onClick={() => setPage(n)}>
+              {n}
+            </button>
+          ))}
+          <button type="button" className={c.btn} disabled={cur === pages} onClick={() => setPage(cur + 1)}>
+            다음 ▶
+          </button>
+        </nav>
+      )}
     </>
   )
 }
