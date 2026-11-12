@@ -17,6 +17,7 @@ export function StatsKpiSection({ st }: { st: St }) {
   const s = st.data?.summary
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const list = st.data?.videos || []
+  const days = st.data?.daily.length || 0 // 기간 날 수(서버가 기간의 날짜마다 한 줄씩 준다)
   return (
     <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
       <dl className={v5 ? undefined : 'xs-ds-kpi'}>
@@ -32,6 +33,12 @@ export function StatsKpiSection({ st }: { st: St }) {
           <dt>총 조회수</dt>
           <dd>{fmtNumber(s?.totalViews)}</dd>
         </div>
+        {v5 && ( // v5전용: 0 때 해제 — 일 평균 조회수(총 조회수 ÷ 기간 날 수)
+          <div>
+            <dt title="총 조회수 ÷ 기간 날 수(이번 달·이번 주는 오늘까지)">일 평균 조회수</dt>
+            <dd>{s && days > 0 ? fmtNumber(Math.round(s.totalViews / days)) : '-'}</dd>
+          </div>
+        )}
         <div>
           <dt>영상당 평균 조회수</dt>
           <dd>{s && s.videoCount > 0 ? fmtNumber(Math.round(s.totalViews / s.videoCount)) : '-'}</dd>
