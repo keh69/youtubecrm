@@ -3,16 +3,15 @@
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
-import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
+import { VideoTable } from '@/components/video-table'
 
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
-  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
 
   if (!allowed) return null
-  const videos = vf.filtered
+  const videos = st.videos
   const daily = st.data?.daily || []
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
   const labelStep = Math.max(1, Math.ceil(daily.length / 15))
@@ -156,64 +155,11 @@ export default function V5Stats() {
           <h2 className="g-h2">영상 ({fmtNumber(videos.length)})</h2>
           <span className="g-muted g-small">{STAT_SORTS.find((o) => o.key === st.sort)?.label}</span>
         </div>
-        {st.videos.length > 0 && <VideoFilterBar ctl={vf} total={st.videos.length} />}
+        {/* 영상 표: 열별 필터 + 영상통계 '수정권한'이면 줄마다 수정·삭제 */}
         {st.loading && !st.data ? (
           <Loading />
-        ) : st.videos.length === 0 ? (
-          <Empty>이 기간에 올린 영상이 없습니다.</Empty>
-        ) : videos.length === 0 ? (
-          <Empty>필터에 맞는 영상이 없습니다.</Empty>
         ) : (
-          <div className="g-table-wrap">
-            <table className="g-table g-vtable">
-              <thead>
-                {/* 열 순서: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 */}
-                <tr>
-                  <th>올린 날짜</th>
-                  <th>영상</th>
-                  <th className="num">재생시간</th>
-                  <th>폼종류</th>
-                  <th>종목</th>
-                  <th>담당자</th>
-                  <th className="num">조회수</th>
-                </tr>
-              </thead>
-              <tbody>
-                {videos.map((v) => {
-                  const fmt = videoFormatLabel(v)
-                  return (
-                    <tr key={v.id}>
-                      <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
-                      <td>
-                        <div className="g-vcell">
-                          <a href={v.url} target="_blank" rel="noreferrer" className="g-thumb" aria-label={`${v.title} 유튜브에서 보기`}>
-                            <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                          </a>
-                          <a href={v.url} target="_blank" rel="noreferrer" className="g-vtitle">
-                            {v.title}
-                          </a>
-                        </div>
-                      </td>
-                      <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
-                      <td>
-                        <span className={`g-format ${fmt === '롱폼' ? 'long' : 'short'}`}>{fmt}</span>
-                      </td>
-                      <td>
-                        <span className="g-chip accent">{v.stockName}</span>
-                      </td>
-                      <td className="nowrap">
-                        <span className="g-who">
-                          <span className="g-avatar xs">{(v.ownerName || '-').slice(0, 1)}</span>
-                          {v.ownerName || '-'}
-                        </span>
-                      </td>
-                      <td className="num">{fmtNumber(v.viewCount)}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <VideoTable videos={st.videos} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', avatar: 'g-avatar xs', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="이 기간에 올린 영상이 없습니다." />
         )}
       </section>
     </>

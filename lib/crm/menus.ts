@@ -70,7 +70,9 @@ export const ATTENDANCE_EDIT_MENU_KEY = 'attendance_team_edit'
 export const STATS_ALL_MENU_KEY = 'stats_all'
 // 역할설정 표 '영상등록' 옆 '수정권한'·'삭제권한': 켜진 역할만 등록한 영상의 종목명 등을 고치거나 영상을 지울 수 있다(행이 없으면 꺼짐).
 export const VIDEOS_EDIT_MENU_KEY = 'videos_edit'
-export const VIDEOS_DELETE_MENU_KEY = 'videos_delete'
+export const VIDEOS_DELETE_MENU_KEY = 'videos_delete' // (더 이상 쓰지 않음: 영상등록 수정권한이 수정·삭제를 함께 정한다)
+// 역할설정 표 '영상통계' 옆 '수정권한': 켜진 역할은 영상통계 표에서 보이는 영상(관리자면 모든 계정, 아니면 나와 하부)을 고치거나 지울 수 있다.
+export const STATS_EDIT_MENU_KEY = 'stats_edit'
 
 // 저장된 값(없으면 기본값)으로 이 역할이 쓸 수 있는 설정 메뉴·세부 권한 목록을 만든다. 부모가 꺼진 세부 권한은 뺀다.
 export function resolveSettingsSubs(stored: (menuKey: string) => boolean | undefined): SettingsSubKey[] {

@@ -514,6 +514,7 @@ export function StatsAllToggle({ role, s, report }: { role: NonNullable<S['data'
   if (!role.menus.includes('stats')) return null
   const on = Boolean(role.locked || role.statsAll)
   return (
+    <>
     <label className="xs-att-edit" title="켜면 영상통계에서 모든 계정의 영상을 봅니다. 끄면 나와 내 소속 하부의 영상만 봅니다.">
       <input
         type="checkbox"
@@ -525,6 +526,18 @@ export function StatsAllToggle({ role, s, report }: { role: NonNullable<S['data'
       />
       관리자
     </label>
+    <label className="xs-att-edit" title="켜면 영상통계 표에서 보이는 영상을 수정·삭제할 수 있습니다">
+      <input
+        type="checkbox"
+        className="rsd-chk"
+        checked={Boolean(role.locked || role.statsEdit)}
+        disabled={role.locked}
+        onChange={async () => report(await s.saveRoleVideoPerm(role.id, 'statsEdit', !(role.locked || role.statsEdit)), `'${role.name}' 영상통계 수정권한을 ${role.statsEdit ? '껐' : '켰'}습니다.`)}
+        aria-label={`${role.name} - 영상통계 수정권한`}
+      />
+      수정권한
+    </label>
+    </>
   )
 }
 
@@ -569,12 +582,11 @@ export function WorkHoursPanel() {
 }
 
 /* ───────── 역할설정 표: '영상등록' 스위치 옆 '수정권한'·'삭제권한' 체크칸 ───────── */
-// 수정권한: 등록한 영상의 종목명을 고칠 수 있다. 삭제권한: 등록한 영상을 지울 수 있다. 영상등록이 켜진 역할에만 보인다.
+// 수정권한: 영상등록에서 내가 등록한 영상을 수정·삭제할 수 있다. 영상등록이 켜진 역할에만 보인다.
 export function VideoPermToggles({ role, s, report }: { role: NonNullable<S['data']>['roles'][number]; s: S; report: Report }) {
   if (!role.menus.includes('videos')) return null
-  const items: Array<{ field: 'videosEdit' | 'videosDelete'; label: string; on: boolean; tip: string }> = [
-    { field: 'videosEdit', label: '수정권한', on: Boolean(role.locked || role.videosEdit), tip: '켜면 등록한 영상의 종목명을 고칠 수 있습니다' },
-    { field: 'videosDelete', label: '삭제권한', on: Boolean(role.locked || role.videosDelete), tip: '켜면 등록한 영상을 지울 수 있습니다' }
+  const items: Array<{ field: 'videosEdit' | 'statsEdit'; label: string; on: boolean; tip: string }> = [
+    { field: 'videosEdit', label: '수정권한', on: Boolean(role.locked || role.videosEdit), tip: '켜면 영상등록에서 내가 등록한 영상을 수정·삭제할 수 있습니다' }
   ]
   return (
     <>

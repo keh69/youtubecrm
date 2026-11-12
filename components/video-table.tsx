@@ -1,0 +1,208 @@
+'use client'
+
+import { useState } from 'react'
+import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
+import { deleteVideo, updateVideo } from '@/lib/crm/client/hooks'
+import type { Video } from '@/lib/crm/client/types'
+import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
+
+// 영상 표(영상통계·영상등록이 함께 쓴다).
+// 열: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 · [수정][삭제]
+// 위에 열별 필터(여러 개 동시에). canEdit 이 참이면 줄 오른쪽에 수정·삭제 버튼이 나오고,
+// 수정을 누르면 그 줄에서 종목명과 폼종류(롱폼/숏폼)를 바로 고친다.
+// cls: 스킨 모양에 맞춘 class 이름(v5 는 g-*). 빠진 것은 기본(xs-*)을 쓴다.
+
+export type VideoTableCls = Partial<{
+  wrap: string
+  table: string
+  vcell: string
+  thumb: string
+  vtitle: string
+  format: string
+  formatLong: string
+  formatShort: string
+  who: string
+  avatar: string
+  chip: string
+  btn: string
+  btnPrimary: string
+  btnDanger: string
+  input: string
+  empty: string
+  msg: string
+}>
+
+const BASE: Required<VideoTableCls> = {
+  wrap: 'xs-table-wrap',
+  table: 'xs-table',
+  vcell: 'xs-vcell',
+  thumb: 'xs-thumb',
+  vtitle: 'xs-vtitle',
+  format: 'xs-chip',
+  formatLong: '',
+  formatShort: '',
+  who: '',
+  avatar: '',
+  chip: 'xs-chip',
+  btn: 'xs-btn',
+  btnPrimary: 'xs-btn primary',
+  btnDanger: 'xs-btn xs-danger',
+  input: 'xs-input sm',
+  empty: 'xs-empty',
+  msg: 'xs-muted'
+}
+
+export function VideoTable({
+  videos,
+  canEdit,
+  onChanged,
+  cls = {},
+  emptyText = '영상이 없습니다.'
+}: {
+  videos: Video[]
+  canEdit: boolean
+  onChanged: () => void | Promise<void> // 고치거나 지운 뒤 목록 새로 불러오기
+  cls?: VideoTableCls
+  emptyText?: string
+}) {
+  const c = { ...BASE, ...cls }
+  const vf = useVideoFilters(videos)
+  const list = vf.filtered
+  const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [msg, setMsg] = useState('')
+
+  const save = async () => {
+    if (!editing) return
+    if (!editing.stockName.trim()) return setMsg('종목명을 입력해 주세요.')
+    setBusy(editing.id)
+    const res = await updateVideo(editing.id, { stockName: editing.stockName.trim(), contentType: editing.contentType })
+    setBusy(null)
+    if (!res.ok) return setMsg(res.error || '수정하지 못했습니다.')
+    setEditing(null)
+    setMsg('수정했습니다.')
+    await onChanged()
+  }
+  const remove = async (v: Video) => {
+    if (!window.confirm(`"${v.title}" 영상을 CRM에서 삭제할까요? (유튜브 영상은 그대로입니다)`)) return
+    setBusy(v.id)
+    const res = await deleteVideo(v.id)
+    setBusy(null)
+    if (!res.ok) return setMsg(res.error || '삭제하지 못했습니다.')
+    setMsg('삭제했습니다.')
+    await onChanged()
+  }
+
+  if (videos.length === 0) return <p className={c.empty}>{emptyText}</p>
+
+  return (
+    <>
+      <VideoFilterBar ctl={vf} total={videos.length} />
+      {msg && <p className={c.msg} role="status">{msg}</p>}
+      <div className={c.wrap}>
+        <table className={c.table}>
+          <thead>
+            <tr>
+              <th>올린 날짜</th>
+              <th>영상</th>
+              <th className="num">재생시간</th>
+              <th>폼종류</th>
+              <th>종목</th>
+              <th>담당자</th>
+              <th className="num">조회수</th>
+              {canEdit && <th />}
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((v) => {
+              const fmt = videoFormatLabel(v)
+              const ed = editing?.id === v.id ? editing : null
+              return (
+                <tr key={v.id}>
+                  <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
+                  <td>
+                    <div className={c.vcell}>
+                      <a href={v.url} target="_blank" rel="noreferrer" className={c.thumb} aria-label={`${v.title} 유튜브에서 보기`}>
+                        <img src={v.thumbnailUrl} alt="" loading="lazy" />
+                      </a>
+                      <a href={v.url} target="_blank" rel="noreferrer" className={c.vtitle}>
+                        {v.title}
+                      </a>
+                    </div>
+                  </td>
+                  <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
+                  <td className="nowrap">
+                    {ed ? (
+                      <select className={c.input} value={ed.contentType} onChange={(e) => setEditing({ ...ed, contentType: e.target.value as 'longform' | 'shortform' })} aria-label="폼종류">
+                        <option value="longform">롱폼</option>
+                        <option value="shortform">숏폼</option>
+                      </select>
+                    ) : (
+                      <span className={`${c.format} ${fmt === '롱폼' ? c.formatLong : c.formatShort}`.trim()}>{fmt}</span>
+                    )}
+                  </td>
+                  <td className="nowrap">
+                    {ed ? (
+                      <input
+                        className={c.input}
+                        value={ed.stockName}
+                        maxLength={60}
+                        autoFocus
+                        aria-label="종목명"
+                        onChange={(e) => setEditing({ ...ed, stockName: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void save()
+                          if (e.key === 'Escape') setEditing(null)
+                        }}
+                      />
+                    ) : (
+                      <span className={c.chip}>{v.stockName}</span>
+                    )}
+                  </td>
+                  <td className="nowrap">
+                    <span className={c.who}>
+                      {c.avatar && <span className={c.avatar}>{(v.ownerName || '-').slice(0, 1)}</span>}
+                      {v.ownerName || '-'}
+                    </span>
+                  </td>
+                  <td className="num">{fmtNumber(v.viewCount)}</td>
+                  {canEdit && (
+                    <td className="right nowrap">
+                      {ed ? (
+                        <>
+                          <button className={c.btnPrimary} disabled={busy === v.id} onClick={save}>
+                            {busy === v.id ? '저장 중…' : '저장'}
+                          </button>{' '}
+                          <button className={c.btn} onClick={() => setEditing(null)}>
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className={c.btn}
+                            disabled={busy !== null}
+                            onClick={() => {
+                              setMsg('')
+                              setEditing({ id: v.id, stockName: v.stockName, contentType: fmt === '숏폼' ? 'shortform' : 'longform' })
+                            }}
+                          >
+                            수정
+                          </button>{' '}
+                          <button className={c.btnDanger} disabled={busy !== null} onClick={() => remove(v)}>
+                            {busy === v.id ? '삭제 중…' : '삭제'}
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {list.length === 0 && <p className={c.empty}>필터에 맞는 영상이 없습니다.</p>}
+    </>
+  )
+}

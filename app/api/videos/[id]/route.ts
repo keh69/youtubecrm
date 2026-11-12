@@ -3,36 +3,42 @@ import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError, type CrmContext } from '@/lib/crm/server/context'
 import { VIDEO_FIELDS, toVideoDto } from '@/lib/crm/server/videos'
+import { loadVisibleUsers } from '@/lib/crm/server/scope'
 
 type Params = { params: Promise<{ id: string }> }
 
-const patchSchema = z.object({
-  stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.')
-})
+const patchSchema = z
+  .object({
+    stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.').optional(),
+    contentType: z.enum(['longform', 'shortform']).optional() // 롱폼/숏폼
+  })
+  .refine((b) => b.stockName !== undefined || b.contentType !== undefined, '고칠 내용이 없습니다.')
 
-// 역할설정 '영상등록' 옆 '수정권한'(종목명 수정)·'삭제권한'(삭제)이 켜진 사람만. 그 위에 본인 영상이거나 관리자급이어야 한다.
-async function loadOwned(ctx: CrmContext, id: string, kind: 'edit' | 'delete') {
-  if (kind === 'edit' && !ctx.canEditVideos) throw new HttpError(403, '영상을 수정할 권한이 없습니다. 관리자에게 역할설정의 영상등록 \'수정권한\'을 켜 달라고 요청해 주세요.')
-  if (kind === 'delete' && !ctx.canDeleteVideos) throw new HttpError(403, '영상을 삭제할 권한이 없습니다. 관리자에게 역할설정의 영상등록 \'삭제권한\'을 켜 달라고 요청해 주세요.')
+// 누가 고치거나 지울 수 있나
+// - 영상등록 '수정권한': 내가 등록한 영상
+// - 영상통계 '수정권한': 영상통계에서 보이는 영상(영상통계 '관리자'면 모든 계정, 아니면 나와 내 소속 하부)
+async function loadOwned(ctx: CrmContext, id: string) {
   if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, '잘못된 영상입니다.')
   const { data } = await ctx.db.from(TABLES.videos).select('id, primary_owner_user_id').eq('id', id).maybeSingle()
   if (!data) throw new HttpError(404, '영상을 찾을 수 없습니다.')
-  if (data.primary_owner_user_id !== ctx.profile.id && !ctx.isAdmin) {
-    throw new HttpError(403, '본인이 등록한 영상만 수정·삭제할 수 있습니다.')
+  if (data.primary_owner_user_id === ctx.profile.id && ctx.canEditVideos) return data
+  if (ctx.canEditStatsVideos) {
+    const people = await loadVisibleUsers(ctx, { all: ctx.canSeeAllStats })
+    if (people.some((p) => p.id === data.primary_owner_user_id)) return data
   }
-  return data
+  throw new HttpError(403, '이 영상을 수정·삭제할 권한이 없습니다. 관리자에게 역할설정의 영상등록·영상통계 \'수정권한\'을 요청해 주세요.')
 }
 
-// 종목명 수정
+// 수정: 종목명·롱폼/숏폼
 export async function PATCH(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
     const { id } = await context.params
-    await loadOwned(ctx, id, 'edit')
+    await loadOwned(ctx, id)
     const body = patchSchema.parse(await request.json())
     const { data, error } = await ctx.db
       .from(TABLES.videos)
-      .update({ stock_name: body.stockName, updated_at: new Date().toISOString() })
+      .update({ ...(body.stockName !== undefined ? { stock_name: body.stockName } : {}), ...(body.contentType ? { content_type: body.contentType } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
       .select(VIDEO_FIELDS)
       .single()
@@ -48,7 +54,7 @@ export async function DELETE(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
     const { id } = await context.params
-    await loadOwned(ctx, id, 'delete')
+    await loadOwned(ctx, id)
     const { error } = await ctx.db.from(TABLES.videos).delete().eq('id', id)
     if (error) throw error
     await ctx.db

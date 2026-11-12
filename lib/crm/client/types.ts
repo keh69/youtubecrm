@@ -14,7 +14,8 @@ export type Me = {
   canEditAttendance?: boolean // 근태통계 '수정가능': 달력에서 근태 수정·삭제
   canSeeAllStats?: boolean // 영상통계 '관리자': 전 직원 영상
   canEditVideos?: boolean // 영상등록 '수정권한'
-  canDeleteVideos?: boolean // 영상등록 '삭제권한'
+  canDeleteVideos?: boolean // 영상등록 '수정권한'과 같다
+  canEditStatsVideos?: boolean // 영상통계 '수정권한'
   workHours?: { start: string; end: string } // 출퇴근 기준시간: 이후 출근 = 지각, 이후 퇴근 = 야근
 }
 
@@ -106,7 +107,8 @@ export type SettingsRole = {
   attendanceEdit?: boolean // 근태통계 옆 '수정가능'
   statsAll?: boolean // 영상통계 옆 '관리자'
   videosEdit?: boolean // 영상등록 옆 '수정권한'
-  videosDelete?: boolean // 영상등록 옆 '삭제권한'
+  videosDelete?: boolean // (쓰지 않음)
+  statsEdit?: boolean // 영상통계 옆 '수정권한'
   holderCount: number
   memberCount: number
 }

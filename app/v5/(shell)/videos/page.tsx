@@ -3,28 +3,15 @@
 import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
-import { Empty, Loading, PageHead } from '../../_components/ui'
+import { Loading, PageHead } from '../../_components/ui'
+import { VideoTable } from '@/components/video-table'
 
 export default function V5Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
   const reg = useVideoRegister({ requireType: true }) // 롱폼/숏폼을 꼭 골라야 추가된다
-  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
-  const [listMsg, setListMsg] = useState('')
   if (!allowed) return null
 
-  const remove = async (id: string, title: string) => {
-    if (!window.confirm(`"${title}" 영상을 CRM에서 삭제할까요? (유튜브 영상은 그대로입니다)`)) return
-    const res = await reg.remove(id)
-    setListMsg(res.ok ? '삭제했습니다.' : res.error || '삭제 실패')
-  }
-
-  const saveEdit = async () => {
-    if (!editing) return
-    const res = await reg.rename(editing.id, editing.name.trim())
-    if (res.ok) setEditing(null)
-    setListMsg(res.ok ? '종목명을 고쳤습니다.' : res.error || '수정 실패')
-  }
 
   const added = reg.lastAdded
   const formatTag = (v: { durationSeconds: number | null; contentType?: string }) => {
@@ -101,76 +88,13 @@ export default function V5Videos() {
         )}
       </section>
 
+      {/* 내가 등록한 영상 표(영상통계와 같은 표). 영상등록 '수정권한'이면 줄마다 수정·삭제 */}
       <section className="g-glass">
-        <h2 className="g-h2">최근 등록 영상</h2>
-        {listMsg && <p className="g-msg ok">{listMsg}</p>}
+        <h2 className="g-h2">내가 등록한 영상 ({reg.recent.length})</h2>
         {reg.recentLoading ? (
           <Loading />
-        ) : reg.recent.length === 0 ? (
-          <Empty>아직 등록한 영상이 없습니다.</Empty>
         ) : (
-          <ul className="g-vlist">
-            {reg.recent.map((v) => (
-              <li key={v.id}>
-                <a href={v.url} target="_blank" rel="noreferrer" className="g-thumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="g-dur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="g-vlist-body">
-                  <a href={v.url} target="_blank" rel="noreferrer" className="g-vtitle">
-                    {v.title}
-                  </a>
-                  {editing?.id === v.id ? (
-                    <div className="g-inline-edit">
-                      <input
-                        className="g-input sm"
-                        value={editing.name}
-                        onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') void saveEdit()
-                          if (e.key === 'Escape') setEditing(null)
-                        }}
-                        maxLength={60}
-                        autoFocus
-                        aria-label="종목명"
-                      />
-                      <button className="g-btn primary sm" onClick={saveEdit}>
-                        저장
-                      </button>
-                      <button className="g-btn ghost sm" onClick={() => setEditing(null)}>
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="g-meta-chips">
-                      {/* 순서: 업로드일자 · 종목명 · 영상길이 · 롱/숏폼 · 조회수 · 등록자 */}
-                      <span className="g-chip">업로드 {fmtDate(v.publishedAt)}</span>
-                      <span className="g-chip accent">{v.stockName}</span>
-                      <span className="g-chip">재생시간 {fmtDuration(v.durationSeconds)}</span>
-                      {formatTag(v)}
-                      <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
-                      <span className="g-chip">등록자 {v.ownerName || me.name}</span>
-                    </div>
-                  )}
-                </div>
-                {/* 역할설정의 영상등록 '수정권한'·'삭제권한'이 켜진 사람에게만 버튼이 보인다 */}
-                {(me.canEditVideos || me.canDeleteVideos) && (
-                  <div className="g-vlist-actions">
-                    {me.canEditVideos && (
-                      <button className="g-btn ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                        수정
-                      </button>
-                    )}
-                    {me.canDeleteVideos && (
-                      <button className="g-btn soft-danger sm" onClick={() => remove(v.id, v.title)}>
-                        삭제
-                      </button>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', avatar: 'g-avatar xs', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

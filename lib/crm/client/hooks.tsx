@@ -402,7 +402,17 @@ export function useVideoRegister(opts: { requireType?: boolean } = {}) {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { stockName, setStockName, contentType, setContentType, url, setUrl, busy, error, submit, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
+  return { stockName, setStockName, contentType, setContentType, url, setUrl, busy, error, submit, reloadRecent, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
+}
+
+// 영상 고치기(종목명·롱폼/숏폼)·지우기: 영상등록·영상통계 표가 함께 쓴다
+export async function updateVideo(id: string, patch: { stockName?: string; contentType?: 'longform' | 'shortform' }): Promise<ActionResult> {
+  const res = await api(`/api/videos/${id}`, { method: 'PATCH', body: patch })
+  return res.ok ? { ok: true } : { ok: false, error: res.error }
+}
+export async function deleteVideo(id: string): Promise<ActionResult> {
+  const res = await api(`/api/videos/${id}`, { method: 'DELETE' })
+  return res.ok ? { ok: true } : { ok: false, error: res.error }
 }
 
 /* ───────────────────────── 통계 ───────────────────────── */
@@ -525,7 +535,7 @@ export function useSettings() {
       return res.ok ? { ok: true } : { ok: false, error: res.error }
     },
     // 영상등록 '수정권한'·'삭제권한' 켜기/끄기
-    saveRoleVideoPerm: async (id: string, field: 'videosEdit' | 'videosDelete', on: boolean): Promise<ActionResult> => {
+    saveRoleVideoPerm: async (id: string, field: 'videosEdit' | 'statsEdit', on: boolean): Promise<ActionResult> => {
       setData((d) => (d ? { ...d, roles: d.roles.map((r) => (r.id === id ? { ...r, [field]: on } : r)) } : d))
       const res = await api(`/api/settings/roles/${id}`, { method: 'PATCH', body: { [field]: on } })
       if (!res.ok) await reload()

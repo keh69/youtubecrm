@@ -1,5 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
-import { ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, VIDEOS_EDIT_MENU_KEY, VIDEOS_DELETE_MENU_KEY, AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, VIDEOS_EDIT_MENU_KEY, STATS_EDIT_MENU_KEY, AFFILIATION_MENU_KEY, LOCKED_ROLE_CODE, MENU_KEYS, SETTINGS_SUBS, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { HttpError, MIGRATION_HINT, isMissingSchema, loadRoleFlagCodes, loadMenuMap, loadRolesForUsers, loadSettingsSubMap, requireMenu, type CrmContext } from '@/lib/crm/server/context'
 import { selectUserRows } from '@/lib/crm/server/scope'
 import { isDeletedRow } from '@/lib/crm/server/deleted'
@@ -86,7 +86,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
   const attEdit = await loadRoleFlagCodes(db, ATTENDANCE_EDIT_MENU_KEY)
   const statsAll = await loadRoleFlagCodes(db, STATS_ALL_MENU_KEY)
   const vEdit = await loadRoleFlagCodes(db, VIDEOS_EDIT_MENU_KEY)
-  const vDelete = await loadRoleFlagCodes(db, VIDEOS_DELETE_MENU_KEY)
+  const sEdit = await loadRoleFlagCodes(db, STATS_EDIT_MENU_KEY)
 
   const roles = allRoles.map((r) => ({
     id: r.id,
@@ -100,7 +100,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     attendanceEdit: r.code === LOCKED_ROLE_CODE || attEdit.has(r.code), // 근태통계 '수정가능'
     statsAll: r.code === LOCKED_ROLE_CODE || statsAll.has(r.code), // 영상통계 '관리자'
     videosEdit: r.code === LOCKED_ROLE_CODE || vEdit.has(r.code), // 영상등록 '수정권한'
-    videosDelete: r.code === LOCKED_ROLE_CODE || vDelete.has(r.code), // 영상등록 '삭제권한'
+    statsEdit: r.code === LOCKED_ROLE_CODE || sEdit.has(r.code), // 영상통계 '수정권한'
     signupRole: signupRole?.id === r.id, // 회원가입·아이디 만들기에서 새 아이디가 받는 역할(삭제 불가)
     holderCount: userRows.filter((u) => !isDeletedRow(u) && (rolesByUser.get(u.id) || []).some((x) => x.id === r.id)).length,
     // 이 역할을 가진 사람에게 소속된 인원(예전 역할 소속 포함)

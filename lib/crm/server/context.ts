@@ -4,7 +4,7 @@ import { loadWorkHours } from '@/lib/crm/server/work-hours'
 import { TABLES } from '@/lib/supabase/tables'
 import { verifyAccessToken } from '@/lib/auth/verify-token'
 import { getBearerToken } from '@/lib/auth/session'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, VIDEOS_EDIT_MENU_KEY, VIDEOS_DELETE_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, VIDEOS_EDIT_MENU_KEY, STATS_EDIT_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>
 
@@ -33,7 +33,8 @@ export type CrmContext = {
   canEditAttendance: boolean // 근태통계 '수정가능': 달력에서 근태를 고치거나 지울 수 있다
   canSeeAllStats: boolean // 영상통계 '관리자': 전 직원 영상을 본다(아니면 내 영상만)
   canEditVideos: boolean // 영상등록 '수정권한'
-  canDeleteVideos: boolean // 영상등록 '삭제권한'
+  canDeleteVideos: boolean // 영상등록 '수정권한'과 같다(수정권한이 있으면 삭제도 된다)
+  canEditStatsVideos: boolean // 영상통계 '수정권한': 영상통계에서 보이는 영상을 고치거나 지울 수 있다
 }
 
 // 화면에 보여줄 수 있는 에러. 이 클래스로 던지면 status 와 메시지가 그대로 응답된다.
@@ -197,14 +198,19 @@ export async function getContext(request: Request): Promise<CrmContext> {
 
   // 영상등록 '수정권한'·'삭제권한': 총 관리자는 항상, 그 외에는 영상등록이 켜진 역할 중 하나라도 켜져 있으면
   let canEditVideos = isSuperAdmin
-  let canDeleteVideos = isSuperAdmin
   if (!isSuperAdmin && menus.has('videos')) {
     const codes = roles.filter((r) => menuMap.get(r.code)?.has('videos')).map((r) => r.code)
     canEditVideos = (await loadRoleFlagCodes(db, VIDEOS_EDIT_MENU_KEY, codes)).size > 0
-    canDeleteVideos = (await loadRoleFlagCodes(db, VIDEOS_DELETE_MENU_KEY, codes)).size > 0
+  }
+  const canDeleteVideos = canEditVideos // 수정권한 하나로 수정·삭제
+  // 영상통계 '수정권한'
+  let canEditStatsVideos = isSuperAdmin
+  if (!isSuperAdmin && menus.has('stats')) {
+    const codes = roles.filter((r) => menuMap.get(r.code)?.has('stats')).map((r) => r.code)
+    canEditStatsVideos = (await loadRoleFlagCodes(db, STATS_EDIT_MENU_KEY, codes)).size > 0
   }
 
-  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin, settingsTabs, canEditAttendance, canSeeAllStats, canEditVideos, canDeleteVideos }
+  return { db, profile, roles, menus: MENU_KEYS.filter((k) => menus.has(k)), isAdmin, isSuperAdmin, settingsTabs, canEditAttendance, canSeeAllStats, canEditVideos, canDeleteVideos, canEditStatsVideos }
 }
 
 // 역할별 켜기/끄기 표시(근태 '수정가능', 영상통계 '관리자' 등)가 켜진 역할 code 목록
