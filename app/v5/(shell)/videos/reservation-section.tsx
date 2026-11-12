@@ -20,8 +20,9 @@ function fmtKst(iso: string | null) {
   return `${p.month}.${p.day} (${p.weekday}) ${p.hour}:${p.minute}`
 }
 
-type Form = { stockName: string; contentType: 'longform' | 'shortform' | ''; url: string; when: string }
-const EMPTY: Form = { stockName: '', contentType: '', url: '', when: '' }
+// 공개 시각은 받지 않는다(유튜브에서 정한 시각을 API 로 읽을 수 없고, 등록은 실제 공개를 보고 한다)
+type Form = { stockName: string; contentType: 'longform' | 'shortform' | ''; url: string }
+const EMPTY: Form = { stockName: '', contentType: '', url: '' }
 
 export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<void> }) {
   const r = useReservations()
@@ -39,8 +40,7 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
     const res = await r.reserve({
       youtubeUrl: form.url.trim(),
       stockName: form.stockName.trim(),
-      contentType: form.contentType,
-      scheduledAt: form.when ? new Date(form.when).toISOString() : null // 화면에서 고른 한국 시각 그대로
+      contentType: form.contentType
     })
     setBusy(false)
     if (!res.ok) return setMsg({ tone: 'error', text: res.error || '예약등록하지 못했습니다.' })
@@ -92,10 +92,6 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
             ))}
           </div>
         </div>
-        <label className="g-field">
-          <span>공개 예정 (선택)</span>
-          <input className="g-input" type="datetime-local" value={form.when} onChange={(e) => setForm({ ...form, when: e.target.value })} />
-        </label>
         <label className="g-field grow">
           <span>유튜브 예약 링크</span>
           <input className="g-input" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://youtu.be/..." inputMode="url" />
@@ -116,7 +112,6 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
             <thead>
               <tr>
                 <th>예약한 날</th>
-                <th>공개 예정</th>
                 <th>예약 링크</th>
                 <th>폼종류</th>
                 <th>종목</th>
@@ -128,7 +123,6 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
               {r.items.map((x) => (
                 <tr key={x.id}>
                   <td className="nowrap">{fmtKst(x.createdAt)}</td>
-                  <td className="nowrap">{fmtKst(x.scheduledAt)}</td>
                   <td className="nowrap">
                     <a href={x.url} target="_blank" rel="noreferrer">
                       {x.url.replace('https://', '')}
