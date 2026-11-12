@@ -4,6 +4,7 @@ import { passwordSchema, toAuthPassword } from '@/lib/crm/server/password'
 import { TABLES } from '@/lib/supabase/tables'
 import { findAuthUserByEmail } from '@/lib/auth/session'
 import { HttpError, getContext, handleError } from '@/lib/crm/server/context'
+import { onlyDigits } from '@/lib/crm/server/accounts'
 import { assertAffiliationColumn, assertSuperAdminRemains, audit, requireSettingsTab } from '@/lib/crm/server/settings'
 import { assertAffiliationTarget, hasAffiliationUserColumn } from '@/lib/crm/server/scope'
 
@@ -13,7 +14,13 @@ const patchSchema = z.object({
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30).optional(),
   // 빈칸이면 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문).
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional(),
-  phone: z.string().trim().max(20).regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional(),
+  // 전화번호는 숫자만 저장('-' 등은 뺀다)
+  phone: z
+    .string()
+    .max(30)
+    .optional()
+    .transform((v) => (v === undefined ? undefined : onlyDigits(v)))
+    .refine((v) => v === undefined || v.length <= 11, '전화번호는 숫자 11자리까지 쓸 수 있어요.'),
   affiliationUserId: z.string().uuid().nullable().optional(), // 소속 아이디(사람)
   affiliationRoleId: z.string().uuid().nullable().optional(), // 예전 스킨 호환용(역할 소속)
   password: passwordSchema.optional(),

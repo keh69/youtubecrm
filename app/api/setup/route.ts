@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
     const { data: user, error } = await db
       .from(TABLES.crmUsers)
-      .insert({ auth_user_id: created.user.id, login_id: body.loginId, email: body.email, name: body.name, phone: body.phone || null, role_type: 'super_admin', employment_status: 'active' })
+      .insert({ auth_user_id: created.user.id, login_id: body.loginId, email: body.email, name: body.name, phone: body.phone.replace(/[^0-9]/g, '') || null, role_type: 'super_admin', employment_status: 'active' })
       .select('id')
       .single()
     if (error || !user) {

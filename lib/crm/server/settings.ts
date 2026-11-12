@@ -118,7 +118,7 @@ export async function loadSettingsOverview(ctx: CrmContext) {
     loginId: u.login_id,
     name: u.name,
     email: publicEmail(u.email),
-    phone: u.phone || '',
+    phone: String(u.phone || '').replace(/[^0-9]/g, ''), // 숫자만
     affiliationRoleId: u.affiliation_role_id || null,
     affiliationUserId: u.affiliation_user_id || null,
     roleIds: (rolesByUser.get(u.id) || []).map((r) => r.id),

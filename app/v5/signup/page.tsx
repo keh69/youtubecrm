@@ -105,7 +105,7 @@ export default function V5Signup() {
               </label>
               <label className="g-field">
                 <span>전화번호 *</span>
-                <input className="g-input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" />
+                <input className="g-input" value={form.phone} onChange={(e) => set('phone', e.target.value.replace(/[^0-9]/g, ''))} placeholder="01012345678" maxLength={11} inputMode="tel" autoComplete="tel" />
               </label>
               <label className="g-field">
                 <span>소속</span>

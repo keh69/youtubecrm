@@ -316,7 +316,7 @@ function AccountEditor({ user, isMe, s, report }: { user: SettingsUser; isMe: bo
       </label>
       <label className="field">
         <span>전화번호</span>
-        <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} />
       </label>
       <label className="field">
         <span>새 비밀번호(바꿀 때만)</span>
@@ -516,7 +516,7 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
         </label>
         <label className="field">
           <span>전화번호</span>
-          <input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="010-0000-0000" inputMode="tel" />
+          <input value={form.phone} onChange={(e) => set('phone', e.target.value.replace(/[^0-9]/g, ''))} placeholder="01012345678" maxLength={11} inputMode="tel" />
         </label>
         <label className="field">
           <span>소속</span>

@@ -128,7 +128,7 @@ export async function loadSubordinates(ctx: CrmContext): Promise<Subordinate[]> 
       name: u.name,
       loginId: u.login_id,
       email: publicEmail(u.email),
-      phone: u.phone || '',
+      phone: String(u.phone || '').replace(/[^0-9]/g, ''), // 숫자만
       affiliationUserId: u.affiliation_user_id || null,
       affiliationRoleId: u.affiliation_role_id || null,
       affiliationName: affiliationNameOf(u, nameById, roleName),

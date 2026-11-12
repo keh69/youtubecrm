@@ -11,6 +11,17 @@ import { DELETED_STATUS, DEL_MARK, displayLoginId } from '@/lib/crm/server/delet
 
 type Db = CrmContext['db']
 
+// 전화번호: 숫자만 저장한다(01012345678). '-'·공백 등은 빼고 저장하고, 숫자는 11자리까지.
+export const onlyDigits = (v: string | null | undefined) => String(v || '').replace(/[^0-9]/g, '')
+export const phoneSchema = z
+  .string()
+  .trim()
+  .max(30, '전화번호가 너무 길어요.')
+  .optional()
+  .default('')
+  .transform(onlyDigits)
+  .refine((v) => v.length <= 11, '전화번호는 숫자 11자리까지 쓸 수 있어요.')
+
 // 입사일자: 화면에서는 2026.11.11 로 보이고, 서버에는 2026-11-11 로 온다. 비우면 저장하지 않는다.
 export const hireDateSchema = z
   .union([
@@ -45,7 +56,7 @@ export const newAccountSchema = z.object({
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30, '이름은 30자까지 쓸 수 있어요.'),
   // 이메일은 선택: 비우면 내부용 주소를 대신 붙인다.
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional().default(''),
-  phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
+  phone: phoneSchema,
   // 소속: 역할이 있는 아이디(사람)를 고른다. affiliationRoleId 는 예전 스킨 호환용(역할 소속).
   affiliationUserId: z.string().uuid().nullable().optional(),
   affiliationRoleId: z.string().uuid().nullable().optional(),
@@ -163,7 +174,7 @@ export const employeeEditSchema = z.object({
   name: z.string().trim().min(1, '이름을 입력해 주세요.').max(30, '이름은 30자까지 쓸 수 있어요.'),
   // 빈칸이면 이메일은 바꾸지 않는다(내부용 주소를 쓰는 계정은 화면에 빈칸으로 보이기 때문)
   email: z.union([z.literal(''), z.string().trim().email('이메일 형식이 올바르지 않습니다.')]).optional().default(''),
-  phone: z.string().trim().max(20, '전화번호가 너무 길어요.').regex(/^[0-9\-+ ]*$/, '전화번호는 숫자와 - 만 쓸 수 있어요.').optional().default(''),
+  phone: phoneSchema,
   hireDate: hireDateSchema
 })
 

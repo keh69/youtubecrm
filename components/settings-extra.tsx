@@ -117,7 +117,7 @@ export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][num
             </label>
             <label className="xs-field">
               <span>전화번호</span>
-              <input className="xs-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" />
+              <input className="xs-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} inputMode="tel" />
             </label>
             {err && <p className="xs-err">{err}</p>}
             <div className="xs-actions">
