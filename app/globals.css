@@ -1378,3 +1378,21 @@ html {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ───────── 드롭다운(select) 펼친 목록 색: 블랙 테마는 검은 바탕·흰 글씨, 화이트 테마는 흰 바탕·검은 글씨 (모든 스킨, 2026-11-12) ───────── */
+:root[data-theme='dark'] select {
+  color-scheme: dark;
+}
+:root[data-theme='dark'] select option,
+:root[data-theme='dark'] select optgroup {
+  background-color: #1b1b1f;
+  color: #f2f2f2;
+}
+:root[data-theme='light'] select {
+  color-scheme: light;
+}
+:root[data-theme='light'] select option,
+:root[data-theme='light'] select optgroup {
+  background-color: #ffffff;
+  color: #111111;
+}
