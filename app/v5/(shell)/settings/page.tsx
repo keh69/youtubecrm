@@ -355,7 +355,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
         💡 <strong>소속</strong>에서 사람(아이디)을 고르면 그 사람 밑으로 들어가, 그 사람이 로그인했을 때 이 직원의 영상·통계·근태를 볼 수 있습니다. 위로 계속 이어집니다(팀원 → 팀장 → 관리자). 소속 목록에는 역할별로 그 역할이 적용된 아이디만 나옵니다.
       </p>
       <ul className="g-accounts">
-        {s.data!.users.map((u) => {
+        {s.assignUsers.map((u) => {
           const open = editId === u.id
           return (
             <li key={u.id} className={`${u.active ? '' : 'inactive'} ${open ? 'open' : ''}`}>

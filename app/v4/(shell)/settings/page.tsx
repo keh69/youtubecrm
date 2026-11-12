@@ -196,7 +196,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
             </tr>
           </thead>
           <tbody>
-            {s.data!.users.map((u) => (
+            {s.assignUsers.map((u) => (
               <Fragment key={u.id}>
                 <tr className={`${u.active ? '' : 'inactive'}${editId === u.id ? ' open' : ''}`}>
                   <td>

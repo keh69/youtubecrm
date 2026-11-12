@@ -526,8 +526,13 @@ export function useSettings() {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
+  // 02 역할부여 목록: 총 관리자(admin) 아이디는 빼고 보여 준다(모든 스킨)
+  const lockedRoleIds = new Set((data?.roles || []).filter((r) => r.locked).map((r) => r.id))
+  const assignUsers = (data?.users || []).filter((u) => !u.roleIds.some((id) => lockedRoleIds.has(id)))
+
   return {
     data,
+    assignUsers,
     loading,
     error,
     reload,
@@ -807,7 +812,11 @@ export const SETTINGS_TABS: ReadonlyArray<{ key: SettingsTab; no: string; label:
 export function useSettingsTabs(opts: { dump?: boolean; unresolved?: boolean; workhours?: boolean } = {}) {
   const { me } = useSession()
   const allowed = new Set<string>(me.settingsTabs || [])
-  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump) && (t.key !== 'unresolved' || opts.unresolved) && (t.key !== 'workhours' || opts.workhours))
+  // 보이는 탭만 골라 번호를 01, 02, 03 … 차례로 다시 매긴다(일부 탭만 보이는 아이디도 번호가 이어지게)
+  const tabs = SETTINGS_TABS.filter((t) => allowed.has(t.key) && (t.key !== 'dump' || opts.dump) && (t.key !== 'unresolved' || opts.unresolved) && (t.key !== 'workhours' || opts.workhours)).map((t, i) => ({
+    ...t,
+    no: String(i + 1).padStart(2, '0')
+  }))
   return { tabs, first: (tabs[0]?.key || 'skin') as SettingsTab }
 }
 

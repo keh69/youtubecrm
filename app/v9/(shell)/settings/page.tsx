@@ -178,7 +178,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
             </tr>
           </thead>
           <tbody>
-            {s.data!.users.map((u, i) => [
+            {s.assignUsers.map((u, i) => [
               <tr key={u.id} className={`${u.active ? '' : 'inactive'}${editId === u.id ? ' selected' : ''}`}>
                 <td className="rn">{i + 1}</td>
                 <td>

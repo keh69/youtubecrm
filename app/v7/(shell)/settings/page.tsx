@@ -199,7 +199,7 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
   const { me } = useSession()
   const [editId, setEditId] = useState<string | null>(null)
   const roles = s.data!.roles
-  const users = s.data!.users
+  const users = s.assignUsers // 총 관리자(admin)는 빼고
   return (
     <section className="card">
       <p className="muted small">
