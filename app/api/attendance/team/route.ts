@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       for (const r of mine) byDate[r.workDate] = r
       const worked = mine.filter((r) => r.status !== 'absent')
       return {
-        user: { id: u.id, name: u.name, loginId: u.loginId, affiliationName: u.affiliationName },
+        user: { id: u.id, name: u.name, loginId: u.loginId, affiliationName: u.affiliationName, roles: (rolesByUser.get(u.id) || []).map((r) => r.name) },
         summary: {
           present: worked.filter((r) => r.checkInAt).length, // 출근(지각 포함)
           late: worked.filter((r) => r.late).length,

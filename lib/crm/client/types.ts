@@ -40,7 +40,7 @@ export type MyAttendance = {
 export type AttendanceSummary = { present: number; late: number; checkedOut: number; overtime: number; absent: number; workedMinutes: number }
 
 export type TeamAttendanceRow = {
-  user: { id: string; name: string; loginId: string; affiliationName: string | null }
+  user: { id: string; name: string; loginId: string; affiliationName: string | null; roles?: string[] }
   summary: AttendanceSummary
   records: Record<string, DayRecord>
 }

@@ -106,7 +106,13 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
   const [menu, setMenu] = useState<{ x: number; y: number; date: string } | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
-  const row = data.rows.find((r) => r.user.id === userId) || data.rows[0]
+  // 직원 고르기 순서: 센터장이 항상 맨 위, 그다음은 이름 가나다순. 처음 열면 맨 위 사람(센터장)을 보여 준다.
+  const people = [...data.rows].sort((a, b) => {
+    const ca = (a.user.roles || []).includes('센터장') ? 0 : 1
+    const cb = (b.user.roles || []).includes('센터장') ? 0 : 1
+    return ca - cb || a.user.name.localeCompare(b.user.name, 'ko')
+  })
+  const row = people.find((r) => r.user.id === userId) || people[0]
 
   useEffect(() => {
     if (!menu) return
@@ -143,9 +149,9 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
       <div className={c('cal-top')}>
         <h2 className={titleClass}>달력 · {data.label}</h2>
         <select className={selectClass} value={row.user.id} onChange={(e) => setUserId(e.target.value)} aria-label="달력에서 볼 직원">
-          {data.rows.map((r) => (
+          {people.map((r) => (
             <option key={r.user.id} value={r.user.id}>
-              {r.user.name} ({r.user.loginId})
+              {r.user.name} ({r.user.loginId}){(r.user.roles || []).includes('센터장') ? ' · 센터장' : ''}
             </option>
           ))}
         </select>
