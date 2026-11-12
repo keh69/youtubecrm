@@ -27,7 +27,7 @@ function fmtKst(iso: string | null) {
 // 예약 표 필터: 예약한 날(범위)·등록자·폼종류·종목·상태. 여러 개를 걸면 모두 맞는 것만.
 type RF = { from: string; to: string; owners: string[]; formats: string[]; stocks: string[]; states: string[] }
 const RF_EMPTY: RF = { from: '', to: '', owners: [], formats: [], stocks: [], states: [] }
-const PAGE_SIZE = 10
+const PAGE_SIZE = 5 // 예약 표는 5개씩, 넘으면 아래 페이지 번호
 const FORMAT_LABEL = { longform: '롱폼', shortform: '숏폼' } as const
 const stateLabel = (x: Reservation) => (x.status === 'waiting' ? '공개 대기' : '등록됨')
 // 예약한 날(KST) YYYY-MM-DD
