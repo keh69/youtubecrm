@@ -174,6 +174,7 @@ export default function V5TeamAttendance() {
             {team.data.rows.map((row) => {
               const isOpen = openUser === row.user.id
               const days = team.data!.days // 날짜 오름차순
+              const today = row.records[days[days.length - 1]] // '오늘' 보기일 때 그날 기록
               return (
                 <li key={row.user.id} className={isOpen ? 'open' : ''}>
                   <button type="button" className="g-person" aria-expanded={isOpen} onClick={() => setOpenUser(isOpen ? null : row.user.id)}>
@@ -184,6 +185,31 @@ export default function V5TeamAttendance() {
                         {row.user.loginId} · {row.user.affiliationName || '소속 없음'}
                       </small>
                     </span>
+                    {team.period === 'day' ? (
+                      // 오늘: 횟수 대신 오늘 출근·퇴근 시각과 근무시간
+                      <span className="g-person-stats">
+                        <span className="g-stat ok">
+                          <small>출근</small>
+                          <b>{fmtTime(today?.checkInAt)}</b>
+                        </span>
+                        <span className="g-stat out">
+                          <small>퇴근</small>
+                          <b>{today?.autoCheckout ? '미처리' : fmtTime(today?.checkOutAt)}</b>
+                        </span>
+                        <span className="g-stat time">
+                          <small>근무시간</small>
+                          <b>{today?.checkInAt ? fmtMinutes(today.workedMinutes) : '-'}</b>
+                        </span>
+                        <span className="g-badges">
+                          <StatusPill record={today} />
+                          {dayBadges(today).map((b) => (
+                            <span key={b.key} className={`g-pill tone-${b.key}`}>
+                              {b.label}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                    ) : (
                     <span className="g-person-stats">
                       <span className="g-stat ok">
                         <small>출근</small>
@@ -210,6 +236,7 @@ export default function V5TeamAttendance() {
                         <b>{fmtMinutes(row.summary.workedMinutes)}</b>
                       </span>
                     </span>
+                    )}
                     <span className="g-chev" aria-hidden="true">
                       {isOpen ? '▲' : '▼'}
                     </span>
