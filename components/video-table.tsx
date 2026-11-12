@@ -8,7 +8,15 @@ import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 
 // 영상 표(영상통계·영상등록이 함께 쓴다).
-// 열: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 · [수정][삭제]
+// 올린 시간: 한국 시간 24시간 표기(예: 13:05, 00:30)
+function fmtHm24(iso: string | null | undefined) {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '-'
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d)
+}
+
+// 열: 올린 날짜 · (v5: 올린 시간) · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 · [수정][삭제]
 // 위에 열별 필터(여러 개 동시에). canEdit 이 참이면 줄 오른쪽에 수정·삭제 버튼이 나오고,
 // 수정을 누르면 그 줄에서 종목명과 폼종류(롱폼/숏폼)를 바로 고친다.
 // cls: 스킨 모양에 맞춘 class 이름(v5 는 g-*). 빠진 것은 기본(xs-*)을 쓴다.
@@ -80,6 +88,7 @@ export function VideoTable({
     ...cls
   }
   const hideTitle = ui.key === 'v5' // v5전용: 0 때 해제 — 영상 열에서 제목만 빼고 썸네일은 남김(영상등록·영상통계)
+  const showTime = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
   const vf = useVideoFilters(videos)
   const list = vf.filtered
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
@@ -118,6 +127,7 @@ export function VideoTable({
           <thead>
             <tr>
               <th>올린 날짜</th>
+              {showTime && <th>올린 시간</th>}
               <th className={hideTitle ? 'thumb-col' : undefined}>{hideTitle ? '썸네일' : '영상'}</th>
               <th className="num">재생시간</th>
               <th>폼종류</th>
@@ -134,6 +144,7 @@ export function VideoTable({
               return (
                 <tr key={v.id}>
                   <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
+                  {showTime && <td className="num nowrap">{fmtHm24(v.publishedAt || v.createdAt)}</td>}
                   <td className={hideTitle ? 'thumb-col' : undefined}>
                     <div className={c.vcell}>
                       <a href={v.url} target="_blank" rel="noreferrer" className={c.thumb} aria-label={`${v.title} 유튜브에서 보기`} title={v.title}>
