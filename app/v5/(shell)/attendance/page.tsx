@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow } from '@/lib/crm/client/hooks'
-import { fmtHourMin, fmtTimeSec, fmtYmdShort, liveWorkedMinutes, statusLabel, statusTone } from '@/lib/crm/client/format'
+import { fmtHourMin, fmtTimeSec, fmtYmdShort, liveWorkedMinutes, nowStatusLabel, statusTone } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 
 const GOAL_MINUTES = 9 * 60
@@ -64,7 +64,7 @@ export default function V5Attendance() {
         <dl className={`g-att-summary tone-${statusTone(t)}`}>
           <div>
             <dt>현재상태</dt>
-            <dd>{statusLabel(t)}</dd>
+            <dd>{nowStatusLabel(t)}</dd>
           </div>
           <div>
             <dt>총 근무시간</dt>

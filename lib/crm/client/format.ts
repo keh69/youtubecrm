@@ -74,6 +74,12 @@ export function statusLabel(record: { status: string; checkInAt: string | null; 
   return record.checkOutAt ? '퇴근' : '출근'
 }
 
+// 근태체크 "현재상태" 칸: 출근했고 아직 퇴근 전이면 '근무중', 나머지는 statusLabel 과 같다
+export function nowStatusLabel(record: Parameters<typeof statusLabel>[0]) {
+  const label = statusLabel(record)
+  return label === '출근' ? '근무중' : label
+}
+
 // 근태체크 "총 근무시간" 표기: 485분 → 8시간05분, 0분 → 0시간00분
 export function fmtHourMin(minutes: number) {
   const m = Math.max(0, Math.floor(minutes))
