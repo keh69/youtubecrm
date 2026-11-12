@@ -126,7 +126,7 @@ export default function V5TeamAttendance() {
               ◀ 이전
             </button>
             <button className="g-btn ghost sm" onClick={team.goToday}>
-              {team.period === 'week' ? '이번 주' : '이번 달'}
+              {team.period === 'day' ? '오늘' : team.period === 'week' ? '이번 주' : '이번 달'}
             </button>
             <button className="g-btn ghost sm" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
               다음 ▶
@@ -173,7 +173,7 @@ export default function V5TeamAttendance() {
           <ul className="g-people">
             {team.data.rows.map((row) => {
               const isOpen = openUser === row.user.id
-              const days = [...team.data!.days].reverse()
+              const days = team.data!.days // 날짜 오름차순
               return (
                 <li key={row.user.id} className={isOpen ? 'open' : ''}>
                   <button type="button" className="g-person" aria-expanded={isOpen} onClick={() => setOpenUser(isOpen ? null : row.user.id)}>

@@ -46,7 +46,7 @@ export type TeamAttendanceRow = {
   records: Record<string, DayRecord>
 }
 
-export type TeamPeriod = 'week' | 'month'
+export type TeamPeriod = 'day' | 'week' | 'month'
 
 export type TeamAttendance = {
   period: TeamPeriod

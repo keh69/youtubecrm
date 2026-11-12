@@ -130,7 +130,7 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
   if (!row) return null
   const c = (name: string) => `${prefix}${name}`
   const start = data.from
-  const end = data.period === 'week' ? addDays(start, 6) : lastDayOfMonth(start)
+  const end = data.period === 'day' ? start : data.period === 'week' ? addDays(start, 6) : lastDayOfMonth(start)
   const cells: Array<string | null> = []
   for (let i = 0; i < dow(start); i++) cells.push(null)
   for (let d = start; d <= end; d = addDays(d, 1)) cells.push(d)

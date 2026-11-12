@@ -97,7 +97,7 @@ export default function V4TeamAttendance() {
               ◀ 이전
             </button>
             <button className="btn yellow sm" onClick={team.goToday}>
-              {team.period === 'week' ? '이번 주' : '이번 달'}
+              {team.period === 'day' ? '오늘' : team.period === 'week' ? '이번 주' : '이번 달'}
             </button>
             <button className="btn white sm" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
               다음 ▶

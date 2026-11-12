@@ -6,7 +6,7 @@ import { loadVisibleUsers } from '@/lib/crm/server/scope'
 import { closeOpenDays, loadDays } from '@/lib/crm/server/attendance'
 
 // 직원 근태 통계 (주간 / 월간)
-//  ?period=week|month (기본 month) &date=YYYY-MM-DD (그 날짜가 들어 있는 주/달, 기본 오늘)
+//  ?period=day|week|month (화면 기본 day) &date=YYYY-MM-DD (그 날짜가 들어 있는 주/달, 기본 오늘)
 // 집계 규칙: 출근 = 출근을 누른 날(지각도 포함), 지각 = 09:00 이후 출근,
 //           퇴근 = 퇴근을 누른 날(23:59 자동 퇴근 제외), 야근 = 19:00 이후 퇴근, 결근 = 관리자 결근 처리
 export async function GET(request: Request) {
@@ -15,14 +15,22 @@ export async function GET(request: Request) {
     requireMenu(ctx, 'attendance_team')
     const url = new URL(request.url)
     const today = getKstYmd(new Date())
-    const period = url.searchParams.get('period') === 'week' ? 'week' : 'month'
+    const p = url.searchParams.get('period')
+    const period = p === 'day' ? 'day' : p === 'week' ? 'week' : 'month'
     const dateParam = url.searchParams.get('date') || today
     const anchor = /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today
 
     let start: string
     let end: string
     let label: string
-    if (period === 'week') {
+    if (period === 'day') {
+      // 하루: 고른 날짜 하나(기본 오늘)
+      start = anchor
+      end = anchor
+      const [y, m, d] = anchor.split('-').map(Number)
+      const wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()]
+      label = `${y}년 ${m}월 ${d}일 (${wd})${anchor === today ? ' · 오늘' : ''}`
+    } else if (period === 'week') {
       ;({ start, end } = getFullWeekRangeKst(anchor))
       const [, sm, sd] = start.split('-').map(Number)
       const [, em, ed] = end.split('-').map(Number)

@@ -94,7 +94,7 @@ export default function V3TeamAttendance() {
             </button>
             <span aria-hidden="true">·</span>
             <button type="button" className="j-textbtn" onClick={team.goToday}>
-              {team.period === 'week' ? '이번 주' : '이번 달'}
+              {team.period === 'day' ? '오늘' : team.period === 'week' ? '이번 주' : '이번 달'}
             </button>
             <span aria-hidden="true">·</span>
             <button type="button" className="j-textbtn" disabled={!team.canGoNext} onClick={() => team.shift(1)}>

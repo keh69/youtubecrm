@@ -253,6 +253,7 @@ export function useMyAttendance() {
 /* ───────────────────────── 직원근태 (관리자/팀장) ───────────────────────── */
 
 export const TEAM_PERIODS: ReadonlyArray<{ key: TeamPeriod; label: string }> = [
+  { key: 'day', label: '오늘' }, // 하루(기본: 오늘)
   { key: 'week', label: '주간' },
   { key: 'month', label: '월간' }
 ]
@@ -260,7 +261,7 @@ export const TEAM_PERIODS: ReadonlyArray<{ key: TeamPeriod; label: string }> = [
 // 직원근태: 주간/월간 통계. date 는 보고 있는 주/달 안의 아무 날짜.
 // 집계(summary): 출근(지각 포함) / 지각(출근 기준시간 이후) / 퇴근 / 야근(퇴근 기준시간 이후) / 결근 / 근무시간
 export function useTeamAttendance() {
-  const [period, setPeriodState] = useState<TeamPeriod>('month')
+  const [period, setPeriodState] = useState<TeamPeriod>('day') // 처음엔 오늘 하루
   const [date, setDate] = useState(() => todayKst())
   const [data, setData] = useState<TeamAttendance | null>(null)
   const [loading, setLoading] = useState(true)
@@ -283,9 +284,10 @@ export function useTeamAttendance() {
     setPeriodState(next)
     setDate(todayKst())
   }
-  // 이전(-1) / 다음(+1) 주 또는 달
+  // 이전(-1) / 다음(+1) 날·주·달
   const shift = (delta: number) => {
-    if (period === 'week') setDate((d) => addDays(weekStart(d), delta * 7))
+    if (period === 'day') setDate((d) => addDays(d, delta))
+    else if (period === 'week') setDate((d) => addDays(weekStart(d), delta * 7))
     else setDate((d) => `${shiftMonth(d.slice(0, 7), delta)}-01`)
   }
   const goToday = () => setDate(todayKst())

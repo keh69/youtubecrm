@@ -131,7 +131,7 @@ export default function V11TeamAttendance() {
               ◀ 이전
             </button>
             <button className="btn ghost small" onClick={team.goToday}>
-              {team.period === 'week' ? '이번 주' : '이번 달'}
+              {team.period === 'day' ? '오늘' : team.period === 'week' ? '이번 주' : '이번 달'}
             </button>
             <button className="btn ghost small" disabled={!team.canGoNext} onClick={() => team.shift(1)}>
               다음 ▶
