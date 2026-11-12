@@ -798,6 +798,41 @@ export const EMPTY_ACCOUNT: NewAccount = { loginId: '', password: '', name: '', 
 export const MY_PAGE_PATH = '/me'
 
 // 내정보 → 비밀번호 변경: 현재 비밀번호 없이 새 비밀번호(4자 이상) + 확인만 넣는다.
+// 내정보: 내 전화번호·이메일 고치기(전화번호는 숫자만)
+export function useMyContact() {
+  const [email, setEmail] = useState('')
+  const [phone, setPhoneRaw] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    void (async () => {
+      const res = await api<{ email: string; phone: string }>('/api/me/contact')
+      if (res.ok) {
+        setEmail(res.data.email)
+        setPhoneRaw(res.data.phone)
+      } else setError(res.error)
+      setLoading(false)
+    })()
+  }, [])
+  const setPhone = (v: string) => setPhoneRaw(v.replace(/[^0-9]/g, '').slice(0, 11))
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (busy) return
+    setBusy(true)
+    setError('')
+    setDone(false)
+    const res = await api<{ email: string; phone: string }>('/api/me/contact', { method: 'PUT', body: { email: email.trim(), phone } })
+    setBusy(false)
+    if (!res.ok) return setError(res.error)
+    setEmail(res.data.email)
+    setPhoneRaw(res.data.phone)
+    setDone(true)
+  }
+  return { email, setEmail, phone, setPhone, loading, busy, error, done, submit }
+}
+
 export function useChangePassword() {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
