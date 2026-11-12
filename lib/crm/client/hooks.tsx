@@ -10,6 +10,7 @@ import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogou
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
 import type { AccountPatch, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
+import { isMobileDevice } from '@/lib/crm/client/device'
 
 export type ActionResult = { ok: boolean; error?: string }
 
@@ -205,6 +206,8 @@ export function useNow(intervalMs = 1000) {
 
 export function useMyAttendance() {
   const [data, setData] = useState<MyAttendance | null>(null)
+  const [mobileBlocked, setMobileBlocked] = useState(false) // 폰·태블릿이면 출근·퇴근을 막는다(컴퓨터에서만)
+  useEffect(() => setMobileBlocked(isMobileDevice()), [])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<'in' | 'out' | null>(null)
@@ -225,7 +228,7 @@ export function useMyAttendance() {
   const press = async (kind: 'in' | 'out'): Promise<ActionResult> => {
     if (busy) return { ok: false }
     setBusy(kind)
-    const res = await api(`/api/attendance/${kind === 'in' ? 'checkin' : 'checkout'}`, { method: 'POST', body: {} })
+    const res = await api(`/api/attendance/${kind === 'in' ? 'checkin' : 'checkout'}`, { method: 'POST', body: { device: isMobileDevice() ? 'mobile' : 'desktop' } })
     await reload()
     setBusy(null)
     return res.ok ? { ok: true } : { ok: false, error: res.error }
@@ -238,8 +241,9 @@ export function useMyAttendance() {
     error,
     busy,
     today,
-    canCheckIn: Boolean(data) && !today?.checkInAt && today?.status !== 'absent',
-    canCheckOut: Boolean(today?.checkInAt) && !today?.checkOutAt,
+    mobileBlocked,
+    canCheckIn: !mobileBlocked && Boolean(data) && !today?.checkInAt && today?.status !== 'absent',
+    canCheckOut: !mobileBlocked && Boolean(today?.checkInAt) && !today?.checkOutAt,
     checkIn: () => press('in'),
     checkOut: () => press('out'),
     reload

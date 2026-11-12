@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getFullWeekRangeKst, getKstYmd, getMonthRangeKst, getYmdList } from '@/lib/attendance/time'
-import { getContext, handleError, requireMenu } from '@/lib/crm/server/context'
+import { getContext, handleError, loadRolesForUsers, requireMenu } from '@/lib/crm/server/context'
+import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
 import { closeOpenDays, loadDays } from '@/lib/crm/server/attendance'
 
@@ -34,7 +35,10 @@ export async function GET(request: Request) {
     const to = end < today ? end : today
     const from = start
 
-    const users = (await loadVisibleUsers(ctx)).filter((u) => u.active)
+    // 총 관리자(admin) 계정은 근태를 하지 않으므로 목록에서 뺀다
+    const visible = (await loadVisibleUsers(ctx)).filter((u) => u.active)
+    const { rolesByUser } = await loadRolesForUsers(ctx.db, visible.map((u) => ({ id: u.id, role_type: '', custom_role_code: null }) as any))
+    const users = visible.filter((u) => !(rolesByUser.get(u.id) || []).some((r) => r.code === LOCKED_ROLE_CODE))
     const ids = users.map((u) => u.id)
     await closeOpenDays(ctx.db, ids)
     const records = from <= to ? await loadDays(ctx.db, ids, from, to) : []

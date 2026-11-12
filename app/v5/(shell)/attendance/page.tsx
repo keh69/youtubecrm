@@ -53,6 +53,7 @@ export default function V5Attendance() {
       <PageHead emoji="⏰" title="근태체크" desc="출근할 때와 퇴근할 때 버튼을 한 번씩 눌러 주세요. 퇴근을 안 누르면 23:59에 자동 퇴근됩니다." />
 
       {att.error && <Note msg={{ tone: 'error', text: att.error }} role="alert" />}
+      {att.mobileBlocked && <Note msg={{ tone: 'error', text: '출근·퇴근은 컴퓨터에서만 누를 수 있습니다. 폰·태블릿에서는 기록만 볼 수 있어요.' }} role="status" />}
 
       <section className="g-glass g-att">
         <div className="g-att-clock">
