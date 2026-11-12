@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { todayKst } from '@/lib/crm/client/format'
 
 // 날짜 입력칸(모든 스킨 공통): 1987.05.27 처럼 바로 타이핑할 수 있고(숫자만 쳐도 점이 자동으로 들어간다),
 // 오른쪽 📅 버튼을 누르면 달력이 뜬다. 달력에서 고르면 칸에 채워지고 커서가 바로 칸으로 돌아온다.
@@ -34,7 +35,7 @@ export function DateInput({
   className,
   autoFocus,
   ariaLabel = '날짜',
-  placeholder = '2026.11.11'
+  placeholder
 }: {
   value: string
   onChange: (dotted: string) => void
@@ -64,7 +65,7 @@ export function DateInput({
         value={value}
         onChange={(e) => onChange(formatTyping(e.target.value))}
         inputMode="numeric"
-        placeholder={placeholder}
+        placeholder={placeholder ?? isoToDotted(todayKst())} // 예시는 오늘 날짜(한국 시간)
         maxLength={10}
         autoFocus={autoFocus}
         aria-label={ariaLabel}

@@ -97,7 +97,7 @@ export default function V5Signup() {
               </label>
               <label className="g-field">
                 <span>입사일자 *</span>
-                <DateInput className="g-input" value={form.hireDate} onChange={(v) => set('hireDate', v)} ariaLabel="입사일자" placeholder="2026.11.11" />
+                <DateInput className="g-input" value={form.hireDate} onChange={(v) => set('hireDate', v)} ariaLabel="입사일자" />
               </label>
               <label className="g-field">
                 <span>이메일 *</span>
