@@ -17,7 +17,7 @@ export function fmtTimeSec(iso: string | null | undefined) {
 
 // 2026-11-11 → 11.11 (수)
 export function fmtYmdShort(ymd: string) {
-  if (!ymd || !/^d{4}-d{2}-d{2}/.test(ymd)) return '-'
+  if (!ymd || !/^\d{4}-\d{2}-\d{2}/.test(ymd)) return '-'
   const [y, m, d] = ymd.split('-').map(Number)
   const wd = new Intl.DateTimeFormat('ko-KR', { timeZone: KST, weekday: 'short' }).format(new Date(Date.UTC(y, m - 1, d, 12)))
   return `${m}.${d} (${wd})`
