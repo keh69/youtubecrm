@@ -5,11 +5,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { MENUS, firstAllowedPath, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { MENUS, V5_ONLY_MENUS, firstAllowedPath, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
-import type { AccountPatch, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
+import type { AccountPatch, MealPay, Me, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
 import { isMobileDevice } from '@/lib/crm/client/device'
 
 export type ActionResult = { ok: boolean; error?: string }
@@ -114,7 +114,8 @@ export function useNav(): NavItem[] {
   const pathname = usePathname()
   return useMemo(() => {
     const isOn = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
-    const has = (k: MenuKey) => me.menus.includes(k)
+    const isV5 = base === '/v5' || base.startsWith('/v5/')
+    const has = (k: MenuKey) => me.menus.includes(k) && (isV5 || !V5_ONLY_MENUS.includes(k)) // v5전용: 0 때 해제
     const items: Array<Omit<NavItem, 'href' | 'active' | 'sub'>> = [
       ...MENUS.filter((m) => has(m.key) && !(SUB_KEYS.has(m.key) && Object.entries(NAV_SUBS).some(([p, c]) => c === m.key && has(p as MenuKey)))),
       { key: 'me', label: '내정보', path: '/me', description: '내 정보 확인, 비밀번호 변경' }
@@ -987,4 +988,37 @@ export function useVersionLinks() {
   const current = skinOfPath(pathname)
   const rest = pathWithoutSkin(pathname)
   return SKINS.map((s) => ({ key: s.key, name: s.name, href: `${s.base}${rest}` || '/', active: s.key === current }))
+}
+
+// 급여계산 > 식대계산: 고른 달(기본 이번 달)의 직원별 출근 날 수 × 1만 원
+export function useMealPay() {
+  const [month, setMonth] = useState(() => todayKst().slice(0, 7))
+  const [data, setData] = useState<MealPay | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const seq = useRef(0)
+  const reload = useCallback(async () => {
+    const mySeq = ++seq.current
+    setLoading(true)
+    const res = await api<MealPay>(`/api/payroll/meals?month=${month}`)
+    if (mySeq !== seq.current) return
+    if (res.ok) {
+      setData(res.data)
+      setError('')
+    } else setError(res.error)
+    setLoading(false)
+  }, [month])
+  useEffect(() => {
+    void reload()
+  }, [reload])
+  return {
+    month,
+    data,
+    loading,
+    error,
+    reload,
+    shift: (delta: number) => setMonth((m) => shiftMonth(m, delta)),
+    goThisMonth: () => setMonth(todayKst().slice(0, 7)),
+    canGoNext: month < todayKst().slice(0, 7)
+  }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { MENUS, type MenuKey } from '@/lib/crm/menus'
+import { MENUS_SYNCED, type MenuKey } from '@/lib/crm/menus' // v5전용: 0 때 해제(MENUS_SYNCED)
 import { EMPLOYEE_TABS_NOTE, EMPTY_ACCOUNT, useEmployees, useMenuGuard, useSession, useSettings, useSettingsTabs, useDragReorder, type SettingsTab } from '@/lib/crm/client/hooks'
 import type { NewAccount, SettingsRole, SettingsUser } from '@/lib/crm/client/types'
 import { SkinPicker } from '@/components/skin-picker'
@@ -371,7 +371,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
               <tr>
                 <th className="drag-col" aria-label="순서" />
                 <th>역할</th>
-                {MENUS.map((m) => (
+                {MENUS_SYNCED.map((m) => (
                   <th key={m.key} className="center" title={m.description}>
                     {m.key === 'attendance_team' ? '근태통계' : m.label}
                   </th>
@@ -409,7 +409,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       </>
                     )}
                   </td>
-                  {MENUS.map((m) => (
+                  {MENUS_SYNCED.map((m) => (
                     <td key={m.key} className="center" style={m.key === 'settings' ? { whiteSpace: 'nowrap' } : undefined}>
                       <input
                         type="checkbox"

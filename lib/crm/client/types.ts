@@ -61,6 +61,19 @@ export type TeamAttendance = {
   totals: AttendanceSummary
 }
 
+// 급여계산 > 식대계산
+export type MealPay = {
+  month: string // YYYY-MM
+  label: string // 2026년 11월
+  from: string
+  to: string
+  countedTo: string
+  isCurrent: boolean
+  perDay: number
+  rows: Array<{ user: { id: string; name: string; loginId: string; affiliation: string | null; active: boolean }; days: number; amount: number }>
+  totals: { days: number; amount: number; people: number }
+}
+
 export type Video = {
   id: string
   youtubeVideoId: string

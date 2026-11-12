@@ -12,6 +12,7 @@ const TABLE: Record<NavItem['key'], string> = {
   attendance_team: 'team_attendance',
   videos: 'videos',
   stats: 'video_stats',
+  payroll: 'payroll', // v5전용 메뉴(0 때 사용)
   settings: 'settings',
   skin: 'skins',
   me: 'me'

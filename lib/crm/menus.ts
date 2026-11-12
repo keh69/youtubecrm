@@ -2,7 +2,7 @@
 // 역할(role)마다 어떤 메뉴를 볼 수 있는지는 youtubeCRM_role_menu_permissions 에
 // (role_type = 역할 code, menu_key) 로 저장된다. 사용자가 여러 역할을 가지면 합집합.
 
-export const MENU_KEYS = ['attendance', 'attendance_team', 'videos', 'stats', 'settings'] as const
+export const MENU_KEYS = ['attendance', 'attendance_team', 'videos', 'stats', 'payroll', 'settings'] as const
 export type MenuKey = (typeof MENU_KEYS)[number]
 
 export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; description: string }> = [
@@ -10,8 +10,15 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
   { key: 'attendance_team', label: '직원근태', path: '/team-attendance', description: '직원 근태 통계 확인, 결근 처리' },
   { key: 'videos', label: '영상등록', path: '/videos', description: '종목명 + 유튜브 주소로 영상 등록' },
   { key: 'stats', label: '영상통계', path: '/stats', description: '영상 조회수·재생시간·업로드 현황' },
+  { key: 'payroll', label: '급여계산', path: '/payroll', description: '급여계산, 식대계산(출근 1일당 1만 원)' },
   { key: 'settings', label: '설정', path: '/settings', description: '역할부여, 역할설정, 아이디생성' }
 ]
+
+// v5전용: 0 때 해제 — 아직 v5 에만 있는 메뉴. 다른 스킨의 메뉴 줄·역할설정 표에는 안 나온다.
+// 사용자가 '0' 을 치면 다른 스킨에 페이지를 만들고 이 목록에서 뺀다.
+export const V5_ONLY_MENUS: MenuKey[] = ['payroll']
+// v5 가 아닌 스킨이 쓰는 메뉴 목록(위 v5 전용 메뉴 제외)
+export const MENUS_SYNCED = MENUS.filter((m) => !V5_ONLY_MENUS.includes(m.key))
 
 // 관리자급 역할: 이 역할을 가진 사람은 남이 등록한 영상도 고칠 수 있다. 삭제가 막힌 것은 총 관리자뿐(isSystemRole).
 export const ADMIN_ROLE_CODES = ['super_admin', 'admin'] as const

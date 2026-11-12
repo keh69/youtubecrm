@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MENUS, type MenuKey } from '@/lib/crm/menus'
+import { MENUS_SYNCED, type MenuKey } from '@/lib/crm/menus' // v5전용: 0 때 해제(MENUS_SYNCED)
 import { SkinPicker } from '@/components/skin-picker'
 import { RoleSettingsDetail } from '@/components/role-settings-detail'
 import { AffiliationSelect } from '@/components/affiliation-select'
@@ -383,7 +383,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                 <th className="rn">#</th>
                 <th className="drag-col" aria-label="순서" />
                 <th>역할</th>
-                {MENUS.map((m) => (
+                {MENUS_SYNCED.map((m) => (
                   <th key={m.key} className="center" title={m.description}>
                     {m.key === 'attendance_team' ? '근태통계' : m.label}
                   </th>
@@ -422,7 +422,7 @@ function RolesTab({ s, report }: { s: S; report: Report }) {
                       </>
                     )}
                   </td>
-                  {MENUS.map((m) => (
+                  {MENUS_SYNCED.map((m) => (
                     <td key={m.key} className="center" style={m.key === 'settings' ? { whiteSpace: 'nowrap' } : undefined}>
                       <input type="checkbox" checked={r.menus.includes(m.key)} disabled={r.locked} onChange={() => toggle(r, m.key)} aria-label={`${r.name} - ${m.label}`} />
                       {m.key === 'settings' && <RoleSettingsDetail role={r} onSave={(id, tabs) => s.saveRoleSettingsTabs(id, tabs)} onSaveAffiliation={(id, v) => s.saveRoleAffiliation(id, v)} />}
