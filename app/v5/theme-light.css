@@ -3594,3 +3594,55 @@ html:root .v5 .g-ds-person tfoot td {
 html:root .v5 .g-ds-person tfoot td.num {
   text-align: right;
 }
+
+/* ───────── 영상통계 요약 줄: 항상 한 줄 · 가운데 정렬 (2026-11-12) ─────────
+   칸이 넘치면 먼저 칸 사이 간격이 줄고, 그래도 좁으면 글자가 작아진다(카드 폭 기준 cqi). */
+html:root .v5 .g-ds-kpi {
+  container-type: inline-size;
+  padding: 12px clamp(8px, 1.6cqi, 18px);
+}
+html:root .v5 .g-ds-kpi dl {
+  flex-wrap: nowrap;
+}
+html:root .v5 .g-ds-kpi dl > div,
+html:root .v5 .g-ds-kpi dl > div:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 2px clamp(2px, 0.9cqi, 14px);
+  text-align: center;
+}
+html:root .v5 .g-ds-kpi dl > div:first-child {
+  border-left: 0;
+}
+html:root .v5 .g-ds-kpi dt {
+  font-size: clamp(9px, 1.15cqi, 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html:root .v5 .g-ds-kpi dd {
+  font-size: clamp(12px, 1.9cqi, 20px);
+}
+html:root .v5 .g-ds-kpi dd.small {
+  font-size: clamp(10px, 1.4cqi, 15px);
+}
+
+/* 일자별 표: 올린 개수 칸을 누르면 그날로 영상리스트 거르기 */
+html:root .v5 .g-ds-daily td.heat .ds-cell.ds-pick {
+  width: calc(100% - 2px);
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+html:root .v5 .g-ds-daily td.heat.hi .ds-cell.ds-pick {
+  color: #fff;
+}
+html:root .v5 .g-ds-daily td.heat .ds-cell.ds-pick:hover {
+  outline: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+  outline-offset: -2px;
+}
+html:root .v5 .g-ds-daily td.heat .ds-cell.ds-pick.on {
+  outline: 2px solid #f59e0b;
+  outline-offset: -2px;
+}

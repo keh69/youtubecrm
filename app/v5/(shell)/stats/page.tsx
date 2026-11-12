@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import { STAT_PERIODS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
@@ -10,6 +12,7 @@ export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
+  const [day, setDay] = useState<{ ymd: string; n: number } | null>(null) // 일자별 표에서 누른 날 → 영상리스트 거르기 (v5)
 
   if (!allowed) return null
   const videos = st.videos
@@ -56,7 +59,7 @@ export default function V5Stats() {
 
       {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
       <StatsKpiSection st={st} />
-      <StatsDailySection st={st} />
+      <StatsDailySection st={st} pickedDay={day?.ymd ?? null} onPickDay={(ymd) => setDay({ ymd, n: Date.now() })} />
       <StatsPersonSection st={st} meId={me.id} />
 
       <section className="g-glass">
@@ -67,7 +70,7 @@ export default function V5Stats() {
         {st.loading && !st.data ? (
           <Loading />
         ) : (
-          <VideoTable videos={st.videos} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="이 기간에 올린 영상이 없습니다." />
+          <VideoTable videos={st.videos} dayFilter={day} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="이 기간에 올린 영상이 없습니다." />
         )}
       </section>
     </>

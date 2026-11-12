@@ -71,7 +71,8 @@ const isWeekend = (ymd: string) => {
 // 1만 이상은 1.2만처럼 줄여 좁은 칸에 들어가게
 const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만` : n.toLocaleString('ko-KR'))
 
-export function StatsDailySection({ st }: { st: St }) {
+// onPickDay: 올린 개수 칸을 누르면 그날(YYYY-MM-DD)을 알려 준다(영상리스트를 그날로 거르기). pickedDay: 지금 고른 날(칸 강조)
+export function StatsDailySection({ st, onPickDay, pickedDay }: { st: St; onPickDay?: (ymd: string) => void; pickedDay?: string | null }) {
   const ui = useSkinUi()
   const v5 = ui.key === 'v5'
   const daily = st.data?.daily || []
@@ -106,7 +107,17 @@ export function StatsDailySection({ st }: { st: St }) {
                   style={d.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (d.count / maxCount)).toFixed(2) } : undefined}
                   title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}
                 >
-                  {d.count > 0 ? <span className="ds-cell">{d.count}</span> : '·'}
+                  {d.count > 0 ? (
+                    onPickDay ? (
+                      <button type="button" className={`ds-cell ds-pick${pickedDay === d.date ? ' on' : ''}`} onClick={() => onPickDay(d.date)} title={`${fmtYmdShort(d.date)} 올린 영상 ${d.count}개만 아래 영상리스트에 보기`}>
+                        {d.count}
+                      </button>
+                    ) : (
+                      <span className="ds-cell">{d.count}</span>
+                    )
+                  ) : (
+                    '·'
+                  )}
                 </td>
               ))}
               <td className="sum">{fmtNumber(daily.reduce((n, d) => n + d.count, 0))}</td>
@@ -123,7 +134,10 @@ export function StatsDailySection({ st }: { st: St }) {
           </tbody>
         </table>
       </div>
-      <p className={ui.muted}>올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.</p>
+      <p className={ui.muted}>
+        올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.
+        {onPickDay && ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.'}
+      </p>
     </section>
   )
 }

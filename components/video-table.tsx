@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { deleteVideo, updateVideo } from '@/lib/crm/client/hooks'
 import type { Video } from '@/lib/crm/client/types'
@@ -93,8 +93,10 @@ export function VideoTable({
   onChanged,
   cls = {},
   emptyText = '영상이 없습니다.',
-  focus = null
+  focus = null,
+  dayFilter = null
 }: {
+  dayFilter?: { ymd: string; n: number } | null // 이 날 올린 영상만 보이게 '올린 날짜' 필터를 맞추고 표로 스크롤(n 이 바뀔 때마다)
   focus?: { id: string; n: number } | null // 이 영상이 있는 쪽으로 넘기고, 그 줄로 스크롤해 잠깐 강조한다(n 이 바뀔 때마다)
   videos: Video[]
   canEdit: boolean
@@ -173,6 +175,13 @@ export function VideoTable({
     const t = window.setTimeout(() => setHl(null), 3000)
     return () => window.clearTimeout(t)
   }, [hl])
+  const tableTop = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!dayFilter) return
+    vf.setF({ ...vf.f, dateFrom: dayFilter.ymd, dateTo: dayFilter.ymd })
+    tableTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayFilter])
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
@@ -202,6 +211,7 @@ export function VideoTable({
 
   return (
     <>
+      <div ref={tableTop} aria-hidden="true" />
       <VideoFilterBar
         ctl={vf}
         total={videos.length}
