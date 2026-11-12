@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { TABLES } from '@/lib/supabase/tables'
 import { addDaysToYmd, getKstYmd, getYmdList } from '@/lib/attendance/time'
-import { HttpError, getContext, handleError, requireMenu } from '@/lib/crm/server/context'
+import { HttpError, getContext, handleError, loadRolesForUsers, requireMenu } from '@/lib/crm/server/context'
+import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
 import { VIDEO_FIELDS, refreshStaleVideos, toVideoDto } from '@/lib/crm/server/videos'
 import { processReservations } from '@/lib/crm/server/reservations'
@@ -66,9 +67,12 @@ export async function GET(request: Request) {
       totalDurationSeconds: list.reduce((s, v) => s + (v.durationSeconds || 0), 0)
     })
 
+    // 담당자별 표에서는 총 관리자(admin)를 뺀다(영상을 올리는 직원만)
+    const { rolesByUser } = await loadRolesForUsers(ctx.db, ids.map((id) => ({ id, role_type: '', custom_role_code: null }) as any))
+    const personIds = ids.filter((id) => !(rolesByUser.get(id) || []).some((r) => r.code === LOCKED_ROLE_CODE))
     const perPerson =
       ids.length > 1
-        ? ids
+        ? personIds
             .map((id) => ({ userId: id, name: nameById.get(id) || '-', ...sum(videos.filter((v) => v.ownerId === id)) }))
             .sort((a, b) => b.totalViews - a.totalViews || b.videoCount - a.videoCount)
         : []
