@@ -111,7 +111,7 @@ export function VideoTable({
 
   return (
     <>
-      <VideoFilterBar ctl={vf} total={videos.length} hideTitle={hideTitle} />
+      <VideoFilterBar ctl={vf} total={videos.length} hideTitle={hideTitle} oneLine={hideTitle} />
       {msg && <p className={c.msg} role="status">{msg}</p>}
       <div className={c.wrap}>
         <table className={hideTitle ? cx(c.table, 'no-title') : c.table}>

@@ -1267,6 +1267,47 @@ html {
   white-space: nowrap;
 }
 
+/* 한 줄 필터(.vf-one): 줄바꿈 없이 칸을 줄여 한 줄에 다 넣는다. 개수 안내(.vf-status-top)는 필터 줄 위 오른쪽. (v5 영상등록·영상통계) */
+.vf-bar.vf-one {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+}
+.vf-bar.vf-one > * {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.vf-bar.vf-one .vf-label {
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.vf-bar.vf-one .vf-input {
+  padding: 5px 6px;
+  min-height: 30px;
+}
+.vf-bar.vf-one .vf-range {
+  gap: 3px;
+}
+.vf-bar.vf-one .vf-range .vf-input {
+  width: 58px;
+}
+.vf-bar.vf-one .vf-range .vf-input[type='date'] {
+  width: 118px;
+}
+.vf-bar.vf-one .vf-multi > summary > span:last-child {
+  min-width: 70px;
+  max-width: 130px;
+  padding: 5px 24px 5px 8px;
+}
+.vf-status.vf-status-top {
+  justify-content: flex-end;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 12.5px;
+  opacity: 0.85;
+}
+
 /* 상세설정 창을 표 밖(body)에 띄울 때: 화면 기준 위치, 맨 위에 */
 .rsd-pop.rsd-floating {
   position: fixed;

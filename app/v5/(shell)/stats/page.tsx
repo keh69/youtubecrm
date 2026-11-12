@@ -152,7 +152,7 @@ export default function V5Stats() {
 
       <section className="g-glass">
         <div className="g-card-head">
-          <h2 className="g-h2">영상 ({fmtNumber(videos.length)})</h2>
+          <h2 className="g-h2">영상리스트 ({fmtNumber(videos.length)})</h2>
           <span className="g-muted g-small">{STAT_SORTS.find((o) => o.key === st.sort)?.label}</span>
         </div>
         {/* 영상 표: 열별 필터 + 영상통계 '수정권한'이면 줄마다 수정·삭제 */}

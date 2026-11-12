@@ -78,7 +78,7 @@ export function useVideoFilters<T extends V>(videos: T[]) {
   return { f, setF, options, filtered, activeCount, clear: () => setF(EMPTY) }
 }
 
-function MultiPick({ label, all, value, onChange }: { label: string; all: string[]; value: string[]; onChange: (v: string[]) => void }) {
+export function MultiPick({ label, all, value, onChange }: { label: string; all: string[]; value: string[]; onChange: (v: string[]) => void }) {
   const [q, setQ] = useState('')
   const ref = useRef<HTMLDetailsElement>(null)
   // 열려 있을 때 바깥(다른 필터 포함)을 누르거나 Esc 를 누르면 닫는다
@@ -124,11 +124,32 @@ function MultiPick({ label, all, value, onChange }: { label: string; all: string
   )
 }
 
-export function VideoFilterBar({ ctl, total, hideTitle = false }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean }) {
+// oneLine: 필터를 한 줄로(개수·지우기 안내는 필터 줄 위 오른쪽으로). v5전용: 0 때 해제
+export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean; oneLine?: boolean }) {
   const { f, setF, options } = ctl
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
+  const status = (
+    <div className={oneLine ? 'vf-status vf-status-top' : 'vf-status'}>
+      <span>
+        {ctl.activeCount > 0 ? (
+          <>
+            필터 {ctl.activeCount}개 · <b>{ctl.filtered.length}</b> / {total}개
+          </>
+        ) : (
+          <>전체 {total}개</>
+        )}
+      </span>
+      {ctl.activeCount > 0 && (
+        <button type="button" className="vf-mini" onClick={ctl.clear}>
+          필터 모두 지우기
+        </button>
+      )}
+    </div>
+  )
   return (
-    <div className="vf-bar" role="group" aria-label="영상 필터">
+    <>
+    {oneLine && status}
+    <div className={oneLine ? 'vf-bar vf-one' : 'vf-bar'} role="group" aria-label="영상 필터">
       {/* 표 열 순서대로: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 */}
       <div className="vf-field">
         <span className="vf-label">올린 날짜</span>
@@ -160,22 +181,8 @@ export function VideoFilterBar({ ctl, total, hideTitle = false }: { ctl: ReturnT
           <input className="vf-input" inputMode="numeric" value={f.viewsMax} onChange={(e) => set({ viewsMax: e.target.value.replace(/\D/g, '') })} placeholder="최대" aria-label="조회수 최대" />
         </span>
       </div>
-      <div className="vf-status">
-        <span>
-          {ctl.activeCount > 0 ? (
-            <>
-              필터 {ctl.activeCount}개 · <b>{ctl.filtered.length}</b> / {total}개
-            </>
-          ) : (
-            <>전체 {total}개</>
-          )}
-        </span>
-        {ctl.activeCount > 0 && (
-          <button type="button" className="vf-mini" onClick={ctl.clear}>
-            필터 모두 지우기
-          </button>
-        )}
-      </div>
+      {!oneLine && status}
     </div>
+    </>
   )
 }

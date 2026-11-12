@@ -3360,3 +3360,15 @@ html:root .v5 .g-vtable.no-title .thumb-col .g-thumb {
 html:root .v5 .g-vtable.no-title .g-who {
   justify-content: center;
 }
+
+/* 예약등록 표 아래 페이지 번호 (2026-11-12) */
+html:root .v5 .g-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+html:root .v5 .g-pager .g-btn.sm {
+  min-width: 34px;
+}

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useReservations, useSession } from '@/lib/crm/client/hooks'
+import { MultiPick } from '@/components/video-filters'
+import type { Reservation } from '@/lib/crm/client/types'
 import { Loading, Note, type Msg } from '../../_components/ui'
 
 // 영상등록 > 예약등록 (v5)
@@ -21,6 +23,16 @@ function fmtKst(iso: string | null) {
 }
 
 // 공개 시각은 받지 않는다(유튜브에서 정한 시각을 API 로 읽을 수 없고, 등록은 실제 공개를 보고 한다)
+// 예약 표 필터: 예약한 날(범위)·등록자·폼종류·종목·상태. 여러 개를 걸면 모두 맞는 것만.
+type RF = { from: string; to: string; owners: string[]; formats: string[]; stocks: string[]; states: string[] }
+const RF_EMPTY: RF = { from: '', to: '', owners: [], formats: [], stocks: [], states: [] }
+const PAGE_SIZE = 10
+const FORMAT_LABEL = { longform: '롱폼', shortform: '숏폼' } as const
+const stateLabel = (x: Reservation) => (x.status === 'waiting' ? '공개 대기' : '등록됨')
+// 예약한 날(KST) YYYY-MM-DD
+const kstYmd = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso))
+const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'))
+
 type Form = { stockName: string; contentType: 'longform' | 'shortform' | ''; url: string }
 const EMPTY: Form = { stockName: '', contentType: '', url: '' }
 
@@ -32,6 +44,35 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
   const [msg, setMsg] = useState<Msg>(null)
   const waiting = r.items.filter((x) => x.status === 'waiting')
   const showOwner = Boolean(me.isSuperAdmin) // 총관리자는 모든 직원의 예약이 보이므로 등록자 열을 단다
+  const [rf, setRf] = useState<RF>(RF_EMPTY)
+  const [page, setPage] = useState(1)
+  const setFilter = (patch: Partial<RF>) => {
+    setRf((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }
+  const opts = useMemo(
+    () => ({
+      owners: uniq(r.items.map((x) => x.ownerName || '')),
+      formats: uniq(r.items.map((x) => FORMAT_LABEL[x.contentType])),
+      stocks: uniq(r.items.map((x) => x.stockName)),
+      states: ['공개 대기', '등록됨']
+    }),
+    [r.items]
+  )
+  const filtered = r.items.filter((x) => {
+    const d = kstYmd(x.createdAt)
+    if (rf.from && d < rf.from) return false
+    if (rf.to && d > rf.to) return false
+    if (rf.owners.length && !rf.owners.includes(x.ownerName || '')) return false
+    if (rf.formats.length && !rf.formats.includes(FORMAT_LABEL[x.contentType])) return false
+    if (rf.stocks.length && !rf.stocks.includes(x.stockName)) return false
+    if (rf.states.length && !rf.states.includes(stateLabel(x))) return false
+    return true
+  })
+  const activeCount = [rf.from || rf.to, rf.owners.length, rf.formats.length, rf.stocks.length, rf.states.length].filter(Boolean).length
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const cur = Math.min(page, pages)
+  const pageItems = filtered.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,6 +148,36 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
       ) : r.items.length === 0 ? (
         <p className="g-empty">예약등록한 영상이 없습니다.</p>
       ) : (
+        <>
+        <div className="vf-status vf-status-top">
+          <span>
+            {activeCount > 0 ? (
+              <>
+                필터 {activeCount}개 · <b>{filtered.length}</b> / {r.items.length}개
+              </>
+            ) : (
+              <>전체 {r.items.length}개</>
+            )}
+          </span>
+          {activeCount > 0 && (
+            <button type="button" className="vf-mini" onClick={() => setFilter(RF_EMPTY)}>
+              필터 모두 지우기
+            </button>
+          )}
+        </div>
+        <div className="vf-bar vf-one" role="group" aria-label="예약 필터">
+          <div className="vf-field">
+            <span className="vf-label">예약한 날</span>
+            <span className="vf-range">
+              <input className="vf-input" type="date" value={rf.from} onChange={(e) => setFilter({ from: e.target.value })} aria-label="예약한 날 시작" />~
+              <input className="vf-input" type="date" value={rf.to} onChange={(e) => setFilter({ to: e.target.value })} aria-label="예약한 날 끝" />
+            </span>
+          </div>
+          {showOwner && <MultiPick label="등록자" all={opts.owners} value={rf.owners} onChange={(owners) => setFilter({ owners })} />}
+          <MultiPick label="폼종류" all={opts.formats} value={rf.formats} onChange={(formats) => setFilter({ formats })} />
+          <MultiPick label="종목" all={opts.stocks} value={rf.stocks} onChange={(stocks) => setFilter({ stocks })} />
+          <MultiPick label="상태" all={opts.states} value={rf.states} onChange={(states) => setFilter({ states })} />
+        </div>
         <div className="g-table-wrap">
           <table className="g-table g-resv-table">
             <thead>
@@ -121,7 +192,14 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
               </tr>
             </thead>
             <tbody>
-              {r.items.map((x) => (
+              {pageItems.length === 0 && (
+                <tr>
+                  <td colSpan={showOwner ? 7 : 6} className="g-empty">
+                    조건에 맞는 예약이 없습니다.
+                  </td>
+                </tr>
+              )}
+              {pageItems.map((x) => (
                 <tr key={x.id}>
                   <td className="nowrap">{fmtKst(x.createdAt)}</td>
                   {showOwner && <td className="nowrap">{x.ownerName || '-'}</td>}
@@ -155,6 +233,22 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
             </tbody>
           </table>
         </div>
+        {pages > 1 && (
+          <nav className="g-pager" aria-label="예약 페이지">
+            <button type="button" className="g-btn ghost sm" disabled={cur === 1} onClick={() => setPage(cur - 1)}>
+              ◀ 이전
+            </button>
+            {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+              <button key={n} type="button" className={`g-btn sm ${n === cur ? 'primary' : 'ghost'}`} aria-current={n === cur ? 'page' : undefined} onClick={() => setPage(n)}>
+                {n}
+              </button>
+            ))}
+            <button type="button" className="g-btn ghost sm" disabled={cur === pages} onClick={() => setPage(cur + 1)}>
+              다음 ▶
+            </button>
+          </nav>
+        )}
+        </>
       )}
     </section>
   )
