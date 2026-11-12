@@ -2,6 +2,7 @@
 
 import { useChangePassword, useSession } from '@/lib/crm/client/hooks'
 import { BlockTitle, Msg, PageHead } from '../../_components/ui'
+import { MyContactForm } from '@/components/my-contact'
 
 export default function V4Me() {
   const { me } = useSession()
@@ -18,6 +19,9 @@ export default function V4Me() {
           <span className="chip">역할 {me.roles.map((r) => r.name).join(', ') || '역할 없음'}</span>
         </div>
       </section>
+
+      {/* 연락처 수정: 내 전화번호(숫자만)·이메일 */}
+      <MyContactForm />
 
       <section className="blk">
         <BlockTitle color="pink">비밀번호 변경</BlockTitle>

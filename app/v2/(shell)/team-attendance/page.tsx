@@ -153,7 +153,7 @@ export default function V2TeamAttendance() {
               <tbody>
                 {team.data.rows.map((row) => {
                   const isOpen = openUser === row.user.id
-                  const days = [...team.data!.days].reverse()
+                  const days = team.data!.days
                   return [
                     <tr key={row.user.id} className={`clickable ${isOpen ? 'open' : ''}`} onClick={() => setOpenUser(isOpen ? null : row.user.id)}>
                       <td>

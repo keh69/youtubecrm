@@ -2,6 +2,7 @@
 
 import { useChangePassword, useSession } from '@/lib/crm/client/hooks'
 import { Prompt } from '../../term'
+import { MyContactForm } from '@/components/my-contact'
 
 export default function V8Me() {
   const { me } = useSession()
@@ -31,6 +32,9 @@ export default function V8Me() {
           </div>
         </dl>
       </section>
+
+      {/* 연락처 수정: 내 전화번호(숫자만)·이메일 */}
+      <MyContactForm />
 
       <section className="card">
         <h2>비밀번호 변경</h2>

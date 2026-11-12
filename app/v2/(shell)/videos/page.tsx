@@ -5,6 +5,7 @@ import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hoo
 import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
 import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
+import { VideoTable } from '@/components/video-table'
 
 export default function V2Videos() {
   const allowed = useMenuGuard('videos')
@@ -105,79 +106,12 @@ export default function V2Videos() {
         )}
       </Panel>
 
-      <Panel label="최근 등록 영상" right={!reg.recentLoading && <span className="count mono">{reg.recent.length}</span>}>
+      <Panel label="내가 등록한 영상" right={!reg.recentLoading && <span className="count mono">{reg.recent.length}</span>}>
         {listMsg && <Note msg={{ tone: 'ok', text: listMsg }} />}
         {reg.recentLoading ? (
-          <Loading />
-        ) : reg.recent.length === 0 ? (
-          <Empty>아직 등록한 영상이 없습니다.</Empty>
+          <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <div className="tbl-wrap">
-            <table className="tbl vids">
-              <thead>
-                <tr>
-                  <th>영상</th>
-                  <th>형식</th>
-                  <th>종목명</th>
-                  <th className="num">조회수</th>
-                  <th className="num">길이</th>
-                  <th>업로드</th>
-                  <th>등록자</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {reg.recent.map((v) => (
-                  <tr key={v.id}>
-                    <td>
-                      <div className="vcell">
-                        <a href={v.url} target="_blank" rel="noreferrer" className="vthumb">
-                          <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                        </a>
-                        <a href={v.url} target="_blank" rel="noreferrer" className="vtitle">
-                          {v.title}
-                        </a>
-                      </div>
-                    </td>
-                    <td>
-                      <FormatChip video={v} />
-                    </td>
-                    <td>
-                      {editing?.id === v.id ? (
-                        <span className="inline-edit">
-                          <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={60} autoFocus />
-                          <button className="key accent sm" onClick={saveEdit}>
-                            저장
-                          </button>
-                          <button className="key ghost sm" onClick={() => setEditing(null)}>
-                            취소
-                          </button>
-                        </span>
-                      ) : (
-                        <span className="sym">{v.stockName}</span>
-                      )}
-                    </td>
-                    <td className="num">{fmtNumber(v.viewCount)}</td>
-                    <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                    <td className="mono">{fmtDate(v.publishedAt)}</td>
-                    <td className="nowrap">{v.ownerName || me.name}</td>
-                    <td className="right nowrap">
-                      {me.canEditVideos && (
-<button className="key ghost sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                        수정
-                      </button>
-)}{' '}
-                      {me.canDeleteVideos && (
-<button className="key ghost sm danger-text" onClick={() => remove(v.id, v.title)}>
-                        삭제
-                      </button>
-)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vids', vcell: 'vcell', thumb: 'vthumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'sym', btn: 'key ghost sm', btnPrimary: 'key accent sm', btnDanger: 'key ghost sm danger-text', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </Panel>
     </>

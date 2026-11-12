@@ -158,7 +158,7 @@ export default function V4TeamAttendance() {
               <tbody>
                 {team.data.rows.map((row) => {
                   const isOpen = openUser === row.user.id
-                  const days = [...team.data!.days].reverse()
+                  const days = team.data!.days
                   return (
                     <Fragment key={row.user.id}>
                       <tr className={`clickable${isOpen ? ' open' : ''}`} onClick={() => setOpenUser(isOpen ? null : row.user.id)}>

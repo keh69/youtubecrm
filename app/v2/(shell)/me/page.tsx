@@ -2,6 +2,7 @@
 
 import { useChangePassword, useSession } from '@/lib/crm/client/hooks'
 import { PageHead, Panel } from '../../_components/ui'
+import { MyContactForm } from '@/components/my-contact'
 
 export default function V2Me() {
   const { me } = useSession()
@@ -26,6 +27,9 @@ export default function V2Me() {
           </div>
         </dl>
       </Panel>
+
+      {/* 연락처 수정: 내 전화번호(숫자만)·이메일 */}
+      <MyContactForm />
 
       <Panel label="비밀번호 변경">
         <form className="cmd-form" onSubmit={pw.submit}>

@@ -5,6 +5,7 @@ import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hoo
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
+import { VideoTable } from '@/components/video-table'
 
 export default function V3Videos() {
   const allowed = useMenuGuard('videos')
@@ -90,65 +91,12 @@ export default function V3Videos() {
       <hr className="j-double" />
 
       <section className="j-section">
-        <h2 className="j-h2">최근 등록 영상</h2>
+        <h2 className="j-h2">내가 등록한 영상</h2>
         <Note msg={listMsg} />
         {reg.recentLoading ? (
-          <Loading />
-        ) : reg.recent.length === 0 ? (
-          <Empty>아직 등록한 영상이 없습니다.</Empty>
+          <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <ul className="j-stories">
-            {reg.recent.map((v) => (
-              <li key={v.id} className="j-story">
-                <a href={v.url} target="_blank" rel="noreferrer" className="j-thumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="j-dur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="j-story-body">
-                  <a href={v.url} target="_blank" rel="noreferrer" className="j-story-title">
-                    {v.title}
-                  </a>
-                  {editing?.id === v.id ? (
-                    <div className="j-inline-edit">
-                      <input
-                        value={editing.name}
-                        onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') void saveEdit()
-                          if (e.key === 'Escape') setEditing(null)
-                        }}
-                        maxLength={60}
-                        autoFocus
-                        aria-label="종목명"
-                      />
-                      <button type="button" className="j-btn ink small" onClick={saveEdit}>
-                        저장
-                      </button>
-                      <button type="button" className="j-textbtn" onClick={() => setEditing(null)}>
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="j-byline">
-                      업로드 {fmtDate(v.publishedAt)} · <span className="j-tag">{v.stockName}</span> {fmtDuration(v.durationSeconds)} <span className="j-format">{videoFormatLabel(v)}</span> 조회수 {fmtNumber(v.viewCount)} · 등록자 {v.ownerName || me.name}
-                    </p>
-                  )}
-                  <div className="j-story-actions">
-                    {me.canEditVideos && (
-<button type="button" className="j-textbtn" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                      수정
-                    </button>
-)}
-                    {me.canDeleteVideos && (
-<button type="button" className="j-textbtn danger" onClick={() => remove(v.id, v.title)}>
-                      삭제
-                    </button>
-)}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

@@ -5,6 +5,7 @@ import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hoo
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
+import { VideoTable } from '@/components/video-table'
 
 export default function V4Videos() {
   const allowed = useMenuGuard('videos')
@@ -95,63 +96,13 @@ export default function V4Videos() {
 
       <section className="blk">
         <BlockTitle color="pink" right={!reg.recentLoading && reg.recent.length > 0 ? <span className="count-pill">{reg.recent.length}개</span> : undefined}>
-          최근 등록 영상
+          내가 등록한 영상
         </BlockTitle>
         {listMsg && <Msg tone="ok">{listMsg}</Msg>}
         {reg.recentLoading ? (
-          <Loading />
-        ) : reg.recent.length === 0 ? (
-          <Empty>아직 등록한 영상이 없습니다.</Empty>
+          <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <ul className="vcards">
-            {reg.recent.map((v) => (
-              <li key={v.id} className="vcard">
-                <a href={v.url} target="_blank" rel="noreferrer" className="vthumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="vdur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="vbody">
-                  <a href={v.url} target="_blank" rel="noreferrer" className="vtitle">
-                    {v.title}
-                  </a>
-                  {editing?.id === v.id ? (
-                    <div className="inline-edit">
-                      <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={60} autoFocus aria-label="종목명" />
-                      <button className="btn mint sm" onClick={saveEdit}>
-                        저장
-                      </button>
-                      <button className="btn white sm" onClick={() => setEditing(null)}>
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="meta-row">
-                      <span>업로드 {fmtDate(v.publishedAt)}</span>
-                      <span className="chip">{v.stockName}</span>
-                      <span>{fmtDuration(v.durationSeconds)}</span>
-                      <FormatTag video={v} />
-                      <span>조회수 {fmtNumber(v.viewCount)}</span>
-                      <span>
-                        등록자 <span className="owner">{v.ownerName || me.name}</span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="vactions">
-                  {me.canEditVideos && (
-<button className="btn white sm" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                    수정
-                  </button>
-)}
-                  {me.canDeleteVideos && (
-<button className="btn red sm" onClick={() => remove(v.id, v.title)}>
-                    삭제
-                  </button>
-)}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vtbl', vcell: 'xs-vcell', thumb: 'vrow-thumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'chip', btn: 'btn white sm', btnPrimary: 'btn mint sm', btnDanger: 'btn red sm', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

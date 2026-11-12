@@ -86,7 +86,6 @@ function EmployeesTab() {
     <Panel label="내 소속 하부 사원" right={<span className="count mono">{emp.items.length}</span>}>
       <div className="copy-form-bar">
         <p className="hint">{EMPLOYEE_TABS_NOTE}</p>
-        <CopyEmployeeFormButton />
       </div>
       {emp.error && <Note msg={{ tone: 'error', text: emp.error }} />}
       {emp.notice && <Note msg={{ tone: 'ok', text: emp.notice }} />}
@@ -118,8 +117,8 @@ function EmployeesTab() {
                   </td>
                   <td className="nowrap">{u.name}</td>
                   <td className="nowrap">{isoToDotted(u.hireDate) || '-'}</td>
-                  <td>{u.affiliationName || '-'}</td>
-                  <td>{u.roles.join(', ') || '-'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{u.affiliationTitle || u.affiliationName || '-'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{u.roles.join(', ') || '-'}</td>
                   <td className="nowrap mono">{u.phone || '-'}</td>
                   <td>{u.email || '-'}</td>
                   <td className="right nowrap">
@@ -445,6 +444,8 @@ function CreateTab({ s, report, onDone }: { s: S; report: Report; onDone: () => 
   const set = (k: keyof NewAccount, v: string) => setForm((f) => ({ ...f, [k]: v }))
   return (
     <Panel label="아이디 만들기">
+      {/* 직원양식 [편집] [복사]: 새 직원에게 보낼 가입 양식(사원목록에서 옮겨 옴) */}
+      <CopyEmployeeFormButton />
       <p className="hint">여기서 만든 아이디와 비밀번호로 바로 로그인할 수 있습니다. 새 아이디는 기본으로 &lsquo;{s.data!.roles.find((r) => r.signupRole)?.name || '사원'}&rsquo; 역할을 받습니다.</p>
       <form
         className="grid-form"

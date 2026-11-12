@@ -4,6 +4,7 @@ import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
+import { VideoTable } from '@/components/video-table'
 
 export default function V3Stats() {
   const allowed = useMenuGuard('stats')
@@ -162,53 +163,7 @@ export default function V3Stats() {
         ) : st.videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
-          <>
-          <VideoFilterBar ctl={vf} total={st.videos.length} />
-          <div className="j-table-wrap">
-            <table className="j-table j-vtable">
-              <thead>
-                <tr>
-                  <th>올린 날짜</th>
-                  <th>영상</th>
-                  <th className="num">재생시간</th>
-                  <th>형식</th>
-                  <th>담당자</th>
-                  <th>종목</th>
-                  <th className="num">조회수</th>
-                </tr>
-              </thead>
-              <tbody>
-                {videos.map((v) => (
-                  <tr key={v.id}>
-                    <td className="nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
-                    <td>
-                      <div className="j-vcell">
-                        <a href={v.url} target="_blank" rel="noreferrer" className="j-thumb">
-                          <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                        </a>
-                        <a href={v.url} target="_blank" rel="noreferrer" className="j-story-title">
-                          {v.title}
-                        </a>
-                      </div>
-                    </td>
-                    <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
-                    <td className="nowrap">
-                      <span className="j-format">{videoFormatLabel(v)}</span>
-                    </td>
-                    <td className="nowrap">
-                      <span className="j-owner">{v.ownerName || '-'}</span>
-                    </td>
-                    <td>
-                      <span className="j-tag">{v.stockName}</span>
-                    </td>
-                    <td className="num">{fmtNumber(v.viewCount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {videos.length === 0 && <p className="xs-empty">필터에 맞는 영상이 없습니다.</p>}
-          </>
+          <VideoTable videos={st.videos} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="이 기간에 올린 영상이 없습니다." />
         )}
       </section>
     </>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { isMobileDevice } from '@/lib/crm/client/device'
 import { useNow, useWorkTimes } from '@/lib/crm/client/hooks'
 import { fmtHourMin, fmtYmdShort, liveWorkedMinutes, statusLabel } from '@/lib/crm/client/format'
 import type { DayRecord } from '@/lib/crm/client/types'
@@ -9,7 +10,11 @@ import type { DayRecord } from '@/lib/crm/client/types'
 export function AttendanceSummary({ record }: { record: DayRecord | null }) {
   const now = useNow(1000)
   const worked = liveWorkedMinutes(record, now)
+  const [mobile, setMobile] = useState(false) // 폰·태블릿이면 출근·퇴근을 못 누른다는 안내
+  useEffect(() => setMobile(isMobileDevice()), [])
   return (
+    <>
+    {mobile && <p className="xs-err" role="status">출근·퇴근은 컴퓨터에서만 누를 수 있습니다. 폰·태블릿에서는 기록만 볼 수 있어요.</p>}
     <dl className="xs-att-summary">
       <div>
         <dt>현재상태</dt>
@@ -20,6 +25,7 @@ export function AttendanceSummary({ record }: { record: DayRecord | null }) {
         <dd>{fmtHourMin(worked)}</dd>
       </div>
     </dl>
+    </>
   )
 }
 

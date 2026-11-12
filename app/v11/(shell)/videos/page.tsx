@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { VideoTypePicker } from '@/components/video-type-picker'
+import { VideoTable } from '@/components/video-table'
 
 export default function V11Videos() {
   const allowed = useMenuGuard('videos')
@@ -107,56 +108,12 @@ export default function V11Videos() {
       </section>
 
       <section className="card">
-        <h2>최근 등록 영상</h2>
+        <h2>내가 등록한 영상</h2>
         {listMsg && <p className="msg ok">{listMsg}</p>}
         {reg.recentLoading ? (
-          <p className="muted">불러오는 중…</p>
-        ) : reg.recent.length === 0 ? (
-          <p className="empty">아직 등록한 영상이 없습니다.</p>
+          <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <ul className="video-list">
-            {reg.recent.map((v) => (
-              <li key={v.id}>
-                <a href={v.url} target="_blank" rel="noreferrer" className="thumb">
-                  <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                  <span className="dur">{fmtDuration(v.durationSeconds)}</span>
-                </a>
-                <div className="video-body">
-                  <a href={v.url} target="_blank" rel="noreferrer" className="video-title">
-                    {v.title}
-                  </a>
-                  {editing?.id === v.id ? (
-                    <div className="inline-edit">
-                      <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={60} autoFocus />
-                      <button className="btn primary small" onClick={saveEdit}>
-                        저장
-                      </button>
-                      <button className="btn ghost small" onClick={() => setEditing(null)}>
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="muted small">
-                      업로드 {fmtDate(v.publishedAt)} · <span className="chip">{v.stockName}</span> {fmtDuration(v.durationSeconds)} <span className="chip format">{videoFormatLabel(v)}</span> 조회수 {fmtNumber(v.viewCount)} · 등록자 {v.ownerName || me.name}
-                    </p>
-                  )}
-                  <code className="flag-id">#yt-{v.youtubeVideoId}</code>
-                </div>
-                <div className="video-actions">
-                  {me.canEditVideos && (
-<button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                    수정
-                  </button>
-)}
-                  {me.canDeleteVideos && (
-<button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
-                    삭제
-                  </button>
-)}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'table-wrap', table: 'table vtable', vcell: 'vcell', thumb: 'thumb', vtitle: 'video-title', format: 'xs-chip', chip: 'chip', btn: 'btn ghost small', btnPrimary: 'btn primary small', btnDanger: 'btn ghost small danger-text', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

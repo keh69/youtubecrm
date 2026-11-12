@@ -5,6 +5,7 @@ import { useMenuGuard, useSession, useVideoRegister } from '@/lib/crm/client/hoo
 import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridFoot, Ico, RowNoTh, Th } from '../../_ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
+import { VideoTable } from '@/components/video-table'
 
 export default function V9Videos() {
   const allowed = useMenuGuard('videos')
@@ -84,84 +85,12 @@ export default function V9Videos() {
       </section>
 
       <section className="card">
-        <h2>최근 등록 영상</h2>
+        <h2>내가 등록한 영상</h2>
         {listMsg && <p className="msg ok">{listMsg}</p>}
         {reg.recentLoading ? (
-          <p className="muted">불러오는 중…</p>
-        ) : reg.recent.length === 0 ? (
-          <p className="empty">아직 등록한 영상이 없습니다.</p>
+          <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <>
-            <div className="table-wrap">
-              <table className="table vtable">
-                <thead>
-                  <tr>
-                    <RowNoTh />
-                    <Th name="영상" type="text" />
-                    <Th name="종목" type="text" />
-                    <Th name="형식" type="enum" />
-                    <Th name="조회수" type="int" className="num" />
-                    <Th name="재생시간" type="interval" className="num" />
-                    <Th name="올린 날짜" type="date" />
-                    <Th name="등록자" type="text" />
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {reg.recent.map((v, i) => (
-                    <tr key={v.id}>
-                      <td className="rn">{i + 1}</td>
-                      <td>
-                        <div className="vcell">
-                          <a href={v.url} target="_blank" rel="noreferrer" className="thumb">
-                            <img src={v.thumbnailUrl} alt="" loading="lazy" />
-                          </a>
-                          <a href={v.url} target="_blank" rel="noreferrer" className="video-title">
-                            {v.title}
-                          </a>
-                        </div>
-                      </td>
-                      <td className="nowrap">
-                        {editing?.id === v.id ? (
-                          <span className="inline-edit">
-                            <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={60} autoFocus />
-                            <button className="btn primary small" onClick={saveEdit}>
-                              <Ico>✓</Ico> 저장
-                            </button>
-                            <button className="btn ghost small" onClick={() => setEditing(null)}>
-                              취소
-                            </button>
-                          </span>
-                        ) : (
-                          <span className="chip">{v.stockName}</span>
-                        )}
-                      </td>
-                      <td className="nowrap">
-                        <span className="chip format">{videoFormatLabel(v)}</span>
-                      </td>
-                      <td className="num">{fmtNumber(v.viewCount)}</td>
-                      <td className="num">{fmtDuration(v.durationSeconds)}</td>
-                      <td className="mono nowrap">{fmtDate(v.publishedAt)}</td>
-                      <td className="nowrap owner-cell">{v.ownerName || me.name}</td>
-                      <td className="right nowrap">
-                        {me.canEditVideos && (
-<button className="btn ghost small" onClick={() => setEditing({ id: v.id, name: v.stockName })}>
-                          <Ico>✎</Ico> 수정
-                        </button>
-)}
-                        {me.canDeleteVideos && (
-<button className="btn ghost small danger-text" onClick={() => remove(v.id, v.title)}>
-                          <Ico>✕</Ico> 삭제
-                        </button>
-)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <GridFoot count={reg.recent.length} />
-          </>
+          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'table-wrap', table: 'table vtable', vcell: 'vcell', thumb: 'thumb', vtitle: 'video-title', format: 'xs-chip', chip: 'chip', btn: 'btn ghost small', btnPrimary: 'btn primary small', btnDanger: 'btn ghost small danger-text', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>
