@@ -115,7 +115,7 @@ export default function V5Stats() {
         <section className="g-glass">
           <h2 className="g-h2">담당자별</h2>
           <div className="g-table-wrap">
-            <table className="g-table">
+            <table className="g-table g-compact">
               <thead>
                 <tr>
                   <th>담당자</th>
