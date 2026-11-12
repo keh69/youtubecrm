@@ -5,7 +5,7 @@ import { useReservations, useSession } from '@/lib/crm/client/hooks'
 import { Loading, Note, type Msg } from '../../_components/ui'
 
 // 영상등록 > 예약등록 (v5)
-// 유튜브 예약 업로드 링크를 미리 넣어 두면, 영상이 공개된 뒤 자동으로 '내가 등록한 영상'에 들어간다.
+// 유튜브 예약 업로드 링크를 미리 넣어 두면, 영상이 공개된 뒤 자동으로 '영상리스트'에 들어간다.
 
 // KST 날짜·시각 보기: 11.13 (금) 18:00
 function fmtKst(iso: string | null) {
@@ -65,7 +65,7 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
       <h2 className="g-h2">
         예약등록 (공개 대기 {waiting.length}){showOwner && <small className="g-muted"> · 전체 직원</small>}
       </h2>
-      <p className="g-muted g-small">유튜브에서 예약 업로드한 뒤 나오는 링크를 넣어 두세요. 영상이 공개되면 자동으로 아래 &apos;내가 등록한 영상&apos;에 들어갑니다(영상등록·영상통계 화면을 열 때 확인합니다).</p>
+      <p className="g-muted g-small">유튜브에서 예약 업로드한 뒤 나오는 링크를 넣어 두세요. 영상이 공개되면 자동으로 아래 &apos;영상리스트&apos;에 들어갑니다(영상등록·영상통계 화면을 열 때 확인합니다).</p>
       <form className="g-row-form" onSubmit={submit}>
         <div className="g-field">
           <span>등록자</span>

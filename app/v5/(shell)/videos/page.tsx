@@ -89,12 +89,12 @@ export default function V5Videos() {
         )}
       </section>
 
-      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '내가 등록한 영상'에 들어간다 */}
+      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '영상리스트'에 들어간다 */}
       <ReservationSection onMoved={reg.reloadRecent} />
 
-      {/* 내가 등록한 영상 표(영상통계와 같은 표). 영상등록 '수정권한'이면 줄마다 수정·삭제 */}
+      {/* 영상리스트 표(영상통계와 같은 표). 영상등록 '수정권한'이면 줄마다 수정·삭제 */}
       <section className="g-glass">
-        <h2 className="g-h2">내가 등록한 영상 ({reg.recent.length})</h2>
+        <h2 className="g-h2">영상리스트 ({reg.recent.length})</h2>
         {reg.recentLoading ? (
           <Loading />
         ) : (
