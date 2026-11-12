@@ -89,7 +89,7 @@ export default function V5Videos() {
                 {formatTag(added.video)}
                 <span className="g-chip accent">{added.video.stockName}</span>
                 <span className="g-chip">조회수 {fmtNumber(added.video.viewCount)}</span>
-                <span className="g-chip">{fmtDuration(added.video.durationSeconds)}</span>
+                <span className="g-chip">재생시간 {fmtDuration(added.video.durationSeconds)}</span>
                 <span className="g-chip">업로드 {fmtDate(added.video.publishedAt)}</span>
                 <span className="g-chip">등록자 {added.video.ownerName || me.name}</span>
               </div>
@@ -146,7 +146,7 @@ export default function V5Videos() {
                       {/* 순서: 업로드일자 · 종목명 · 영상길이 · 롱/숏폼 · 조회수 · 등록자 */}
                       <span className="g-chip">업로드 {fmtDate(v.publishedAt)}</span>
                       <span className="g-chip accent">{v.stockName}</span>
-                      <span className="g-chip">{fmtDuration(v.durationSeconds)}</span>
+                      <span className="g-chip">재생시간 {fmtDuration(v.durationSeconds)}</span>
                       {formatTag(v)}
                       <span className="g-chip">조회수 {fmtNumber(v.viewCount)}</span>
                       <span className="g-chip">등록자 {v.ownerName || me.name}</span>
