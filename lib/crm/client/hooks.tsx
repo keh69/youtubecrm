@@ -228,7 +228,11 @@ export function useMyAttendance() {
 
   const press = async (kind: 'in' | 'out'): Promise<ActionResult> => {
     if (busy) return { ok: false }
-    if (isMobileDevice()) return { ok: false, error: MOBILE_ATTENDANCE_MSG } // 폰·태블릿: 서버에 보내지 않고 안내만
+    if (isMobileDevice()) {
+      // 폰·태블릿: 서버에 보내지 않고 안내 창만(모든 스킨)
+      window.alert(MOBILE_ATTENDANCE_MSG)
+      return { ok: false, error: MOBILE_ATTENDANCE_MSG }
+    }
     setBusy(kind)
     const res = await api(`/api/attendance/${kind === 'in' ? 'checkin' : 'checkout'}`, { method: 'POST', body: { device: isMobileDevice() ? 'mobile' : 'desktop' } })
     await reload()

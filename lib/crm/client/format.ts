@@ -146,3 +146,10 @@ export function shiftMonth(month: string, delta: number) {
   const date = new Date(Date.UTC(y, m - 1 + delta, 1, 12))
   return date.toISOString().slice(0, 7)
 }
+
+// 직원근태 '오늘' 이름 옆 동그라미: 오늘 현재 상태 → 글자·색 (출: 주황, 퇴: 짙은 회색, 미: 밝은 회색)
+export function nowState(r: { checkInAt: string | null; checkOutAt: string | null; autoCheckout?: boolean } | null | undefined) {
+  if (r?.checkInAt && r.checkOutAt && !r.autoCheckout) return { text: '퇴', bg: '#4b5058', title: '퇴근' }
+  if (r?.checkInAt) return { text: '출', bg: '#f97316', title: '출근(근무중)' }
+  return { text: '미', bg: '#c3c7cd', title: '미등록' }
+}

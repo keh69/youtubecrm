@@ -58,10 +58,10 @@ export default function V8Attendance() {
           <p className="msg error">오늘은 결근으로 처리되어 있습니다. 사유: {t.absenceReason || '-'}</p>
         )}
         <div className="att-buttons">
-          <button className="btn primary big" disabled={att.loading || !att.canCheckIn || att.busy !== null} onClick={() => press('in')}>
+          <button className={`btn primary big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckIn || att.busy !== null)} onClick={() => press('in')}>
             {att.busy === 'in' ? '기록 중…' : '출근'}
           </button>
-          <button className="btn dark big" disabled={att.loading || !att.canCheckOut || att.busy !== null} onClick={() => press('out')}>
+          <button className={`btn dark big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckOut || att.busy !== null)} onClick={() => press('out')}>
             {att.busy === 'out' ? '기록 중…' : '퇴근'}
           </button>
         </div>

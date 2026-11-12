@@ -2,16 +2,9 @@
 
 import { useState } from 'react'
 import { TEAM_PERIODS, useMenuGuard, useTeamAttendance, useWorkTimes } from '@/lib/crm/client/hooks'
-import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, todayKst } from '@/lib/crm/client/format'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, nowState, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
 import { TeamCalendar } from '@/components/team-calendar'
-
-// 오늘 현재 상태 → 동그라미 글자·색
-function nowState(r: { checkInAt: string | null; checkOutAt: string | null; autoCheckout?: boolean } | null | undefined) {
-  if (r?.checkInAt && r.checkOutAt && !r.autoCheckout) return { text: '퇴', bg: '#4b5058', title: '퇴근' }
-  if (r?.checkInAt) return { text: '출', bg: '#f97316', title: '출근(근무중)' }
-  return { text: '미', bg: '#c3c7cd', title: '미등록' }
-}
 
 export default function V5TeamAttendance() {
   const allowed = useMenuGuard('attendance_team')

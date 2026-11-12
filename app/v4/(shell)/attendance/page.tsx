@@ -22,6 +22,8 @@ export default function V4Attendance() {
   const t = att.today
   const clock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)
   const blocked = att.loading || att.busy !== null
+  // 폰·태블릿: 버튼은 꺼진 모양이지만 누를 수 있게 두고, 누르면 훅이 'PC에서만' 안내 창을 띄운다
+  const offCls = att.mobileBlocked ? ' att-mobile-off' : ''
 
   return (
     <>
@@ -62,11 +64,11 @@ export default function V4Attendance() {
       {t?.status === 'absent' && <Msg tone="error">오늘은 결근으로 처리되어 있습니다. 사유: {t.absenceReason || '-'}</Msg>}
 
       <section className="att-btns">
-        <button className="giant mint" disabled={blocked || !att.canCheckIn} onClick={() => press('in')}>
+        <button className={`giant mint${offCls}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (blocked || !att.canCheckIn)} onClick={() => press('in')}>
           <span className="giant-main">{att.busy === 'in' ? '기록 중…' : '출근'}</span>
           <span className="giant-sub">{t?.checkInAt ? `${fmtTimeSec(t.checkInAt)} 기록됨` : 'IN · 지금 누르기'}</span>
         </button>
-        <button className="giant pink" disabled={blocked || !att.canCheckOut} onClick={() => press('out')}>
+        <button className={`giant pink${offCls}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (blocked || !att.canCheckOut)} onClick={() => press('out')}>
           <span className="giant-main">{att.busy === 'out' ? '기록 중…' : '퇴근'}</span>
           <span className="giant-sub">{t?.checkOutAt ? `${fmtTimeSec(t.checkOutAt)} 기록됨` : 'OUT · 지금 누르기'}</span>
         </button>

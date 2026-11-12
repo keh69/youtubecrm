@@ -17,7 +17,7 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
 // v5전용: 0 때 해제 — 아직 v5 에만 페이지가 있는 메뉴. 다른 스킨의 메뉴 줄에는 안 나온다.
 // (누구에게 보일지 정하는 역할설정 표에는 모든 스킨에서 나온다. 새 기능 메뉴는 항상 MENUS 에 넣어 역할설정에서 켜고 끈다.)
 // 사용자가 '0' 을 치면 다른 스킨에 페이지를 만들고 이 목록에서 뺀다.
-export const V5_ONLY_MENUS: MenuKey[] = ['payroll']
+export const V5_ONLY_MENUS: MenuKey[] = [] // 2026-11-12 '0': 급여계산도 모든 스킨에 페이지가 생겼다
 
 // 관리자급 역할: 이 역할을 가진 사람은 남이 등록한 영상도 고칠 수 있다. 삭제가 막힌 것은 총 관리자뿐(isSystemRole).
 export const ADMIN_ROLE_CODES = ['super_admin', 'admin'] as const

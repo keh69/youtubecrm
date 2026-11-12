@@ -6,6 +6,7 @@ import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/cli
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
 import { VideoTable } from '@/components/video-table'
+import { ReservationSection } from '@/components/reservation-section'
 
 export default function V4Videos() {
   const allowed = useMenuGuard('videos')
@@ -13,6 +14,7 @@ export default function V4Videos() {
   const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null) // 예약 표 [완료] → 영상리스트에서 이 영상으로
   if (!allowed) return null
 
   const remove = async (id: string, title: string) => {
@@ -94,15 +96,16 @@ export default function V4Videos() {
         </section>
       )}
 
+      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '영상리스트'에 들어간다 */}
+      <ReservationSection onMoved={reg.reloadRecent} listed={reg.recent} onShow={(id) => setFocus({ id, n: Date.now() })} />
+
       <section className="blk">
-        <BlockTitle color="pink" right={!reg.recentLoading && reg.recent.length > 0 ? <span className="count-pill">{reg.recent.length}개</span> : undefined}>
-          내가 등록한 영상
-        </BlockTitle>
+        <BlockTitle color="pink">영상리스트 ({reg.recent.length})</BlockTitle>
         {listMsg && <Msg tone="ok">{listMsg}</Msg>}
         {reg.recentLoading ? (
           <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vtbl', vcell: 'xs-vcell', thumb: 'vrow-thumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'chip', btn: 'btn white sm', btnPrimary: 'btn mint sm', btnDanger: 'btn red sm', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
+          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vtbl', vcell: 'xs-vcell', thumb: 'vrow-thumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'chip', btn: 'btn white sm', btnPrimary: 'btn mint sm', btnDanger: 'btn red sm', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

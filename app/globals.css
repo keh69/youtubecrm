@@ -1439,3 +1439,311 @@ tr.vt-hl > td {
   animation: vt-hl-pulse 3s ease-out;
   box-shadow: inset 0 1px 0 #2563eb, inset 0 -1px 0 #2563eb;
 }
+
+/* ═════════ 2026-11-12 '0': v5 에만 있던 기능을 모든 스킨에 — 공용 배치(스킨 색·글꼴은 각 스킨 CSS 를 따른다) ═════════ */
+
+/* 영상 표(제목 없는 표 .no-title): 썸네일 칸은 썸네일 크기만, 나머지 칸은 가운데 */
+table.no-title th,
+table.no-title td {
+  text-align: center;
+  vertical-align: middle;
+}
+table.no-title td.right {
+  text-align: right;
+}
+table.no-title .thumb-col {
+  width: 1%;
+}
+table.no-title .thumb-col > div {
+  display: flex;
+  justify-content: center;
+}
+table.no-title .thumb-col a {
+  display: block;
+  position: relative;
+  width: 106px;
+  flex: none;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+table.no-title .thumb-col img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 영상 표·예약 표 아래 페이지 번호 */
+.vt-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.vt-pager > button {
+  min-width: 34px;
+}
+
+/* 예약등록(공용 부품) */
+.xs-resv-form {
+  align-items: flex-end;
+  gap: 10px;
+}
+.xs-grow {
+  flex: 1 1 220px;
+}
+.xs-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px dashed color-mix(in srgb, currentColor 30%, transparent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.xs-resv-btn {
+  margin-left: auto;
+}
+.xs-reflect {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: #8a8f98;
+  border: 0;
+  white-space: nowrap;
+}
+.xs-reflect.done {
+  background: #2563eb;
+  cursor: pointer;
+}
+.xs-reflect.done:hover {
+  background: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 급여계산 위쪽 작은 탭 */
+.xs-tabs {
+  margin: 4px 0 12px;
+}
+
+/* 영상통계 요약 한 줄(.xs-ds-kpi) — 급여계산 식대 합계 줄도 같이 쓴다 */
+.xs-ds-kpi {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 4px 0;
+}
+.xs-ds-kpi > div {
+  flex: 1 1 130px;
+  padding: 2px 14px;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.xs-ds-kpi > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+.xs-ds-kpi dt {
+  font-size: 12px;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+.xs-ds-kpi dd {
+  margin: 2px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.xs-ds-kpi dd.small {
+  font-size: 14px;
+  font-weight: 600;
+  padding-top: 3px;
+}
+
+/* 영상통계 일자별 표(.xs-ds-daily) */
+table.xs-ds-daily {
+  width: 100%;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+table.xs-ds-daily th,
+table.xs-ds-daily td {
+  padding: 5px 2px;
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+table.xs-ds-daily thead th small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.6;
+}
+table.xs-ds-daily thead th.we {
+  color: #e8795f;
+}
+table.xs-ds-daily th[scope='row'],
+table.xs-ds-daily thead th:first-child {
+  width: 66px;
+  text-align: left;
+  padding-left: 8px;
+}
+table.xs-ds-daily .sum {
+  width: 58px;
+  font-weight: 700;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+table.xs-ds-daily td.heat {
+  padding: 3px 2px;
+}
+table.xs-ds-daily td.heat .ds-cell {
+  display: block;
+  margin: 0 1px;
+  padding: 2px 0;
+  border-radius: 5px;
+  background: rgb(139 92 246 / var(--a, 0.3));
+  font-weight: 700;
+}
+table.xs-ds-daily td.heat.hi .ds-cell {
+  color: #fff;
+}
+table.xs-ds-daily td.zero {
+  opacity: 0.35;
+}
+
+/* 영상통계 담당자별 표(.xs-ds-person) */
+table.xs-ds-person {
+  width: 100%;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+table.xs-ds-person th,
+table.xs-ds-person td {
+  padding: 6px 8px;
+}
+table.xs-ds-person thead th {
+  font-size: 12px;
+  white-space: nowrap;
+}
+table.xs-ds-person thead th.num .vt-sort {
+  justify-content: flex-end;
+}
+table.xs-ds-person tbody tr.none {
+  opacity: 0.5;
+}
+table.xs-ds-person .ds-sub {
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+table.xs-ds-person .ds-share {
+  white-space: nowrap;
+}
+table.xs-ds-person .ds-bar {
+  display: inline-block;
+  vertical-align: middle;
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  overflow: hidden;
+}
+table.xs-ds-person .ds-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #8b5cf6;
+}
+table.xs-ds-person .ds-pct {
+  display: inline-block;
+  min-width: 32px;
+  margin-left: 6px;
+  text-align: right;
+  font-size: 12px;
+}
+table.xs-ds-person .ds-link {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+:root[data-theme='dark'] table.xs-ds-person .ds-link {
+  color: #8ab4ff;
+}
+table.xs-ds-person .ds-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+table.xs-ds-person tfoot th,
+table.xs-ds-person tfoot td {
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font-weight: 700;
+  font-size: 12.5px;
+  text-align: left;
+}
+table.xs-ds-person tfoot td.num {
+  text-align: right;
+}
+
+/* 직원근태 '오늘': 이름 옆 상태 동그라미(출·퇴·미) — 배경색은 nowState().bg 를 style 로 */
+.xs-now-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+/* 직원근태 '오늘': 출근·퇴근 시각 칸 */
+.xs-today-times {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-variant-numeric: tabular-nums;
+}
+.xs-today-times b {
+  font-weight: 800;
+}
+
+/* 폰·태블릿 출근·퇴근 버튼: 꺼진 모양(누르면 'PC에서만 근태체크가 가능합니다' 안내 창) */
+.att-mobile-off,
+.att-mobile-off:hover,
+.att-mobile-off:active {
+  filter: grayscale(0.85);
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 필터 줄 오른쪽 끝 [필터 초기화] */
+.vf-bar .vf-reset {
+  margin-left: auto;
+  align-self: flex-end;
+  flex: none;
+  white-space: nowrap;
+}
+/* 사원목록 찾기 칸 */
+.vf-bar .vf-q {
+  width: 170px;
+}

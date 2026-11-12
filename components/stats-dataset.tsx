@@ -1,12 +1,144 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { fmtDuration, fmtNumber, fmtTotalDuration } from '@/lib/crm/client/format'
+import { fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm/client/format'
 import type { Video } from '@/lib/crm/client/types'
+import type { useStats } from '@/lib/crm/client/hooks'
+import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 
-// 영상통계 > 담당자별 (v5): 사람마다 영상 수·조회수·재생시간과 평균·최고·비중을 한눈에 보는 수치표.
+// 영상통계 수치표 묶음(모든 스킨 공통 부품): 요약 한 줄 · 일자별 표 · 담당자별 표.
+// v5 는 예전 class(g-ds-*) 그대로, 다른 스킨은 그 스킨의 카드·표 모양(useSkinUi) + xs-ds-* 배치로 그린다.
+type St = ReturnType<typeof useStats>
+
+/* ───────── 요약 한 줄 ───────── */
+export function StatsKpiSection({ st }: { st: St }) {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
+  const s = st.data?.summary
+  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
+  const list = st.data?.videos || []
+  return (
+    <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
+      <dl className={v5 ? undefined : 'xs-ds-kpi'}>
+        <div>
+          <dt>기간</dt>
+          <dd className="small">{rangeText}</dd>
+        </div>
+        <div>
+          <dt>올린 영상</dt>
+          <dd>{fmtNumber(s?.videoCount)}개</dd>
+        </div>
+        <div>
+          <dt>총 조회수</dt>
+          <dd>{fmtNumber(s?.totalViews)}</dd>
+        </div>
+        <div>
+          <dt>영상당 평균 조회수</dt>
+          <dd>{s && s.videoCount > 0 ? fmtNumber(Math.round(s.totalViews / s.videoCount)) : '-'}</dd>
+        </div>
+        <div>
+          <dt>총 재생시간(영상 길이 합)</dt>
+          <dd>{fmtTotalDuration(s?.totalDurationSeconds || 0)}</dd>
+        </div>
+        <div>
+          <dt>영상당 평균 길이</dt>
+          <dd>{s && s.videoCount > 0 ? fmtDuration(Math.round(s.totalDurationSeconds / s.videoCount)) : '-'}</dd>
+        </div>
+        <div>
+          <dt>롱폼 / 숏폼</dt>
+          <dd>
+            {fmtNumber(list.filter((v) => v.contentType === 'longform').length)} / {fmtNumber(list.filter((v) => v.contentType !== 'longform').length)}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  )
+}
+
+/* ───────── 일자별 표: 날짜를 가로로, 올린 개수·조회수를 줄로. 개수 칸은 많을수록 진한 보라(한 색 농도) ───────── */
+const weekdayOf = (ymd: string) => ['일', '월', '화', '수', '목', '금', '토'][new Date(`${ymd}T12:00:00Z`).getUTCDay()]
+const isWeekend = (ymd: string) => {
+  const w = new Date(`${ymd}T12:00:00Z`).getUTCDay()
+  return w === 0 || w === 6
+}
+// 1만 이상은 1.2만처럼 줄여 좁은 칸에 들어가게
+const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만` : n.toLocaleString('ko-KR'))
+
+export function StatsDailySection({ st }: { st: St }) {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
+  const daily = st.data?.daily || []
+  if (daily.length === 0) return null
+  const maxCount = Math.max(1, ...daily.map((d) => d.count))
+  return (
+    <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
+      <h2 className={v5 ? 'g-h2' : cx(ui.h2, 'xs-h')}>일자별</h2>
+      <div className={ui.tableWrap}>
+        <table className={v5 ? 'g-table g-ds-daily' : cx(ui.table, 'xs-ds-daily')}>
+          <thead>
+            <tr>
+              <th scope="col">날짜</th>
+              {daily.map((d) => (
+                <th key={d.date} scope="col" className={isWeekend(d.date) ? 'we' : undefined} title={fmtYmdShort(d.date)}>
+                  {Number(d.date.slice(8))}
+                  <small>{weekdayOf(d.date)}</small>
+                </th>
+              ))}
+              <th scope="col" className="sum">
+                합계
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">올린 개수</th>
+              {daily.map((d) => (
+                <td
+                  key={d.date}
+                  className={d.count > 0 ? (d.count / maxCount > 0.55 ? 'heat hi' : 'heat') : 'zero'}
+                  style={d.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (d.count / maxCount)).toFixed(2) } : undefined}
+                  title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}
+                >
+                  {d.count > 0 ? <span className="ds-cell">{d.count}</span> : '·'}
+                </td>
+              ))}
+              <td className="sum">{fmtNumber(daily.reduce((n, d) => n + d.count, 0))}</td>
+            </tr>
+            <tr>
+              <th scope="row">조회수</th>
+              {daily.map((d) => (
+                <td key={d.date} className={d.views > 0 ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · 조회수 ${fmtNumber(d.views)}`}>
+                  {d.views > 0 ? shortNum(d.views) : '·'}
+                </td>
+              ))}
+              <td className="sum">{shortNum(daily.reduce((n, d) => n + d.views, 0))}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className={ui.muted}>올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.</p>
+    </section>
+  )
+}
+
+/* ───────── 담당자별 ───────── */
+export function StatsPersonSection({ st, meId }: { st: St; meId: string }) {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
+  if (!st.data || st.data.perPerson.length === 0) return null
+  return (
+    <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
+      <div className={v5 ? 'g-card-head' : 'xs-head'}>
+        <h2 className={v5 ? 'g-h2' : cx(ui.h2, 'xs-h')}>담당자별</h2>
+        <span className={ui.muted}>머리칸을 누르면 정렬 · [보기]를 누르면 그 사람 영상만</span>
+      </div>
+      <PersonStatsTable people={st.data.perPerson} videos={st.data.videos} onPick={(id) => st.setWho(id === meId ? 'me' : id)} />
+    </section>
+  )
+}
+
+// 담당자별 표: 사람마다 영상 수·조회수·재생시간과 평균·최고·비중을 한눈에 보는 수치표.
 // 머리칸을 누르면 오름차순 → 내림차순 → 기본(조회수 많은 순) 으로 정렬된다. 맨 아래 줄은 합계·전체 평균.
-
 type Person = { userId: string; name: string }
 type Row = {
   userId: string
@@ -76,7 +208,9 @@ const COLS: Array<{ key: Key; label: string; num?: boolean; title?: string }> = 
   { key: 'last', label: '최근 업로드', title: '이 기간에 가장 최근 올린 날' }
 ]
 
-export function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos: Video[]; onPick: (userId: string) => void }) {
+function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos: Video[]; onPick: (userId: string) => void }) {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
   const [sort, setSort] = useState<Sort>(null)
   const rows = useMemo(() => build(people, videos), [people, videos])
   const sorted = useMemo(() => {
@@ -111,8 +245,8 @@ export function PersonStatsTable({ people, videos, onPick }: { people: Person[];
   }, [rows, videos])
 
   return (
-    <div className="g-table-wrap">
-      <table className="g-table g-ds-person">
+    <div className={ui.tableWrap}>
+      <table className={v5 ? 'g-table g-ds-person' : cx(ui.table, 'xs-ds-person')}>
         <thead>
           <tr>
             {COLS.map((c) => (
@@ -132,7 +266,7 @@ export function PersonStatsTable({ people, videos, onPick }: { people: Person[];
           {sorted.map((r) => (
             <tr key={r.userId} className={r.count === 0 ? 'none' : undefined}>
               <td className="nowrap">
-                <span className="g-who">{r.name}</span>
+                <span className={v5 ? 'g-who' : undefined}>{r.name}</span>
               </td>
               <td className="num nowrap">
                 <b>{fmtNumber(r.count)}</b>
@@ -167,7 +301,9 @@ export function PersonStatsTable({ people, videos, onPick }: { people: Person[];
         </tbody>
         <tfoot>
           <tr>
-            <th scope="row">합계 · {total.active}/{rows.length}명</th>
+            <th scope="row">
+              합계 · {total.active}/{rows.length}명
+            </th>
             <td className="num nowrap">
               <b>{fmtNumber(total.count)}</b>
               <small className="ds-sub">

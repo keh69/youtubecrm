@@ -87,7 +87,7 @@ export default function V11Attendance() {
               <code className="flag-id">#attendance-check-in</code>
             </div>
             <div className="flag-ctl">
-              <button className="btn primary big" disabled={att.loading || !att.canCheckIn || att.busy !== null} onClick={() => press('in')}>
+              <button className={`btn primary big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckIn || att.busy !== null)} onClick={() => press('in')}>
                 {att.busy === 'in' ? '기록 중…' : '출근'}
               </button>
             </div>
@@ -99,7 +99,7 @@ export default function V11Attendance() {
               <code className="flag-id">#attendance-check-out</code>
             </div>
             <div className="flag-ctl">
-              <button className="btn dark big" disabled={att.loading || !att.canCheckOut || att.busy !== null} onClick={() => press('out')}>
+              <button className={`btn dark big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckOut || att.busy !== null)} onClick={() => press('out')}>
                 {att.busy === 'out' ? '기록 중…' : '퇴근'}
               </button>
             </div>

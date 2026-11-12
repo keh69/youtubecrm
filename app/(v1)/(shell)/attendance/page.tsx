@@ -55,10 +55,11 @@ export default function V1Attendance() {
           <p className="msg error">오늘은 결근으로 처리되어 있습니다. 사유: {t.absenceReason || '-'}</p>
         )}
         <div className="att-buttons">
-          <button className="btn primary big" disabled={att.loading || !att.canCheckIn || att.busy !== null} onClick={() => press('in')}>
+          {/* 폰·태블릿: 꺼진 모양이지만 누르면 'PC에서만 근태체크가 가능합니다' 안내 창 */}
+          <button className={`btn primary big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckIn || att.busy !== null)} onClick={() => press('in')}>
             {att.busy === 'in' ? '기록 중…' : '출근'}
           </button>
-          <button className="btn dark big" disabled={att.loading || !att.canCheckOut || att.busy !== null} onClick={() => press('out')}>
+          <button className={`btn dark big${att.mobileBlocked ? ' att-mobile-off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckOut || att.busy !== null)} onClick={() => press('out')}>
             {att.busy === 'out' ? '기록 중…' : '퇴근'}
           </button>
         </div>

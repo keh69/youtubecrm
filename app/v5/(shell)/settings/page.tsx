@@ -1,6 +1,7 @@
 'use client'
 
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { MultiPick } from '@/components/video-filters'
 import { MENUS, type MenuKey } from '@/lib/crm/menus'
 import { SkinPicker } from '@/components/skin-picker'
 import { CopyEmployeeFormButton } from '@/components/copy-employee-form'
@@ -95,9 +96,57 @@ export default function V5Settings() {
 }
 
 /* ── 01 사원목록: 내 소속 하부 사원 + 그 아이디로 바로 로그인 ── */
+// 사원목록 필터·정렬
+type EmpRow = ReturnType<typeof useEmployees>['items'][number]
+type EmpKey = 'loginId' | 'name' | 'hireDate' | 'aff' | 'roles' | 'phone' | 'email'
+type EmpSort = { key: EmpKey; dir: 'asc' | 'desc' } | null
+type EmpFilter = { q: string; from: string; to: string; affs: string[]; roles: string[]; states: string[] }
+const EMP_FILTER_EMPTY: EmpFilter = { q: '', from: '', to: '', affs: [], roles: [], states: [] }
+const EMP_COLS: Array<{ key: EmpKey; label: string }> = [
+  { key: 'loginId', label: '아이디' },
+  { key: 'name', label: '이름' },
+  { key: 'hireDate', label: '입사일자' },
+  { key: 'aff', label: '소속' },
+  { key: 'roles', label: '역할' },
+  { key: 'phone', label: '전화번호' },
+  { key: 'email', label: '이메일' }
+]
+const empAff = (u: EmpRow) => u.affiliationTitle || u.affiliationName || ''
+const empValue = (u: EmpRow, k: EmpKey) => (k === 'aff' ? empAff(u) : k === 'roles' ? u.roles.join(', ') : k === 'hireDate' ? u.hireDate || '' : (u[k] as string) || '')
+const uniqKo = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'))
+
 function EmployeesTab() {
   const emp = useEmployees()
   const { me } = useSession()
+  // 한 줄 필터: 찾기(아이디·이름·전화·이메일) · 입사일자 범위 · 소속 · 역할 · 상태
+  const [ef, setEf] = useState<EmpFilter>(EMP_FILTER_EMPTY)
+  const [sort, setSort] = useState<EmpSort>(null)
+  const opts = useMemo(() => ({ affs: uniqKo(emp.items.map(empAff)), roles: uniqKo(emp.items.flatMap((u) => u.roles)), states: ['사용 중', '사용중지'] }), [emp.items])
+  const activeCount = [ef.q.trim(), ef.from || ef.to, ef.affs.length, ef.roles.length, ef.states.length].filter(Boolean).length
+  const rows = useMemo(() => {
+    const q = ef.q.trim().toLowerCase()
+    const list = emp.items.filter((u) => {
+      if (q && ![u.loginId, u.name, u.phone, u.email].some((x) => (x || '').toLowerCase().includes(q))) return false
+      if (ef.from && (!u.hireDate || u.hireDate.slice(0, 10) < ef.from)) return false
+      if (ef.to && (!u.hireDate || u.hireDate.slice(0, 10) > ef.to)) return false
+      if (ef.affs.length && !ef.affs.includes(empAff(u))) return false
+      if (ef.roles.length && !u.roles.some((r) => ef.roles.includes(r))) return false
+      if (ef.states.length && !ef.states.includes(u.active ? '사용 중' : '사용중지')) return false
+      return true
+    })
+    if (!sort) return list
+    const sign = sort.dir === 'asc' ? 1 : -1
+    // 빈 값은 정렬 방향과 상관없이 맨 뒤
+    return [...list].sort((a, b) => {
+      const x = empValue(a, sort.key)
+      const y = empValue(b, sort.key)
+      if (!x && !y) return 0
+      if (!x) return 1
+      if (!y) return -1
+      return x.localeCompare(y, 'ko', { numeric: true }) * sign
+    })
+  }, [emp.items, ef, sort])
+  const toggleSort = (key: EmpKey) => setSort((s) => (!s || s.key !== key ? { key, dir: 'asc' } : s.dir === 'asc' ? { key, dir: 'desc' } : null))
   // 상세설정에서 이 역할에 켜 준 세부 권한(총 관리자는 항상 전부)
   const canEdit = (me.settingsTabs || []).includes('employees_edit')
   const canDelete = (me.settingsTabs || []).includes('employees_delete')
@@ -144,22 +193,63 @@ function EmployeesTab() {
       ) : emp.items.length === 0 ? (
         <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 나(내 아이디)로 정해 주세요.</Empty>
       ) : (
+        <>
+        <div className="vf-status vf-status-top">
+          <span>
+            {activeCount > 0 ? (
+              <>
+                필터 {activeCount}개 · <b>{rows.length}</b> / {emp.items.length}명
+              </>
+            ) : (
+              <>전체 {emp.items.length}명</>
+            )}
+          </span>
+        </div>
+        <div className="vf-bar vf-one" role="group" aria-label="사원 필터">
+          <label className="vf-field">
+            <span className="vf-label">찾기</span>
+            <input className="vf-input vf-q" value={ef.q} onChange={(e) => setEf({ ...ef, q: e.target.value })} placeholder="아이디·이름·전화·이메일" />
+          </label>
+          <div className="vf-field">
+            <span className="vf-label">입사일자</span>
+            <span className="vf-range">
+              <input className="vf-input" type="date" value={ef.from} onChange={(e) => setEf({ ...ef, from: e.target.value })} aria-label="입사일자 시작" />~
+              <input className="vf-input" type="date" value={ef.to} onChange={(e) => setEf({ ...ef, to: e.target.value })} aria-label="입사일자 끝" />
+            </span>
+          </div>
+          <MultiPick label="소속" all={opts.affs} value={ef.affs} onChange={(affs) => setEf({ ...ef, affs })} />
+          <MultiPick label="역할" all={opts.roles} value={ef.roles} onChange={(roles) => setEf({ ...ef, roles })} />
+          <MultiPick label="상태" all={opts.states} value={ef.states} onChange={(states) => setEf({ ...ef, states })} />
+          <button type="button" className="vf-reset g-btn ghost sm" disabled={activeCount === 0} onClick={() => setEf(EMP_FILTER_EMPTY)} title="걸어 둔 필터를 모두 지웁니다">
+            필터 초기화
+          </button>
+        </div>
         <div className="g-table-wrap">
           <table className="g-table g-emp-table">
             <thead>
               <tr>
-                <th>아이디</th>
-                <th>이름</th>
-                <th>입사일자</th>
-                <th>소속</th>
-                <th>역할</th>
-                <th>전화번호</th>
-                <th>이메일</th>
+                {EMP_COLS.map((c) => (
+                  <th key={c.key} aria-sort={sort?.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                    <button type="button" className={`vt-sort${sort?.key === c.key ? ' on' : ''}`} onClick={() => toggleSort(c.key)} title="누르면 오름차순 → 내림차순 → 기본 순서">
+                      {c.label}
+                      <span className="vt-sort-ico" aria-hidden="true">
+                        {sort?.key === c.key ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </span>
+                    </button>
+                  </th>
+                ))}
                 <th />
               </tr>
             </thead>
             <tbody>
-              {emp.items.map((u) => (
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={cols} className="g-empty">
+                    조건에 맞는 사원이 없습니다.
+                  </td>
+                </tr>
+              )}
+              {rows.map((u) => (
                 <Fragment key={u.id}>
                 <tr className={u.active ? '' : 'inactive'}>
                   <td className="nowrap">
@@ -242,6 +332,7 @@ function EmployeesTab() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </section>
   )

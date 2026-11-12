@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { TEAM_PERIODS, useMenuGuard, useTeamAttendance } from '@/lib/crm/client/hooks'
-import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
+import { dayBadges, fmtMinutes, fmtTime, fmtYmdShort, nowState, statusLabel, statusTone, todayKst } from '@/lib/crm/client/format'
 import { Prompt } from '../../term'
 import { TeamCalendar } from '@/components/team-calendar'
 import { AttendanceApplyButtons } from '@/components/attendance-extra'
@@ -142,37 +142,75 @@ export default function V8TeamAttendance() {
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr>
-                  <th>직원</th>
-                  <th>소속</th>
-                  <th className="num">출근</th>
-                  <th className="num">지각</th>
-                  <th className="num">퇴근</th>
-                  <th className="num">야근</th>
-                  <th className="num">결근</th>
-                  <th className="num">총 근무시간</th>
-                </tr>
+                {team.period === 'day' ? (
+                  // 오늘: 횟수 대신 그날 출근·퇴근 시각과 근무시간
+                  <tr>
+                    <th>직원</th>
+                    <th>소속</th>
+                    <th className="num">출근</th>
+                    <th className="num">퇴근</th>
+                    <th className="num">근무시간</th>
+                    <th>상태</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th>직원</th>
+                    <th>소속</th>
+                    <th className="num">출근</th>
+                    <th className="num">지각</th>
+                    <th className="num">퇴근</th>
+                    <th className="num">야근</th>
+                    <th className="num">결근</th>
+                    <th className="num">총 근무시간</th>
+                  </tr>
+                )}
               </thead>
               <tbody>
                 {team.data.rows.map((row) => {
                   const isOpen = openUser === row.user.id
-                  const days = team.data!.days
+                  const days = team.data!.days // 날짜 오름차순
+                  const today = row.records[days[days.length - 1]] // '오늘' 보기일 때 그날 기록
+                  // 이름 왼쪽 동그라미 = 오늘 현재 상태 (출: 주황, 퇴: 짙은 회색, 미: 밝은 회색). 오늘이 없는 기간이면 표시하지 않는다.
+                  const now = days.includes(todayKst()) ? nowState(row.records[todayKst()]) : null
                   return [
                     <tr key={row.user.id} className="clickable" onClick={() => setOpenUser(isOpen ? null : row.user.id)}>
                       <td>
+                        {now && (
+                          <span className="xs-now-dot" style={{ background: now.bg }} title={now.title}>
+                            {now.text}
+                          </span>
+                        )}
                         <strong>{row.user.name}</strong> <span className="muted small">{row.user.loginId}</span> <span className="muted small">{isOpen ? '▲' : '▼'}</span>
                       </td>
                       <td>{row.user.affiliationName || '-'}</td>
-                      <td className="num">{row.summary.present}</td>
-                      <td className="num">{row.summary.late}</td>
-                      <td className="num">{row.summary.checkedOut}</td>
-                      <td className="num">{row.summary.overtime}</td>
-                      <td className="num">{row.summary.absent}</td>
-                      <td className="num">{fmtMinutes(row.summary.workedMinutes)}</td>
+                      {team.period === 'day' ? (
+                        <>
+                          <td className="num">{fmtTime(today?.checkInAt)}</td>
+                          <td className="num">{today?.autoCheckout ? <span className="xs-mini-unresolved">미처리</span> : fmtTime(today?.checkOutAt)}</td>
+                          <td className="num">{today?.checkInAt ? fmtMinutes(today.workedMinutes) : '-'}</td>
+                          <td>
+                            <span className={`badge tone-${statusTone(today)}`}>{statusLabel(today)}</span>
+                            {dayBadges(today).map((b) => (
+                              <span key={b.key} className={`badge tone-${b.key}`}>
+                                {b.label}
+                              </span>
+                            ))}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="num">{row.summary.present}</td>
+                          <td className="num">{row.summary.late}</td>
+                          <td className="num">{row.summary.checkedOut}</td>
+                          <td className="num">{row.summary.overtime}</td>
+                          <td className="num">{row.summary.absent}</td>
+                          <td className="num">{fmtMinutes(row.summary.workedMinutes)}</td>
+                        </>
+                      )}
                     </tr>,
                     isOpen && (
                       <tr key={`${row.user.id}-detail`} className="detail-row">
-                        <td colSpan={8}>
+                        <td colSpan={team.period === 'day' ? 6 : 8}>
                           <table className="table inner">
                             <thead>
                               <tr>

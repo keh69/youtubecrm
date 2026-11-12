@@ -4,16 +4,7 @@ import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
-import { PersonStatsTable } from './person-table'
-
-// 일자별 표 도우미
-const weekdayOf = (ymd: string) => ['일', '월', '화', '수', '목', '금', '토'][new Date(`${ymd}T12:00:00Z`).getUTCDay()]
-const isWeekend = (ymd: string) => {
-  const w = new Date(`${ymd}T12:00:00Z`).getUTCDay()
-  return w === 0 || w === 6
-}
-// 1만 이상은 1.2만처럼 줄여 좁은 칸에 들어가게
-const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만` : n.toLocaleString('ko-KR'))
+import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
 
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
@@ -22,9 +13,6 @@ export default function V5Stats() {
 
   if (!allowed) return null
   const videos = st.videos
-  const daily = st.data?.daily || []
-  const maxCount = Math.max(1, ...daily.map((d) => d.count))
-  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
     <>
@@ -76,95 +64,10 @@ export default function V5Stats() {
 
       {st.error && <Note msg={{ tone: 'error', text: st.error }} role="alert" />}
 
-      {/* 요약: 큰 카드 대신 한 줄 수치표 */}
-      <section className="g-glass g-ds-kpi" aria-label="기간 요약">
-        <dl>
-          <div>
-            <dt>기간</dt>
-            <dd className="small">{rangeText}</dd>
-          </div>
-          <div>
-            <dt>올린 영상</dt>
-            <dd>{fmtNumber(st.data?.summary.videoCount)}개</dd>
-          </div>
-          <div>
-            <dt>총 조회수</dt>
-            <dd>{fmtNumber(st.data?.summary.totalViews)}</dd>
-          </div>
-          <div>
-            <dt>영상당 평균 조회수</dt>
-            <dd>{st.data && st.data.summary.videoCount > 0 ? fmtNumber(Math.round(st.data.summary.totalViews / st.data.summary.videoCount)) : '-'}</dd>
-          </div>
-          <div>
-            <dt>총 재생시간(영상 길이 합)</dt>
-            <dd>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</dd>
-          </div>
-          <div>
-            <dt>영상당 평균 길이</dt>
-            <dd>{st.data && st.data.summary.videoCount > 0 ? fmtDuration(Math.round(st.data.summary.totalDurationSeconds / st.data.summary.videoCount)) : '-'}</dd>
-          </div>
-          <div>
-            <dt>롱폼 / 숏폼</dt>
-            <dd>
-              {fmtNumber(st.data?.videos.filter((v) => v.contentType === 'longform').length)} / {fmtNumber(st.data?.videos.filter((v) => v.contentType !== 'longform').length)}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* 일자별: 날짜를 가로로, 올린 개수·조회수를 줄로 보는 표. 개수 칸은 많을수록 진한 보라(한 색 농도) */}
-      {daily.length > 0 && (
-        <section className="g-glass">
-          <h2 className="g-h2">일자별</h2>
-          <div className="g-table-wrap">
-            <table className="g-table g-ds-daily">
-              <thead>
-                <tr>
-                  <th scope="col">날짜</th>
-                  {daily.map((d) => (
-                    <th key={d.date} scope="col" className={isWeekend(d.date) ? 'we' : undefined} title={fmtYmdShort(d.date)}>
-                      {Number(d.date.slice(8))}
-                      <small>{weekdayOf(d.date)}</small>
-                    </th>
-                  ))}
-                  <th scope="col" className="sum">합계</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">올린 개수</th>
-                  {daily.map((d) => (
-                    <td key={d.date} className={d.count > 0 ? (d.count / maxCount > 0.55 ? 'heat hi' : 'heat') : 'zero'} style={d.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (d.count / maxCount)).toFixed(2) } : undefined} title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}>
-                      {d.count > 0 ? <span className="ds-cell">{d.count}</span> : '·'}
-                    </td>
-                  ))}
-                  <td className="sum">{fmtNumber(daily.reduce((n, d) => n + d.count, 0))}</td>
-                </tr>
-                <tr>
-                  <th scope="row">조회수</th>
-                  {daily.map((d) => (
-                    <td key={d.date} className={d.views > 0 ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · 조회수 ${fmtNumber(d.views)}`}>
-                      {d.views > 0 ? shortNum(d.views) : '·'}
-                    </td>
-                  ))}
-                  <td className="sum">{shortNum(daily.reduce((n, d) => n + d.views, 0))}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="g-muted g-small">올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.</p>
-        </section>
-      )}
-
-      {st.data && st.data.perPerson.length > 0 && (
-        <section className="g-glass">
-          <div className="g-card-head">
-            <h2 className="g-h2">담당자별</h2>
-            <span className="g-muted g-small">머리칸을 누르면 정렬 · [보기]를 누르면 그 사람 영상만</span>
-          </div>
-          <PersonStatsTable people={st.data.perPerson} videos={st.data.videos} onPick={(id) => st.setWho(id === me.id ? 'me' : id)} />
-        </section>
-      )}
+      {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
+      <StatsKpiSection st={st} />
+      <StatsDailySection st={st} />
+      <StatsPersonSection st={st} meId={me.id} />
 
       <section className="g-glass">
         <div className="g-card-head">

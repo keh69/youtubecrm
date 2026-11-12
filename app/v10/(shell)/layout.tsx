@@ -12,7 +12,7 @@ const FILES: Record<NavItem['key'], { name: string; ext: string; glyph: string }
   attendance_team: { name: 'team-attendance.tsx', ext: 'tsx', glyph: '<>' },
   videos: { name: 'videos.tsx', ext: 'tsx', glyph: '<>' },
   stats: { name: 'stats.sql', ext: 'sql', glyph: 'DB' },
-  payroll: { name: 'payroll.ts', ext: 'ts', glyph: 'TS' }, // v5전용 메뉴(0 때 사용)
+  payroll: { name: 'payroll.ts', ext: 'ts', glyph: 'TS' },
   settings: { name: 'settings.json', ext: 'json', glyph: '{}' },
   skin: { name: 'skin.css', ext: 'css', glyph: '#' },
   me: { name: 'me.md', ext: 'md', glyph: 'M' }

@@ -6,6 +6,7 @@ import { fmtDate, fmtDuration, fmtNumber } from '@/lib/crm/client/format'
 import { Empty, FormatChip, Loading, Note, PageHead, Panel } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
 import { VideoTable } from '@/components/video-table'
+import { ReservationSection } from '@/components/reservation-section'
 
 export default function V2Videos() {
   const allowed = useMenuGuard('videos')
@@ -13,6 +14,7 @@ export default function V2Videos() {
   const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState('')
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null) // 예약 표 [완료] → 영상리스트에서 이 영상으로
   if (!allowed) return null
 
   const remove = async (id: string, title: string) => {
@@ -106,12 +108,15 @@ export default function V2Videos() {
         )}
       </Panel>
 
-      <Panel label="내가 등록한 영상" right={!reg.recentLoading && <span className="count mono">{reg.recent.length}</span>}>
+      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '영상리스트'에 들어간다 */}
+      <ReservationSection onMoved={reg.reloadRecent} listed={reg.recent} onShow={(id) => setFocus({ id, n: Date.now() })} />
+
+      <Panel label={`영상리스트 (${reg.recent.length})`}>
         {listMsg && <Note msg={{ tone: 'ok', text: listMsg }} />}
         {reg.recentLoading ? (
           <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vids', vcell: 'vcell', thumb: 'vthumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'sym', btn: 'key ghost sm', btnPrimary: 'key accent sm', btnDanger: 'key ghost sm danger-text', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
+          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'tbl-wrap', table: 'tbl vids', vcell: 'vcell', thumb: 'vthumb', vtitle: 'vtitle', format: 'xs-chip', chip: 'sym', btn: 'key ghost sm', btnPrimary: 'key accent sm', btnDanger: 'key ghost sm danger-text', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </Panel>
     </>

@@ -6,6 +6,7 @@ import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/cli
 import { Empty, Loading, Note, PageHead, type Msg } from '../../_components/ui'
 import { VideoTypePicker } from '@/components/video-type-picker'
 import { VideoTable } from '@/components/video-table'
+import { ReservationSection } from '@/components/reservation-section'
 
 export default function V3Videos() {
   const allowed = useMenuGuard('videos')
@@ -13,6 +14,7 @@ export default function V3Videos() {
   const reg = useVideoRegister({ requireType: true })
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   const [listMsg, setListMsg] = useState<Msg>(null)
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null) // 예약 표 [완료] → 영상리스트에서 이 영상으로
   if (!allowed) return null
 
   const remove = async (id: string, title: string) => {
@@ -90,13 +92,18 @@ export default function V3Videos() {
 
       <hr className="j-double" />
 
+      {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '영상리스트'에 들어간다 */}
+      <ReservationSection onMoved={reg.reloadRecent} listed={reg.recent} onShow={(id) => setFocus({ id, n: Date.now() })} />
+
+      <hr className="j-double" />
+
       <section className="j-section">
-        <h2 className="j-h2">내가 등록한 영상</h2>
+        <h2 className="j-h2">영상리스트 ({reg.recent.length})</h2>
         <Note msg={listMsg} />
         {reg.recentLoading ? (
           <p className="xs-muted">불러오는 중…</p>
         ) : (
-          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
+          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

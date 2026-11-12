@@ -1,10 +1,11 @@
 'use client'
 
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
+import { fmtNumber, todayKst } from '@/lib/crm/client/format'
 import { BlockTitle, Empty, Loading, Msg, PageHead } from '../../_components/ui'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { VideoTable } from '@/components/video-table'
+import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
 
 export default function V4Stats() {
   const allowed = useMenuGuard('stats')
@@ -13,9 +14,7 @@ export default function V4Stats() {
   const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
-  const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
   const videos = vf.filtered
-  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
     <>
@@ -67,80 +66,14 @@ export default function V4Stats() {
 
       {st.error && <Msg tone="error">{st.error}</Msg>}
 
-      <section className="kpis">
-        <div className="blk kpi bg-yellow">
-          <span>올린 영상 · {rangeText}</span>
-          <strong>
-            {fmtNumber(st.data?.summary.videoCount)}
-            <small>개</small>
-          </strong>
-        </div>
-        <div className="blk kpi bg-pink">
-          <span>총 조회수</span>
-          <strong>{fmtNumber(st.data?.summary.totalViews)}</strong>
-        </div>
-        <div className="blk kpi bg-blue">
-          <span>총 재생시간(영상 길이 합)</span>
-          <strong>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</strong>
-        </div>
-      </section>
-
-      {(st.data?.daily.length || 0) > 1 && (
-        <section className="blk">
-          <BlockTitle color="mint">일자별 올린 개수</BlockTitle>
-          <div className="chart-wrap">
-            <div className="chart" role="img" aria-label="일자별 업로드 개수 막대">
-              {st.data?.daily.map((d) => (
-                <div key={d.date} className="chart-col" title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}>
-                  <span className="chart-val">{d.count > 0 ? d.count : ''}</span>
-                  <div className="chart-track">
-                    {d.count > 0 && <div className="chart-bar" style={{ height: `${(d.count / maxCount) * 100}%` }} />}
-                  </div>
-                  <span className={`chart-label${d.date.slice(8) === '01' ? ' first' : ''}`}>{Number(d.date.slice(8))}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {st.data && st.data.perPerson.length > 0 && (
-        <section className="blk">
-          <BlockTitle color="blue">담당자별</BlockTitle>
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>담당자</th>
-                  <th className="num">영상</th>
-                  <th className="num">총 조회수</th>
-                  <th className="num">총 재생시간</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {st.data.perPerson.map((p) => (
-                  <tr key={p.userId}>
-                    <td className="strong">{p.name}</td>
-                    <td className="num">{fmtNumber(p.videoCount)}</td>
-                    <td className="num strong">{fmtNumber(p.totalViews)}</td>
-                    <td className="num">{fmtTotalDuration(p.totalDurationSeconds)}</td>
-                    <td className="right">
-                      <button className="btn yellow sm" onClick={() => st.setWho(p.userId === me.id ? 'me' : p.userId)}>
-                        영상 보기 →
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
+      <StatsKpiSection st={st} />
+      <StatsDailySection st={st} />
+      <StatsPersonSection st={st} meId={me.id} />
 
       <section className="blk">
         <BlockTitle color="pink">
-          영상 ({fmtNumber(videos.length)})
+          영상리스트 ({fmtNumber(videos.length)})
         </BlockTitle>
         {st.loading && !st.data ? (
           <Loading />

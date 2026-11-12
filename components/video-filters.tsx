@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { fmtDate, videoFormatLabel } from '@/lib/crm/client/format'
+import { useSkinUi } from '@/lib/crm/client/skin-ui'
 
 // 영상통계 > 영상 표 필터(모든 스킨 공통).
 // 열마다 조건을 걸 수 있고, 여러 열 조건을 한꺼번에 걸면 모두 맞는 영상만 남는다(중복 필터).
@@ -124,10 +125,12 @@ export function MultiPick({ label, all, value, onChange }: { label: string; all:
   )
 }
 
-// oneLine: 필터를 한 줄로(개수·지우기 안내는 필터 줄 위 오른쪽으로). v5전용: 0 때 해제
+// oneLine: 필터를 한 줄로(개수·지우기 안내는 필터 줄 위 오른쪽으로)
 export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false, extra }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean; oneLine?: boolean; extra?: React.ReactNode }) {
   const { f, setF, options } = ctl
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
+  const ui = useSkinUi()
+  const resetBtn = ui.key === 'v5' // v5전용: 0 때 해제 — 필터 줄 오른쪽 끝 [필터 초기화]
   const status = (
     <div className={oneLine ? 'vf-status vf-status-top' : 'vf-status'}>
       <span>
@@ -139,7 +142,7 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
           <>전체 {total}개</>
         )}
       </span>
-      {ctl.activeCount > 0 && (
+      {ctl.activeCount > 0 && !resetBtn && (
         <button type="button" className="vf-mini" onClick={ctl.clear}>
           필터 모두 지우기
         </button>
@@ -183,6 +186,11 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
         </span>
       </div>
       {!oneLine && status}
+      {resetBtn && (
+        <button type="button" className={`vf-reset ${ui.btn}`} disabled={ctl.activeCount === 0} onClick={ctl.clear} title="걸어 둔 필터를 모두 지웁니다">
+          필터 초기화
+        </button>
+      )}
     </div>
     </>
   )

@@ -162,11 +162,6 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
               <>전체 {r.items.length}개</>
             )}
           </span>
-          {activeCount > 0 && (
-            <button type="button" className="vf-mini" onClick={() => setFilter(RF_EMPTY)}>
-              필터 모두 지우기
-            </button>
-          )}
         </div>
         <div className="vf-bar vf-one" role="group" aria-label="예약 필터">
           <div className="vf-field">
@@ -180,6 +175,9 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
           <MultiPick label="폼종류" all={opts.formats} value={rf.formats} onChange={(formats) => setFilter({ formats })} />
           <MultiPick label="종목" all={opts.stocks} value={rf.stocks} onChange={(stocks) => setFilter({ stocks })} />
           <MultiPick label="상태" all={opts.states} value={rf.states} onChange={(states) => setFilter({ states })} />
+          <button type="button" className="vf-reset g-btn ghost sm" disabled={activeCount === 0} onClick={() => setFilter(RF_EMPTY)} title="걸어 둔 필터를 모두 지웁니다">
+            필터 초기화
+          </button>
         </div>
         <div className="g-table-wrap">
           <table className="g-table g-resv-table">

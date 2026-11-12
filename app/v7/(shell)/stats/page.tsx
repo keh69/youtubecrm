@@ -1,10 +1,11 @@
 'use client'
 
 import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats, type StatSort } from '@/lib/crm/client/hooks'
-import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
+import { fmtNumber, todayKst } from '@/lib/crm/client/format'
 import { GridStatus, SqlQuery, sqlStr } from '../../_ui/sql'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { VideoTable } from '@/components/video-table'
+import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
 
 const ORDER_BY: Record<StatSort, string> = {
   date: 'published_at DESC',
@@ -20,9 +21,7 @@ export default function V7Stats() {
   const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
   if (!allowed) return null
 
-  const maxCount = Math.max(1, ...(st.data?.daily.map((d) => d.count) || [0]))
   const videos = vf.filtered
-  const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const rangeRaw = st.from === st.to ? st.from : `${st.from} ~ ${st.to}`
   const whoName = st.who === 'me' ? me.name : st.who === 'all' ? null : st.data?.people.find((p) => p.id === st.who)?.name || st.who
   const sortLabel = STAT_SORTS.find((s) => s.key === st.sort)?.label
@@ -88,75 +87,13 @@ export default function V7Stats() {
 
       {st.error && <p className="msg error">{st.error}</p>}
 
-      <section className="kpis">
-        <div className="card kpi">
-          <span>COUNT(*) · 올린 영상 · {rangeText}</span>
-          <strong>{fmtNumber(st.data?.summary.videoCount)}개</strong>
-        </div>
-        <div className="card kpi">
-          <span>SUM(view_count) · 총 조회수</span>
-          <strong>{fmtNumber(st.data?.summary.totalViews)}</strong>
-        </div>
-        <div className="card kpi">
-          <span>SUM(duration) · 총 재생시간(영상 길이 합)</span>
-          <strong>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</strong>
-        </div>
-      </section>
-
-      {(st.data?.daily.length || 0) > 1 && (
-        <section className="card">
-          <h2>일자별 올린 개수</h2>
-          <div className="bars" role="img" aria-label="일자별 업로드 개수 막대">
-            {st.data?.daily.map((d) => (
-              <div key={d.date} className="bar-col" title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}>
-                <span className="bar-val">{d.count > 0 ? d.count : ''}</span>
-                <div className="bar" style={{ height: `${(d.count / maxCount) * 100}%` }} />
-                <span className="bar-label">{Number(d.date.slice(8))}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {st.data && st.data.perPerson.length > 0 && (
-        <section className="card">
-          <h2>결과 · 담당자별</h2>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="rn">#</th>
-                  <th>담당자</th>
-                  <th className="num">영상</th>
-                  <th className="num">총 조회수</th>
-                  <th className="num">총 재생시간</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {st.data.perPerson.map((p, i) => (
-                  <tr key={p.userId}>
-                    <td className="rn">{i + 1}</td>
-                    <td>{p.name}</td>
-                    <td className="num">{fmtNumber(p.videoCount)}</td>
-                    <td className="num">{fmtNumber(p.totalViews)}</td>
-                    <td className="num">{fmtTotalDuration(p.totalDurationSeconds)}</td>
-                    <td className="right">
-                      <button className="btn ghost small" onClick={() => st.setWho(p.userId === me.id ? 'me' : p.userId)}>
-                        영상 보기
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <GridStatus rows={st.data.perPerson.length}>기간 {rangeRaw} · GROUP BY owner</GridStatus>
-        </section>
-      )}
+      {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
+      <StatsKpiSection st={st} />
+      <StatsDailySection st={st} />
+      <StatsPersonSection st={st} meId={me.id} />
 
       <section className="card">
-        <h2>결과 · 영상 ({fmtNumber(videos.length)})</h2>
+        <h2>결과 · 영상리스트 ({fmtNumber(videos.length)})</h2>
         {st.loading && !st.data ? (
           <p className="muted">불러오는 중…</p>
         ) : st.videos.length === 0 ? (

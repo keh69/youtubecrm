@@ -21,8 +21,10 @@ export default function V3Attendance() {
 
   const t = att.today
   const clock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)
-  const inDisabled = att.loading || !att.canCheckIn || att.busy !== null
-  const outDisabled = att.loading || !att.canCheckOut || att.busy !== null
+  // 폰·태블릿: 버튼은 꺼진 모양이지만 누를 수 있게 두고, 누르면 훅이 'PC에서만' 안내 창을 띄운다
+  const inDisabled = !att.mobileBlocked && (att.loading || !att.canCheckIn || att.busy !== null)
+  const outDisabled = !att.mobileBlocked && (att.loading || !att.canCheckOut || att.busy !== null)
+  const offCls = att.mobileBlocked ? ' att-mobile-off' : ''
 
   return (
     <>
@@ -42,14 +44,14 @@ export default function V3Attendance() {
 
         <div className="j-stamps">
           <div className="j-stamp-col">
-            <button type="button" className="j-stampbtn in" disabled={inDisabled} onClick={() => press('in')}>
+            <button type="button" className={`j-stampbtn in${offCls}`} aria-disabled={att.mobileBlocked || undefined} disabled={inDisabled} onClick={() => press('in')}>
               <span className={att.busy === 'in' ? 'busy' : ''}>{att.busy === 'in' ? '기록 중…' : '출근'}</span>
             </button>
             <span className="j-label">출근 누른 시간</span>
             <strong className="j-written">{fmtTimeSec(t?.checkInAt)}</strong>
           </div>
           <div className="j-stamp-col">
-            <button type="button" className="j-stampbtn out" disabled={outDisabled} onClick={() => press('out')}>
+            <button type="button" className={`j-stampbtn out${offCls}`} aria-disabled={att.mobileBlocked || undefined} disabled={outDisabled} onClick={() => press('out')}>
               <span className={att.busy === 'out' ? 'busy' : ''}>{att.busy === 'out' ? '기록 중…' : '퇴근'}</span>
             </button>
             <span className="j-label">퇴근 누른 시간</span>

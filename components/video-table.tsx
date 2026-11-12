@@ -115,11 +115,12 @@ export function VideoTable({
     msg: ui.msgOk,
     ...cls
   }
-  const hideTitle = ui.key === 'v5' // v5전용: 0 때 해제 — 영상 열에서 제목만 빼고 썸네일은 남김(영상등록·영상통계)
-  const showTime = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
+  // 2026-11-12 '0': 모든 스킨 — 영상 열은 썸네일만(제목 빼기), 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
+  const hideTitle = true
+  const showTime = true
   const vf = useVideoFilters(videos)
-  // v5전용: 0 때 해제 — 머리칸 눌러 정렬
-  const sortable = ui.key === 'v5'
+  // 머리칸 눌러 정렬(모든 스킨)
+  const sortable = true
   const [sort, setSort] = useState<Sort>(null)
   const list = sortable ? sortVideos(vf.filtered, sort) : vf.filtered
   const toggleSort = (key: SortKey) => setSort((s) => (!s || s.key !== key ? { key, dir: 'asc' } : s.dir === 'asc' ? { key, dir: 'desc' } : null))
@@ -137,8 +138,8 @@ export function VideoTable({
     ) : (
       <th className={className}>{label}</th>
     )
-  // v5전용: 0 때 해제 — 몇 개씩 보기(기본 10개) + 아래 페이지 번호
-  const paged = ui.key === 'v5'
+  // 몇 개씩 보기(기본 10개) + 아래 페이지 번호(모든 스킨)
+  const paged = true
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
   useEffect(() => setPage(1), [vf.f, pageSize, sort]) // 필터·보기 개수·정렬을 바꾸면 1쪽으로
@@ -331,7 +332,7 @@ export function VideoTable({
       </div>
       {list.length === 0 && <p className={c.empty}>필터에 맞는 영상이 없습니다.</p>}
       {paged && pages > 1 && (
-        <nav className="g-pager" aria-label="영상 페이지">
+        <nav className="g-pager vt-pager" aria-label="영상 페이지">
           <button type="button" className={c.btn} disabled={cur === 1} onClick={() => setPage(cur - 1)}>
             ◀ 이전
           </button>

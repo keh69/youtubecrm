@@ -11,7 +11,7 @@ const NAV_ICON: Record<MenuKey | 'skin' | 'me', string> = {
   attendance_team: '👥',
   videos: '🎬',
   stats: '📊',
-  payroll: '💰', // v5전용 메뉴(0 때 사용)
+  payroll: '💰',
   settings: '⚙',
   skin: '🎨',
   me: '👤'
