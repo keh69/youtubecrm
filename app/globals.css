@@ -1424,3 +1424,18 @@ html {
 .vt-sort.on .vt-sort-ico {
   opacity: 1;
 }
+
+/* 영상 표에서 다른 곳(예약 표 [완료])이 가리킨 줄을 잠깐 강조 */
+@keyframes vt-hl-pulse {
+  0%,
+  60% {
+    background-color: rgba(37, 99, 235, 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+tr.vt-hl > td {
+  animation: vt-hl-pulse 3s ease-out;
+  box-shadow: inset 0 1px 0 #2563eb, inset 0 -1px 0 #2563eb;
+}

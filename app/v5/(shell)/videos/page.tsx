@@ -11,6 +11,7 @@ export default function V5Videos() {
   const allowed = useMenuGuard('videos')
   const { me } = useSession()
   const reg = useVideoRegister({ requireType: true }) // 롱폼/숏폼을 꼭 골라야 추가된다
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null) // 예약 표 [완료] → 영상리스트에서 이 영상으로
   if (!allowed) return null
 
 
@@ -90,7 +91,7 @@ export default function V5Videos() {
       </section>
 
       {/* 예약등록: 유튜브 예약 링크를 넣어 두면 공개된 뒤 자동으로 아래 '영상리스트'에 들어간다 */}
-      <ReservationSection onMoved={reg.reloadRecent} />
+      <ReservationSection onMoved={reg.reloadRecent} listed={reg.recent} onShow={(id) => setFocus({ id, n: Date.now() })} />
 
       {/* 영상리스트 표(영상통계와 같은 표). 영상등록 '수정권한'이면 줄마다 수정·삭제 */}
       <section className="g-glass">
@@ -98,7 +99,7 @@ export default function V5Videos() {
         {reg.recentLoading ? (
           <Loading />
         ) : (
-          <VideoTable videos={reg.recent} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', avatar: 'g-avatar xs', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="아직 등록한 영상이 없습니다." />
+          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', avatar: 'g-avatar xs', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

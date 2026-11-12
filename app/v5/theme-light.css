@@ -3483,3 +3483,28 @@ html:root .v5 .g-ds-daily td.heat.hi .ds-cell {
 html:root .v5 .g-ds-daily td.zero {
   opacity: 0.35;
 }
+
+/* 예약 표 '영상리스트 반영': 미완료 회색, 완료 파란색(누르면 아래 영상리스트의 그 영상으로) (2026-11-12) */
+html:root .v5 .g-reflect {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: #8a8f98;
+  border: 0;
+  white-space: nowrap;
+}
+html:root .v5 .g-reflect.done {
+  background: #2563eb;
+  cursor: pointer;
+}
+html:root .v5 .g-reflect.done:hover {
+  background: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

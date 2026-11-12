@@ -92,8 +92,10 @@ export function VideoTable({
   canEdit,
   onChanged,
   cls = {},
-  emptyText = '영상이 없습니다.'
+  emptyText = '영상이 없습니다.',
+  focus = null
 }: {
+  focus?: { id: string; n: number } | null // 이 영상이 있는 쪽으로 넘기고, 그 줄로 스크롤해 잠깐 강조한다(n 이 바뀔 때마다)
   videos: Video[]
   canEdit: boolean
   onChanged: () => void | Promise<void> // 고치거나 지운 뒤 목록 새로 불러오기
@@ -145,6 +147,31 @@ export function VideoTable({
   const rows = paged ? list.slice((cur - 1) * pageSize, cur * pageSize) : list
   const winStart = Math.max(1, Math.min(cur - 4, pages - 9)) // 페이지 번호는 최대 10개까지 보인다
   const pageNums = Array.from({ length: Math.min(10, pages) }, (_, i) => winStart + i)
+  // 다른 곳(예약 표 [완료])에서 이 영상을 보여 달라고 하면: 필터에 가려 있으면 필터를 풀고, 그 영상이 있는 쪽으로 넘긴 뒤 스크롤·강조
+  const [pendingFocus, setPendingFocus] = useState<string | null>(null)
+  const [hl, setHl] = useState<{ id: string; n: number } | null>(null)
+  useEffect(() => {
+    if (focus) setPendingFocus(focus.id)
+  }, [focus])
+  useEffect(() => {
+    if (!pendingFocus) return
+    const idx = list.findIndex((v) => v.id === pendingFocus)
+    if (idx < 0) {
+      if (vf.activeCount > 0) vf.clear() // 다음 그림에서 다시 찾는다
+      else setPendingFocus(null)
+      return
+    }
+    setPage(Math.floor(idx / pageSize) + 1)
+    setHl({ id: pendingFocus, n: Date.now() })
+    setPendingFocus(null)
+  }, [pendingFocus, list, pageSize, vf])
+  useEffect(() => {
+    if (!hl) return
+    const row = document.querySelector(`[data-vid="${hl.id}"]`)
+    row?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const t = window.setTimeout(() => setHl(null), 3000)
+    return () => window.clearTimeout(t)
+  }, [hl])
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
@@ -215,7 +242,7 @@ export function VideoTable({
               const fmt = videoFormatLabel(v)
               const ed = editing?.id === v.id ? editing : null
               return (
-                <tr key={v.id}>
+                <tr key={v.id} data-vid={v.id} className={hl?.id === v.id ? 'vt-hl' : undefined}>
                   <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
                   {showTime && <td className="num nowrap">{fmtHm24(v.publishedAt || v.createdAt)}</td>}
                   <td className={hideTitle ? 'thumb-col' : undefined}>

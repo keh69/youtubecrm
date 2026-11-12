@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react'
 import { useReservations, useSession } from '@/lib/crm/client/hooks'
 import { MultiPick } from '@/components/video-filters'
-import type { Reservation } from '@/lib/crm/client/types'
+import type { Reservation, Video } from '@/lib/crm/client/types'
+import { fmtDuration } from '@/lib/crm/client/format'
 import { Loading, Note, type Msg } from '../../_components/ui'
 
 // 영상등록 > 예약등록 (v5)
@@ -36,13 +37,15 @@ const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a
 type Form = { stockName: string; contentType: 'longform' | 'shortform' | ''; url: string }
 const EMPTY: Form = { stockName: '', contentType: '', url: '' }
 
-export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<void> }) {
+// listed: 아래 영상리스트에 있는 영상들(재생시간·'영상리스트 반영' 판단용). onShow: [완료]를 누르면 영상리스트에서 그 영상으로 이동
+export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () => void | Promise<void>; listed: Video[]; onShow: (videoId: string) => void }) {
   const r = useReservations()
   const { me } = useSession()
   const [form, setForm] = useState<Form>(EMPTY)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<Msg>(null)
   const waiting = r.items.filter((x) => x.status === 'waiting')
+  const listedByYt = useMemo(() => new Map(listed.map((v) => [v.youtubeVideoId, v])), [listed])
   const showOwner = Boolean(me.isSuperAdmin) // 총관리자는 모든 직원의 예약이 보이므로 등록자 열을 단다
   const [rf, setRf] = useState<RF>(RF_EMPTY)
   const [page, setPage] = useState(1)
@@ -185,21 +188,25 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
                 <th>예약한 날</th>
                 {showOwner && <th>등록자</th>}
                 <th>예약 링크</th>
+                <th className="num">재생시간</th>
                 <th>폼종류</th>
                 <th>종목</th>
                 <th>상태</th>
+                <th>영상리스트 반영</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {pageItems.length === 0 && (
                 <tr>
-                  <td colSpan={showOwner ? 7 : 6} className="g-empty">
+                  <td colSpan={showOwner ? 9 : 8} className="g-empty">
                     조건에 맞는 예약이 없습니다.
                   </td>
                 </tr>
               )}
-              {pageItems.map((x) => (
+              {pageItems.map((x) => {
+                const inList = listedByYt.get(x.youtubeVideoId)
+                return (
                 <tr key={x.id}>
                   <td className="nowrap">{fmtKst(x.createdAt)}</td>
                   {showOwner && <td className="nowrap">{x.ownerName || '-'}</td>}
@@ -207,6 +214,9 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
                     <a href={x.url} target="_blank" rel="noreferrer">
                       {x.url.replace('https://', '')}
                     </a>
+                  </td>
+                  <td className="num nowrap" title={inList ? undefined : '공개되어 영상리스트에 들어가면 보입니다'}>
+                    {inList ? fmtDuration(inList.durationSeconds) : '-'}
                   </td>
                   <td className="nowrap">
                     <span className={`g-format ${x.contentType === 'longform' ? 'long' : 'short'}`}>{x.contentType === 'longform' ? '롱폼' : '숏폼'}</span>
@@ -223,13 +233,23 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
                       <span className="g-chip accent">✅ 등록됨 {fmtKst(x.registeredAt)}</span>
                     )}
                   </td>
+                  <td className="nowrap">
+                    {inList ? (
+                      <button type="button" className="g-reflect done" onClick={() => onShow(inList.id)} title="누르면 아래 영상리스트에서 이 영상으로 이동합니다">
+                        완료
+                      </button>
+                    ) : (
+                      <span className="g-reflect">미완료</span>
+                    )}
+                  </td>
                   <td className="right nowrap">
                     <button type="button" className="g-btn soft-danger sm" onClick={() => remove(x.id, x.stockName)}>
                       삭제
                     </button>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
