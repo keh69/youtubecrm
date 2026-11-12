@@ -132,10 +132,7 @@ export function PersonStatsTable({ people, videos, onPick }: { people: Person[];
           {sorted.map((r) => (
             <tr key={r.userId} className={r.count === 0 ? 'none' : undefined}>
               <td className="nowrap">
-                <span className="g-who">
-                  <span className="g-avatar xs">{r.name.slice(0, 1)}</span>
-                  {r.name}
-                </span>
+                <span className="g-who">{r.name}</span>
               </td>
               <td className="num nowrap">
                 <b>{fmtNumber(r.count)}</b>

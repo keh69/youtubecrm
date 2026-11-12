@@ -99,7 +99,7 @@ export default function V5Videos() {
         {reg.recentLoading ? (
           <Loading />
         ) : (
-          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', avatar: 'g-avatar xs', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="아직 등록한 영상이 없습니다." />
+          <VideoTable videos={reg.recent} focus={focus} canEdit={Boolean(me.canEditVideos)} onChanged={reg.reloadRecent} cls={{ wrap: 'g-table-wrap', table: 'g-table g-vtable', vcell: 'g-vcell', thumb: 'g-thumb', vtitle: 'g-vtitle', format: 'g-format', formatLong: 'long', formatShort: 'short', who: 'g-who', chip: 'g-chip accent', btn: 'g-btn ghost sm', btnPrimary: 'g-btn primary sm', btnDanger: 'g-btn soft-danger sm', input: 'g-input sm', empty: 'g-empty', msg: 'g-msg ok' }} emptyText="아직 등록한 영상이 없습니다." />
         )}
       </section>
     </>

@@ -270,7 +270,6 @@ function AssignTab({ s, report }: { s: S; report: Report }) {
             <li key={u.id} className={`${u.active ? '' : 'inactive'} ${open ? 'open' : ''}`}>
               <div className="g-account">
                 <div className="g-account-id">
-                  <span className="g-avatar sm">{(u.name || u.loginId).slice(0, 1)}</span>
                   <span>
                     <strong>{u.name}</strong>
                     <small className="g-muted">
