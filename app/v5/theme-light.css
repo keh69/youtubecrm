@@ -3527,7 +3527,7 @@ html:root .v5 .g-ds-person {
 }
 html:root .v5 .g-ds-person th,
 html:root .v5 .g-ds-person td {
-  padding: 6px 10px;
+  padding: 6px 8px;
 }
 html:root .v5 .g-ds-person thead th {
   font-size: 12px;
@@ -3546,12 +3546,11 @@ html:root .v5 .g-ds-person .ds-sub {
 }
 html:root .v5 .g-ds-person .ds-share {
   white-space: nowrap;
-  min-width: 120px;
 }
 html:root .v5 .g-ds-person .ds-bar {
   display: inline-block;
   vertical-align: middle;
-  width: 72px;
+  width: 56px;
   height: 6px;
   border-radius: 3px;
   background: color-mix(in srgb, currentColor 10%, transparent);
@@ -3565,8 +3564,8 @@ html:root .v5 .g-ds-person .ds-bar i {
 }
 html:root .v5 .g-ds-person .ds-pct {
   display: inline-block;
-  min-width: 34px;
-  margin-left: 8px;
+  min-width: 32px;
+  margin-left: 6px;
   text-align: right;
   font-size: 12px;
 }
