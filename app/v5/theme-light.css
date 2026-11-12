@@ -3646,3 +3646,17 @@ html:root .v5 .g-ds-daily td.heat .ds-cell.ds-pick.on {
   outline: 2px solid #f59e0b;
   outline-offset: -2px;
 }
+
+/* 요약 줄 보정: 칸 폭은 글자 길이만큼(남는 폭은 고르게 나눔), 숫자는 잘리지 않게. 아주 좁은 화면(폰)에서만 가로로 밀어 본다 */
+html:root .v5 .g-ds-kpi dl {
+  overflow-x: auto;
+}
+html:root .v5 .g-ds-kpi dl > div,
+html:root .v5 .g-ds-kpi dl > div:first-child,
+html:root .v5 .g-ds-kpi dl > div.period {
+  flex: 1 1 auto;
+  min-width: auto;
+}
+html:root .v5 .g-ds-kpi dd.small {
+  font-size: clamp(9px, 1.35cqi, 15px);
+}

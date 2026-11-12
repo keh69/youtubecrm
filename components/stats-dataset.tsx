@@ -21,7 +21,7 @@ export function StatsKpiSection({ st }: { st: St }) {
   return (
     <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
       <dl className={v5 ? undefined : 'xs-ds-kpi'}>
-        <div>
+        <div className="period">
           <dt>기간</dt>
           <dd className="small">{rangeText}</dd>
         </div>
@@ -44,7 +44,7 @@ export function StatsKpiSection({ st }: { st: St }) {
           <dd>{s && s.videoCount > 0 ? fmtNumber(Math.round(s.totalViews / s.videoCount)) : '-'}</dd>
         </div>
         <div>
-          <dt>총 재생시간(영상 길이 합)</dt>
+          <dt title="올린 영상 길이의 합">총 재생시간</dt>
           <dd>{fmtTotalDuration(s?.totalDurationSeconds || 0)}</dd>
         </div>
         <div>
