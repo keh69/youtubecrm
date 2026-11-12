@@ -5,6 +5,7 @@ import { fmtDate, fmtDuration, fmtNumber, videoFormatLabel } from '@/lib/crm/cli
 import { deleteVideo, updateVideo } from '@/lib/crm/client/hooks'
 import type { Video } from '@/lib/crm/client/types'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
+import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 
 // 영상 표(영상통계·영상등록이 함께 쓴다).
 // 열: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 · [수정][삭제]
@@ -65,7 +66,19 @@ export function VideoTable({
   cls?: VideoTableCls
   emptyText?: string
 }) {
-  const c = { ...BASE, ...cls }
+  const ui = useSkinUi() // 스킨 모양(따로 넘긴 cls 가 있으면 그것이 먼저)
+  const c = {
+    ...BASE,
+    wrap: ui.tableWrap,
+    table: ui.table,
+    chip: ui.chip,
+    btn: ui.btn,
+    btnPrimary: ui.btnPrimary,
+    btnDanger: ui.btnDanger,
+    input: cx(ui.input, 'xs-input sm'),
+    msg: ui.msgOk,
+    ...cls
+  }
   const vf = useVideoFilters(videos)
   const list = vf.filtered
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)

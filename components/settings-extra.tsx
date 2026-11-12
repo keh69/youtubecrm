@@ -28,6 +28,7 @@ import {
 import { fmtDate, fmtDuration, fmtHourMin, fmtNumber, fmtTime, fmtTimeSec, fmtYmdShort, statusLabel } from '@/lib/crm/client/format'
 import { DateInput, dottedToIso, isoToDotted } from '@/components/date-input'
 import { api } from '@/lib/crm/client/api'
+import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 
 type Emp = ReturnType<typeof useEmployees>
 type S = ReturnType<typeof useSettings>
@@ -47,6 +48,7 @@ export function useSettingsTabFromUrl(setTab: (t: SettingsTab) => void) {
 
 /* ───────── 사원목록 [편집] [삭제] ───────── */
 export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][number]; emp: Emp; btnClass: string }) {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸 모양
   const { me } = useSession()
   const canEdit = (me.settingsTabs || []).includes('employees_edit')
   const canDelete = (me.settingsTabs || []).includes('employees_delete')
@@ -105,26 +107,26 @@ export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][num
             </h3>
             <label className="xs-field">
               <span>이름</span>
-              <input className="xs-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+              <input className={cx(ui.input, 'xs-input')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
             </label>
             <label className="xs-field">
               <span>입사일자</span>
-              <DateInput className="xs-input" value={form.hireDate} onChange={(v) => setForm({ ...form, hireDate: v })} ariaLabel="입사일자" />
+              <DateInput className={cx(ui.input, 'xs-input')} value={form.hireDate} onChange={(v) => setForm({ ...form, hireDate: v })} ariaLabel="입사일자" />
             </label>
             <label className="xs-field">
               <span>이메일 (비우면 그대로)</span>
-              <input className="xs-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <input className={cx(ui.input, 'xs-input')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </label>
             <label className="xs-field">
               <span>전화번호</span>
-              <input className="xs-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} inputMode="tel" />
+              <input className={cx(ui.input, 'xs-input')} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} inputMode="tel" />
             </label>
             {err && <p className="xs-err">{err}</p>}
             <div className="xs-actions">
-              <button type="button" className="xs-btn" onClick={() => setOpen(false)}>
+              <button type="button" className={ui.btn} onClick={() => setOpen(false)}>
                 취소
               </button>
-              <button className="xs-btn primary" disabled={busy}>
+              <button className={ui.btnPrimary} disabled={busy}>
                 {busy ? '저장 중…' : '저장'}
               </button>
             </div>
@@ -138,12 +140,13 @@ export function EmployeeManage({ user, emp, btnClass }: { user: Emp['items'][num
 
 /* ───────── 상세설정: 회원가입 시 역할 ───────── */
 export function SignupRoleSelect({ s, report }: { s: S; report: Report }) {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸·표·카드 모양
   const roles = s.data?.roles || []
   return (
     <label className="xs-signup-role">
       <span>회원가입 시 역할 :</span>
       <select
-        className="xs-input sm"
+        className={cx(ui.input, 'xs-input sm')}
         value={roles.find((r) => r.signupRole)?.id || ''}
         onChange={async (e) => {
           const role = roles.find((r) => r.id === e.target.value)
@@ -166,6 +169,7 @@ export function SignupRoleSelect({ s, report }: { s: S; report: Report }) {
 
 /* ───────── 미처리 알림(화면 위에 늘 뜸) ───────── */
 export function UnresolvedAlert({ base }: { base: string }) {
+  const ui = useSkinUi()
   const { me } = useSession()
   const count = useUnresolvedCount((me.settingsTabs || []).includes('unresolved'))
   const pending = count ? count.checkIn + count.checkOut : 0
@@ -179,7 +183,7 @@ export function UnresolvedAlert({ base }: { base: string }) {
           출근미처리 {count!.checkIn}건 · 퇴근미처리 {count!.checkOut}건
         </small>
       </span>
-      <Link href={`${base}/settings?tab=unresolved`} className="xs-btn primary" onClick={() => window.dispatchEvent(new CustomEvent(SETTINGS_TAB_EVENT, { detail: 'unresolved' }))}>
+      <Link href={`${base}/settings?tab=unresolved`} className={ui.btnPrimary} onClick={() => window.dispatchEvent(new CustomEvent(SETTINGS_TAB_EVENT, { detail: 'unresolved' }))}>
         처리하러 가기
       </Link>
     </div>
@@ -206,6 +210,7 @@ function downloadCsv(filename: string, header: string[], rows: Array<Array<strin
 const today = () => new Date().toISOString().slice(0, 10)
 
 export function DumpPanel() {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸·표·카드 모양
   const dump = useDump()
   const [who, setWho] = useState('')
   const [picked, setPicked] = useState<Set<string>>(new Set())
@@ -217,7 +222,7 @@ export function DumpPanel() {
   const vids = useMemo(() => (d?.videos || []).filter((v) => !who || v.ownerId === who), [d, who])
   const allPicked = vids.length > 0 && vids.every((v) => picked.has(v.id))
 
-  if (dump.loading) return <div className="xs-panel">불러오는 중…</div>
+  if (dump.loading) return <div className={cx(ui.section, 'xs-panel')}>불러오는 중…</div>
   if (dump.error) return <div className="xs-panel xs-err">{dump.error}</div>
   if (!d) return null
 
@@ -241,15 +246,15 @@ export function DumpPanel() {
   }
 
   return (
-    <div className="xs-panel">
-      <h3 className="xs-h">06 덤프파일</h3>
+    <div className={cx(ui.section, 'xs-panel')}>
+      <h2 className={cx(ui.h2, 'xs-h')}>06 덤프파일</h2>
       <p className="xs-muted">삭제된 사원의 근태 기록과 영상 기록이 여기에 보관됩니다. 이름은 &lsquo;홍길동(전)&rsquo;으로 보입니다. 영상은 골라서 다른 사원에게 담당자를 넘길 수 있고, CSV 파일로 내려받을 수 있습니다.</p>
       {d.people.length === 0 ? (
         <p className="xs-empty">삭제된 사원이 없습니다.</p>
       ) : (
         <>
           <div className="xs-bar">
-            <select className="xs-input" value={who} onChange={(e) => (setWho(e.target.value), setPicked(new Set()))} aria-label="사원">
+            <select className={cx(ui.input, 'xs-input')} value={who} onChange={(e) => (setWho(e.target.value), setPicked(new Set()))} aria-label="사원">
               <option value="">삭제된 사원 전체 ({d.people.length}명)</option>
               {d.people.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -264,7 +269,7 @@ export function DumpPanel() {
 
           <div className="xs-head">
             <h4>영상기록</h4>
-            <button className="xs-btn" disabled={!vids.length} onClick={() => downloadCsv(`영상기록_${today()}.csv`, ['담당자', '종목명', '제목', '주소', '업로드일', '조회수', '길이(초)'], vids.map((v) => [v.ownerName, v.stockName, v.title, v.url, fmtDate(v.publishedAt || v.createdAt), v.viewCount, v.durationSeconds ?? '']))}>
+            <button className={ui.btn} disabled={!vids.length} onClick={() => downloadCsv(`영상기록_${today()}.csv`, ['담당자', '종목명', '제목', '주소', '업로드일', '조회수', '길이(초)'], vids.map((v) => [v.ownerName, v.stockName, v.title, v.url, fmtDate(v.publishedAt || v.createdAt), v.viewCount, v.durationSeconds ?? '']))}>
               ⬇ CSV 내려받기
             </button>
           </div>
@@ -276,7 +281,7 @@ export function DumpPanel() {
                 <span>
                   <b>{vids.filter((v) => picked.has(v.id)).length}</b>개 선택
                 </span>
-                <select className="xs-input" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="새 담당자">
+                <select className={cx(ui.input, 'xs-input')} value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="새 담당자">
                   <option value="">새 담당자 고르기</option>
                   {d.assignees.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -284,12 +289,12 @@ export function DumpPanel() {
                     </option>
                   ))}
                 </select>
-                <button className="xs-btn primary" disabled={busy || !owner || !vids.some((v) => picked.has(v.id))} onClick={reassign}>
+                <button className={ui.btnPrimary} disabled={busy || !owner || !vids.some((v) => picked.has(v.id))} onClick={reassign}>
                   {busy ? '바꾸는 중…' : '담당자 변경'}
                 </button>
               </div>
-              <div className="xs-table-wrap">
-                <table className="xs-table">
+              <div className={ui.tableWrap}>
+                <table className={ui.table}>
                   <thead>
                     <tr>
                       <th>
@@ -330,15 +335,15 @@ export function DumpPanel() {
 
           <div className="xs-head">
             <h4>근태기록</h4>
-            <button className="xs-btn" disabled={!att.length} onClick={() => downloadCsv(`근태기록_${today()}.csv`, ['이름', '날짜', '출근', '퇴근', '근무시간(분)', '상태', '결근사유'], att.map((r) => [r.name, r.workDate, fmtTimeSec(r.checkInAt), fmtTimeSec(r.checkOutAt), r.workedMinutes, statusLabel(r), r.absenceReason || '']))}>
+            <button className={ui.btn} disabled={!att.length} onClick={() => downloadCsv(`근태기록_${today()}.csv`, ['이름', '날짜', '출근', '퇴근', '근무시간(분)', '상태', '결근사유'], att.map((r) => [r.name, r.workDate, fmtTimeSec(r.checkInAt), fmtTimeSec(r.checkOutAt), r.workedMinutes, statusLabel(r), r.absenceReason || '']))}>
               ⬇ CSV 내려받기
             </button>
           </div>
           {att.length === 0 ? (
             <p className="xs-empty">보관된 근태 기록이 없습니다.</p>
           ) : (
-            <div className="xs-table-wrap">
-              <table className="xs-table">
+            <div className={ui.tableWrap}>
+              <table className={ui.table}>
                 <thead>
                   <tr>
                     <th>이름</th>
@@ -392,6 +397,7 @@ function useResolveActions(): { IN_ACTIONS: ActionDef[]; OUT_ACTIONS: ActionDef[
 }
 
 function ResolveRow({ item, onResolve }: { item: UnresolvedItem; onResolve: ReturnType<typeof useUnresolved>['resolve'] }) {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸·표·카드 모양
   const { IN_ACTIONS, OUT_ACTIONS } = useResolveActions()
   const actions = item.kind === 'in' ? IN_ACTIONS : OUT_ACTIONS
   const [action, setAction] = useState<ResolveAction>(actions[0].key)
@@ -432,11 +438,11 @@ function ResolveRow({ item, onResolve }: { item: UnresolvedItem; onResolve: Retu
             ))}
           </span>
           {current.time ? (
-            <input className="xs-input sm" type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="시간" />
+            <input className={cx(ui.input, 'xs-input sm')} type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="시간" />
           ) : (
-            <input className="xs-input sm" value={note} maxLength={300} placeholder={action === 'absent' ? '결근 사유(선택)' : '휴무 사유(선택)'} onChange={(e) => setNote(e.target.value)} aria-label="사유" />
+            <input className={cx(ui.input, 'xs-input sm')} value={note} maxLength={300} placeholder={action === 'absent' ? '결근 사유(선택)' : '휴무 사유(선택)'} onChange={(e) => setNote(e.target.value)} aria-label="사유" />
           )}
-          <button className="xs-btn primary" disabled={busy || (Boolean(current.time) && !time)} onClick={submit}>
+          <button className={ui.btnPrimary} disabled={busy || (Boolean(current.time) && !time)} onClick={submit}>
             {busy ? '처리 중…' : '처리'}
           </button>
         </div>
@@ -447,13 +453,14 @@ function ResolveRow({ item, onResolve }: { item: UnresolvedItem; onResolve: Retu
 }
 
 export function UnresolvedPanel() {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸·표·카드 모양
   const u = useUnresolved()
-  if (u.loading && !u.data) return <div className="xs-panel">불러오는 중…</div>
+  if (u.loading && !u.data) return <div className={cx(ui.section, 'xs-panel')}>불러오는 중…</div>
   if (u.error) return <div className="xs-panel xs-err">{u.error}</div>
   const d = u.data!
   const table = (list: UnresolvedItem[], out: boolean) => (
-    <div className="xs-table-wrap">
-      <table className="xs-table">
+    <div className={ui.tableWrap}>
+      <table className={ui.table}>
         <thead>
           <tr>
             <th>날짜</th>
@@ -471,8 +478,8 @@ export function UnresolvedPanel() {
     </div>
   )
   return (
-    <div className="xs-panel">
-      <h3 className="xs-h">07 미처리</h3>
+    <div className={cx(ui.section, 'xs-panel')}>
+      <h2 className={cx(ui.h2, 'xs-h')}>07 미처리</h2>
       <p className="xs-muted">
         최근 2주({fmtYmdShort(d.from)} ~ {fmtYmdShort(d.to)}) 동안 평일(월~금)에 출근을 안 누른 날과, 퇴근을 안 눌러 23:59에 자동 퇴근된 날입니다. 오늘 출근은 출근 기준시간(설정 &gt; 08)이 지나야 나타납니다. 출근·출근(지각)·퇴근·퇴근(야근)·결근·휴무 중 하나로 처리하면 목록에서 사라집니다.
       </p>
@@ -543,6 +550,7 @@ export function StatsAllToggle({ role, s, report }: { role: NonNullable<S['data'
 
 /* ───────── 08 출퇴근시간(지각·야근 기준) ───────── */
 export function WorkHoursPanel() {
+  const ui = useSkinUi() // 이 스킨의 버튼·입력칸·표·카드 모양
   const work = useWorkTimes()
   const [start, setStart] = useState(work.start)
   const [end, setEnd] = useState(work.end)
@@ -558,21 +566,21 @@ export function WorkHoursPanel() {
     setMsg({ ok: true, text: `저장했습니다. 출근 ${res.data.start} 이후 = 지각, 퇴근 ${res.data.end} 이후 = 야근. 다른 화면은 새로고침하면 바로 반영됩니다.` })
   }
   return (
-    <form className="xs-panel" onSubmit={save}>
-      <h3 className="xs-h">08 출퇴근시간</h3>
+    <form className={cx(ui.section, 'xs-panel')} onSubmit={save}>
+      <h2 className={cx(ui.h2, 'xs-h')}>08 출퇴근시간</h2>
       <p className="xs-muted">
         출근 기준시간 이후에 출근하면 <b>지각</b>, 퇴근 기준시간 이후에 퇴근하면 <b>야근</b>으로 표시됩니다(23:59 자동 퇴근은 야근이 아니라 퇴근(미처리)). 근태처리·미처리 버튼의 기본 시간도 이 기준을 따릅니다. 바꾸면 지난 기록의 지각·야근 표시도 새 기준으로 다시 계산됩니다.
       </p>
       <div className="xs-bar">
         <label className="xs-field">
           <span>출근 기준시간</span>
-          <input className="xs-input" type="time" value={start} onChange={(e) => setStart(e.target.value)} required />
+          <input className={cx(ui.input, 'xs-input')} type="time" value={start} onChange={(e) => setStart(e.target.value)} required />
         </label>
         <label className="xs-field">
           <span>퇴근 기준시간</span>
-          <input className="xs-input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
+          <input className={cx(ui.input, 'xs-input')} type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
         </label>
-        <button className="xs-btn primary" disabled={busy} style={{ alignSelf: 'flex-end' }}>
+        <button className={ui.btnPrimary} disabled={busy} style={{ alignSelf: 'flex-end' }}>
           {busy ? '저장 중…' : '저장'}
         </button>
       </div>
