@@ -4,6 +4,7 @@ import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/
 import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
+import { PersonStatsTable } from './person-table'
 
 // 일자별 표 도우미
 const weekdayOf = (ymd: string) => ['일', '월', '화', '수', '목', '금', '토'][new Date(`${ymd}T12:00:00Z`).getUTCDay()]
@@ -98,6 +99,16 @@ export default function V5Stats() {
             <dt>총 재생시간(영상 길이 합)</dt>
             <dd>{fmtTotalDuration(st.data?.summary.totalDurationSeconds || 0)}</dd>
           </div>
+          <div>
+            <dt>영상당 평균 길이</dt>
+            <dd>{st.data && st.data.summary.videoCount > 0 ? fmtDuration(Math.round(st.data.summary.totalDurationSeconds / st.data.summary.videoCount)) : '-'}</dd>
+          </div>
+          <div>
+            <dt>롱폼 / 숏폼</dt>
+            <dd>
+              {fmtNumber(st.data?.videos.filter((v) => v.contentType === 'longform').length)} / {fmtNumber(st.data?.videos.filter((v) => v.contentType !== 'longform').length)}
+            </dd>
+          </div>
         </dl>
       </section>
 
@@ -147,40 +158,11 @@ export default function V5Stats() {
 
       {st.data && st.data.perPerson.length > 0 && (
         <section className="g-glass">
-          <h2 className="g-h2">담당자별</h2>
-          <div className="g-table-wrap">
-            <table className="g-table g-compact">
-              <thead>
-                <tr>
-                  <th>담당자</th>
-                  <th className="num">영상</th>
-                  <th className="num">총 조회수</th>
-                  <th className="num">총 재생시간</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {st.data.perPerson.map((p) => (
-                  <tr key={p.userId}>
-                    <td>
-                      <span className="g-who">
-                        <span className="g-avatar xs">{p.name.slice(0, 1)}</span>
-                        {p.name}
-                      </span>
-                    </td>
-                    <td className="num">{fmtNumber(p.videoCount)}</td>
-                    <td className="num">{fmtNumber(p.totalViews)}</td>
-                    <td className="num">{fmtTotalDuration(p.totalDurationSeconds)}</td>
-                    <td className="right">
-                      <button className="g-btn ghost sm" onClick={() => st.setWho(p.userId === me.id ? 'me' : p.userId)}>
-                        영상 보기
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="g-card-head">
+            <h2 className="g-h2">담당자별</h2>
+            <span className="g-muted g-small">머리칸을 누르면 정렬 · [보기]를 누르면 그 사람 영상만</span>
           </div>
+          <PersonStatsTable people={st.data.perPerson} videos={st.data.videos} onPick={(id) => st.setWho(id === me.id ? 'me' : id)} />
         </section>
       )}
 

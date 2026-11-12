@@ -3519,3 +3519,79 @@ html:root .v5 .g-att-buttons .g-round.off:active {
   cursor: not-allowed;
   transform: none;
 }
+
+/* ───────── 영상통계 > 담당자별 수치표(g-ds-person) (2026-11-12) ───────── */
+html:root .v5 .g-ds-person {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .g-ds-person th,
+html:root .v5 .g-ds-person td {
+  padding: 6px 10px;
+}
+html:root .v5 .g-ds-person thead th {
+  font-size: 12px;
+  white-space: nowrap;
+}
+html:root .v5 .g-ds-person thead th.num .vt-sort {
+  justify-content: flex-end;
+}
+html:root .v5 .g-ds-person tbody tr.none {
+  opacity: 0.5;
+}
+html:root .v5 .g-ds-person .ds-sub {
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+html:root .v5 .g-ds-person .ds-share {
+  white-space: nowrap;
+  min-width: 120px;
+}
+html:root .v5 .g-ds-person .ds-bar {
+  display: inline-block;
+  vertical-align: middle;
+  width: 72px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  overflow: hidden;
+}
+html:root .v5 .g-ds-person .ds-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #8b5cf6;
+}
+html:root .v5 .g-ds-person .ds-pct {
+  display: inline-block;
+  min-width: 34px;
+  margin-left: 8px;
+  text-align: right;
+  font-size: 12px;
+}
+html:root .v5 .g-ds-person .ds-link {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+html:root .v5 .g-ds-person .ds-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html:root .v5 .g-ds-person tfoot th,
+html:root .v5 .g-ds-person tfoot td {
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font-weight: 700;
+  font-size: 12.5px;
+  text-align: left;
+}
+html:root .v5 .g-ds-person tfoot td.num {
+  text-align: right;
+}
