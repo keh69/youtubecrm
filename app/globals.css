@@ -1396,3 +1396,31 @@ html {
   background-color: #ffffff;
   color: #111111;
 }
+
+/* 영상 표 머리칸 정렬 버튼(.vt-sort): 머리칸 글자처럼 보이고, 누르면 정렬 */
+.vt-sort {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vt-sort:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.vt-sort .vt-sort-ico {
+  font-size: 0.85em;
+  opacity: 0.45;
+}
+.vt-sort.on {
+  font-weight: 700;
+}
+.vt-sort.on .vt-sort-ico {
+  opacity: 1;
+}

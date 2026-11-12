@@ -10,6 +10,30 @@ import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 // 영상 표(영상통계·영상등록이 함께 쓴다).
 const PAGE_SIZES = [10, 20, 30, 50, 100]
 
+// 머리칸을 누르면 정렬: 오름차순 → 내림차순 → 기본(처음 순서) 순서로 바뀐다. 썸네일 칸은 정렬 없음.
+type SortKey = 'date' | 'time' | 'duration' | 'format' | 'stock' | 'owner' | 'views'
+type Sort = { key: SortKey; dir: 'asc' | 'desc' } | null
+const uploadedIso = (v: Video) => v.publishedAt || v.createdAt
+const sortValue = (v: Video, key: SortKey): number | string => {
+  if (key === 'date') return new Date(uploadedIso(v)).getTime() || 0
+  if (key === 'time') return fmtHm24(uploadedIso(v)) // 하루 안의 시각(HH:mm)만 비교
+  if (key === 'duration') return v.durationSeconds ?? -1
+  if (key === 'format') return videoFormatLabel(v)
+  if (key === 'stock') return v.stockName || ''
+  if (key === 'owner') return v.ownerName || ''
+  return v.viewCount
+}
+function sortVideos(list: Video[], sort: Sort) {
+  if (!sort) return list
+  const sign = sort.dir === 'asc' ? 1 : -1
+  return [...list].sort((a, b) => {
+    const x = sortValue(a, sort.key)
+    const y = sortValue(b, sort.key)
+    const d = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'ko')
+    return d * sign
+  })
+}
+
 // 올린 시간: 한국 시간 24시간 표기(예: 13:05, 00:30)
 function fmtHm24(iso: string | null | undefined) {
   if (!iso) return '-'
@@ -92,12 +116,30 @@ export function VideoTable({
   const hideTitle = ui.key === 'v5' // v5전용: 0 때 해제 — 영상 열에서 제목만 빼고 썸네일은 남김(영상등록·영상통계)
   const showTime = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
   const vf = useVideoFilters(videos)
-  const list = vf.filtered
+  // v5전용: 0 때 해제 — 머리칸 눌러 정렬
+  const sortable = ui.key === 'v5'
+  const [sort, setSort] = useState<Sort>(null)
+  const list = sortable ? sortVideos(vf.filtered, sort) : vf.filtered
+  const toggleSort = (key: SortKey) => setSort((s) => (!s || s.key !== key ? { key, dir: 'asc' } : s.dir === 'asc' ? { key, dir: 'desc' } : null))
+  // 정렬 가능한 머리칸: 글자 + ▲(오름)/▼(내림)/⇅(기본)
+  const sortTh = (key: SortKey, label: string, className?: string) =>
+    sortable ? (
+      <th className={className} aria-sort={sort?.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+        <button type="button" className={cx('vt-sort', sort?.key === key && 'on')} onClick={() => toggleSort(key)} title="누르면 오름차순 → 내림차순 → 기본 순서">
+          {label}
+          <span className="vt-sort-ico" aria-hidden="true">
+            {sort?.key === key ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅'}
+          </span>
+        </button>
+      </th>
+    ) : (
+      <th className={className}>{label}</th>
+    )
   // v5전용: 0 때 해제 — 몇 개씩 보기(기본 10개) + 아래 페이지 번호
   const paged = ui.key === 'v5'
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
-  useEffect(() => setPage(1), [vf.f, pageSize]) // 필터·보기 개수를 바꾸면 1쪽으로
+  useEffect(() => setPage(1), [vf.f, pageSize, sort]) // 필터·보기 개수·정렬을 바꾸면 1쪽으로
   const pages = paged ? Math.max(1, Math.ceil(list.length / pageSize)) : 1
   const cur = Math.min(page, pages)
   const rows = paged ? list.slice((cur - 1) * pageSize, cur * pageSize) : list
@@ -157,14 +199,14 @@ export function VideoTable({
         <table className={hideTitle ? cx(c.table, 'no-title') : c.table}>
           <thead>
             <tr>
-              <th>올린 날짜</th>
-              {showTime && <th>올린 시간</th>}
+              {sortTh('date', '올린 날짜')}
+              {showTime && sortTh('time', '올린 시간')}
               <th className={hideTitle ? 'thumb-col' : undefined}>{hideTitle ? '썸네일' : '영상'}</th>
-              <th className="num">재생시간</th>
-              <th>폼종류</th>
-              <th>종목</th>
-              <th>담당자</th>
-              <th className="num">조회수</th>
+              {sortTh('duration', '재생시간', 'num')}
+              {sortTh('format', '폼종류')}
+              {sortTh('stock', '종목')}
+              {sortTh('owner', '담당자')}
+              {sortTh('views', '조회수', 'num')}
               {canEdit && <th />}
             </tr>
           </thead>
