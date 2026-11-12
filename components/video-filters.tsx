@@ -109,7 +109,7 @@ function MultiPick({ label, all, value, onChange }: { label: string; all: string
   )
 }
 
-export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideoFilters>; total: number }) {
+export function VideoFilterBar({ ctl, total, hideTitle = false }: { ctl: ReturnType<typeof useVideoFilters>; total: number; hideTitle?: boolean }) {
   const { f, setF, options } = ctl
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   return (
@@ -122,10 +122,12 @@ export function VideoFilterBar({ ctl, total }: { ctl: ReturnType<typeof useVideo
           <input className="vf-input" type="date" value={f.dateTo} onChange={(e) => set({ dateTo: e.target.value })} aria-label="올린 날짜 끝" />
         </span>
       </div>
-      <label className="vf-field vf-grow">
-        <span className="vf-label">영상(제목)</span>
-        <input className="vf-input" value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder="제목에 들어간 글자" />
-      </label>
+      {!hideTitle && (
+        <label className="vf-field vf-grow">
+          <span className="vf-label">영상(제목)</span>
+          <input className="vf-input" value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder="제목에 들어간 글자" />
+        </label>
+      )}
       <div className="vf-field">
         <span className="vf-label">재생시간(분)</span>
         <span className="vf-range">

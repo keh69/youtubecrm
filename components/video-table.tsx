@@ -79,6 +79,7 @@ export function VideoTable({
     msg: ui.msgOk,
     ...cls
   }
+  const hideTitle = ui.key === 'v5' // v5전용: 0 때 해제 — 영상(제목) 열 빼기(영상등록·영상통계)
   const vf = useVideoFilters(videos)
   const list = vf.filtered
   const [editing, setEditing] = useState<{ id: string; stockName: string; contentType: 'longform' | 'shortform' } | null>(null)
@@ -110,14 +111,14 @@ export function VideoTable({
 
   return (
     <>
-      <VideoFilterBar ctl={vf} total={videos.length} />
+      <VideoFilterBar ctl={vf} total={videos.length} hideTitle={hideTitle} />
       {msg && <p className={c.msg} role="status">{msg}</p>}
       <div className={c.wrap}>
         <table className={c.table}>
           <thead>
             <tr>
               <th>올린 날짜</th>
-              <th>영상</th>
+              {!hideTitle && <th>영상</th>}
               <th className="num">재생시간</th>
               <th>폼종류</th>
               <th>종목</th>
@@ -133,6 +134,7 @@ export function VideoTable({
               return (
                 <tr key={v.id}>
                   <td className="num nowrap">{fmtDate(v.publishedAt || v.createdAt)}</td>
+                  {!hideTitle && (
                   <td>
                     <div className={c.vcell}>
                       <a href={v.url} target="_blank" rel="noreferrer" className={c.thumb} aria-label={`${v.title} 유튜브에서 보기`}>
@@ -143,6 +145,7 @@ export function VideoTable({
                       </a>
                     </div>
                   </td>
+                  )}
                   <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
                   <td className="nowrap">
                     {ed ? (

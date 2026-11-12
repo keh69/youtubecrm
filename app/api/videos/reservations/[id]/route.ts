@@ -4,7 +4,7 @@ import { cancelReservation } from '@/lib/crm/server/reservations'
 
 type Params = { params: Promise<{ id: string }> }
 
-// 예약 취소(공개 대기 중인 것만)
+// 예약 삭제(예약 목록에서만. 등록된 영상은 그대로)
 export async function DELETE(request: Request, context: Params) {
   try {
     const ctx = await getContext(request)
@@ -13,6 +13,6 @@ export async function DELETE(request: Request, context: Params) {
     await cancelReservation(ctx, id)
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return handleError(e, '예약 취소 실패')
+    return handleError(e, '예약 삭제 실패')
   }
 }

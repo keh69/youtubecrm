@@ -165,13 +165,12 @@ export async function listMyReservations(ctx: CrmContext) {
   return (data || []).map(toDto)
 }
 
-// 예약 취소(공개 대기 중인 것만). 본인 것, 또는 영상등록 수정권한이 있으면 남의 것도.
+// 예약 삭제(예약 목록에서만 지운다. 이미 등록된 영상은 그대로). 본인 것, 또는 영상등록 수정권한이 있으면 남의 것도.
 export async function cancelReservation(ctx: CrmContext, id: string) {
   const { data, error } = await ctx.db.from(TABLES.videoReservations).select('id, owner_user_id, status').eq('id', id).maybeSingle()
   if (error) tableError(error)
   if (!data) throw new HttpError(404, '예약을 찾을 수 없습니다.')
-  if (data.owner_user_id !== ctx.profile.id && !ctx.canEditVideos) throw new HttpError(403, '내가 예약한 영상만 취소할 수 있습니다.')
-  if (data.status !== 'waiting') throw new HttpError(400, '이미 영상등록으로 옮겨진 예약입니다.')
+  if (data.owner_user_id !== ctx.profile.id && !ctx.canEditVideos) throw new HttpError(403, '내가 예약한 영상만 삭제할 수 있습니다.')
   const { error: delError } = await ctx.db.from(TABLES.videoReservations).delete().eq('id', id)
   if (delError) throw delError
 }

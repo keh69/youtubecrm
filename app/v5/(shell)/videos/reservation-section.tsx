@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useReservations } from '@/lib/crm/client/hooks'
+import { useReservations, useSession } from '@/lib/crm/client/hooks'
 import { Loading, Note, type Msg } from '../../_components/ui'
 
 // 영상등록 > 예약등록 (v5)
@@ -26,6 +26,7 @@ const EMPTY: Form = { stockName: '', contentType: '', url: '' }
 
 export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<void> }) {
   const r = useReservations()
+  const { me } = useSession()
   const [form, setForm] = useState<Form>(EMPTY)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<Msg>(null)
@@ -51,28 +52,24 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
     } else setMsg({ tone: 'ok', text: '예약등록했습니다. 유튜브에 공개되면 자동으로 영상등록됩니다.' })
   }
 
-  const cancel = async (id: string, name: string) => {
-    if (!window.confirm(`"${name}" 예약을 취소할까요? (유튜브 예약은 그대로입니다)`)) return
+  // 삭제: CRM 예약 목록에서만 지운다(유튜브 예약·이미 등록된 영상은 그대로)
+  const remove = async (id: string, name: string) => {
+    if (!window.confirm(`"${name}" 예약을 삭제할까요? (유튜브 예약과 이미 등록된 영상은 그대로입니다)`)) return
     const res = await r.cancel(id)
-    setMsg(res.ok ? { tone: 'ok', text: '예약을 취소했습니다.' } : { tone: 'error', text: res.error || '취소하지 못했습니다.' })
-  }
-
-  // 지금 확인: 공개된 예약을 옮기고 아래 영상 표도 새로 불러온다
-  const recheck = async () => {
-    await r.reload()
-    await onMoved()
+    setMsg(res.ok ? { tone: 'ok', text: '예약을 삭제했습니다.' } : { tone: 'error', text: res.error || '삭제하지 못했습니다.' })
   }
 
   return (
     <section className="g-glass g-register">
-      <div className="g-card-head">
-        <h2 className="g-h2">예약등록 (공개 대기 {waiting.length})</h2>
-        <button type="button" className="g-btn ghost sm" onClick={recheck}>
-          지금 확인
-        </button>
-      </div>
+      <h2 className="g-h2">예약등록 (공개 대기 {waiting.length})</h2>
       <p className="g-muted g-small">유튜브에서 예약 업로드한 뒤 나오는 링크를 넣어 두세요. 영상이 공개되면 자동으로 아래 &apos;내가 등록한 영상&apos;에 들어갑니다(영상등록·영상통계 화면을 열 때 확인합니다).</p>
       <form className="g-row-form" onSubmit={submit}>
+        <div className="g-field">
+          <span>등록자</span>
+          <div className="g-readonly" title="로그인한 사람 이름이 자동으로 붙습니다">
+            {me.name} <small>(자동)</small>
+          </div>
+        </div>
         <label className="g-field">
           <span>종목명</span>
           <input className="g-input" value={form.stockName} onChange={(e) => setForm({ ...form, stockName: e.target.value })} placeholder="예) 삼성전자" maxLength={60} />
@@ -144,11 +141,9 @@ export function ReservationSection({ onMoved }: { onMoved: () => void | Promise<
                     )}
                   </td>
                   <td className="right nowrap">
-                    {x.status === 'waiting' && (
-                      <button type="button" className="g-btn soft-danger sm" onClick={() => cancel(x.id, x.stockName)}>
-                        취소
-                      </button>
-                    )}
+                    <button type="button" className="g-btn soft-danger sm" onClick={() => remove(x.id, x.stockName)}>
+                      삭제
+                    </button>
                   </td>
                 </tr>
               ))}
