@@ -73,11 +73,13 @@ async function fetchLiveIds(ids: string[], apiKey: string) {
 }
 
 // 예약 하나를 영상등록으로 옮긴다(등록자는 예약한 직원)
+// 같은 영상이 이미 영상리스트에 있으면(누가 직접 등록했으면) 새로 올리거나 덮어쓰지 않고, 예약만 그 영상에 연결해 끝낸다.
 async function convert(ctx: CrmContext, r: any) {
   const { db } = ctx
-  const { data: owner } = await db.from(TABLES.crmUsers).select('id, name').eq('id', r.owner_user_id).maybeSingle()
-  let videoId: string | null = null
-  try {
+  const { data: already } = await db.from(TABLES.videos).select('id').eq('youtube_video_id', r.youtube_video_id).maybeSingle()
+  let videoId: string | null = already?.id || null
+  const { data: owner } = videoId ? { data: null } : await db.from(TABLES.crmUsers).select('id, name').eq('id', r.owner_user_id).maybeSingle()
+  if (!videoId) try {
     if (!owner) throw new Error('예약한 직원 없음')
     const ownerCtx = { ...ctx, profile: { ...ctx.profile, id: owner.id, name: owner.name } } as CrmContext
     const out = await registerVideo(ownerCtx, `https://www.youtube.com/watch?v=${r.youtube_video_id}`, r.stock_name, r.content_type)

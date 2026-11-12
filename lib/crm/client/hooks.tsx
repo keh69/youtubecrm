@@ -447,7 +447,7 @@ function periodRange(period: StatPeriod, date: string) {
 }
 
 export function useStats() {
-  const [who, setWho] = useState('me')
+  const [who, setWho] = useState('all') // 기본: 볼 수 있는 직원 전체(총관리자는 모든 직원, 그 외는 나 + 내 하부 직원)
   const [period, setPeriod] = useState<StatPeriod>('month')
   const [date, setDateState] = useState(() => todayKst()) // '특정날짜'일 때 고른 날짜
   const [sort, setSort] = useState<StatSort>('date')
