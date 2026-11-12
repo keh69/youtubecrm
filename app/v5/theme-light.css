@@ -3508,3 +3508,14 @@ html:root .v5 .g-reflect.done:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* 폰·태블릿 출근·퇴근 버튼: 꺼진 모양(누르면 'PC에서만 근태체크가 가능합니다' 안내) */
+html:root .v5 .g-att-buttons .g-round.off,
+html:root .v5 .g-att-buttons .g-round.off:hover,
+html:root .v5 .g-att-buttons .g-round.off:active {
+  filter: grayscale(0.85);
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}

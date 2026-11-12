@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMenuGuard, useMyAttendance, useNow } from '@/lib/crm/client/hooks'
 import { fmtHourMin, fmtTimeSec, fmtYmdShort, liveWorkedMinutes, nowStatusLabel, statusTone } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead, StatusPill, type Msg } from '../../_components/ui'
+import { MOBILE_ATTENDANCE_MSG } from '@/lib/crm/client/device'
 
 const GOAL_MINUTES = 9 * 60
 
@@ -38,6 +39,12 @@ export default function V5Attendance() {
   if (!allowed) return null
 
   const press = async (kind: 'in' | 'out') => {
+    // 폰·태블릿: 버튼은 꺼진 모양이지만 누르면 안내 창을 띄운다
+    if (att.mobileBlocked) {
+      setMsg({ tone: 'error', text: MOBILE_ATTENDANCE_MSG })
+      window.alert(MOBILE_ATTENDANCE_MSG)
+      return
+    }
     const res = kind === 'in' ? await att.checkIn() : await att.checkOut()
     if (res.ok) setMsg({ tone: 'ok', text: kind === 'in' ? '출근이 기록되었습니다.' : '퇴근이 기록되었습니다.' })
     else if (res.error) setMsg({ tone: 'error', text: res.error })
@@ -53,7 +60,7 @@ export default function V5Attendance() {
       <PageHead emoji="⏰" title="근태체크" desc="출근할 때와 퇴근할 때 버튼을 한 번씩 눌러 주세요. 퇴근을 안 누르면 23:59에 자동 퇴근됩니다." />
 
       {att.error && <Note msg={{ tone: 'error', text: att.error }} role="alert" />}
-      {att.mobileBlocked && <Note msg={{ tone: 'error', text: '출근·퇴근은 컴퓨터에서만 누를 수 있습니다. 폰·태블릿에서는 기록만 볼 수 있어요.' }} role="status" />}
+      {att.mobileBlocked && <Note msg={{ tone: 'error', text: 'PC에서만 근태체크가 가능합니다.' }} role="status" />}
 
       <section className="g-glass g-att">
         <div className="g-att-clock">
@@ -79,11 +86,11 @@ export default function V5Attendance() {
         </Ring>
 
         <div className="g-att-buttons">
-          <button className="g-round in" disabled={att.loading || !att.canCheckIn || att.busy !== null} onClick={() => press('in')}>
+          <button className={`g-round in${att.mobileBlocked ? ' off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckIn || att.busy !== null)} onClick={() => press('in')}>
             <span aria-hidden="true">☀️</span>
             {att.busy === 'in' ? '기록 중…' : '출근'}
           </button>
-          <button className="g-round out" disabled={att.loading || !att.canCheckOut || att.busy !== null} onClick={() => press('out')}>
+          <button className={`g-round out${att.mobileBlocked ? ' off' : ''}`} aria-disabled={att.mobileBlocked || undefined} disabled={!att.mobileBlocked && (att.loading || !att.canCheckOut || att.busy !== null)} onClick={() => press('out')}>
             <span aria-hidden="true">🌙</span>
             {att.busy === 'out' ? '기록 중…' : '퇴근'}
           </button>

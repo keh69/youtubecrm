@@ -11,3 +11,6 @@ export function isMobileDevice() {
   if (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1) return true
   return false
 }
+
+// 폰·태블릿에서 출근·퇴근을 누르면 보여 줄 안내(서버 lib/crm/server/device.ts 와 같은 글)
+export const MOBILE_ATTENDANCE_MSG = 'PC에서만 근태체크가 가능합니다.'

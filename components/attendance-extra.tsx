@@ -14,7 +14,7 @@ export function AttendanceSummary({ record }: { record: DayRecord | null }) {
   useEffect(() => setMobile(isMobileDevice()), [])
   return (
     <>
-    {mobile && <p className="xs-err" role="status">출근·퇴근은 컴퓨터에서만 누를 수 있습니다. 폰·태블릿에서는 기록만 볼 수 있어요.</p>}
+    {mobile && <p className="xs-err" role="status">PC에서만 근태체크가 가능합니다.</p>}
     <dl className="xs-att-summary">
       <div>
         <dt>현재상태</dt>

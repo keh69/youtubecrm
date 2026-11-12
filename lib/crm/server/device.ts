@@ -15,6 +15,6 @@ export function isMobileRequest(request: Request, clientSaysMobile?: boolean) {
 
 export function assertDesktop(request: Request, clientSaysMobile?: boolean) {
   if (isMobileRequest(request, clientSaysMobile)) {
-    throw new HttpError(403, '출근·퇴근은 컴퓨터에서만 누를 수 있습니다. 폰·태블릿에서는 기록만 볼 수 있어요.')
+    throw new HttpError(403, 'PC에서만 근태체크가 가능합니다.')
   }
 }

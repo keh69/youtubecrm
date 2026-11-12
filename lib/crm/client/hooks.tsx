@@ -10,7 +10,7 @@ import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogou
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
 import type { AccountPatch, MealPay, Me, Reservation, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
-import { isMobileDevice } from '@/lib/crm/client/device'
+import { MOBILE_ATTENDANCE_MSG, isMobileDevice } from '@/lib/crm/client/device'
 
 export type ActionResult = { ok: boolean; error?: string }
 
@@ -228,6 +228,7 @@ export function useMyAttendance() {
 
   const press = async (kind: 'in' | 'out'): Promise<ActionResult> => {
     if (busy) return { ok: false }
+    if (isMobileDevice()) return { ok: false, error: MOBILE_ATTENDANCE_MSG } // 폰·태블릿: 서버에 보내지 않고 안내만
     setBusy(kind)
     const res = await api(`/api/attendance/${kind === 'in' ? 'checkin' : 'checkout'}`, { method: 'POST', body: { device: isMobileDevice() ? 'mobile' : 'desktop' } })
     await reload()
