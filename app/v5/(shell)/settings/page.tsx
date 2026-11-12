@@ -148,7 +148,7 @@ function EmployeesTab() {
         <Empty>내 소속 하부에 있는 사원이 없습니다. 02 역할부여에서 사원의 소속을 나(내 아이디)로 정해 주세요.</Empty>
       ) : (
         <div className="g-table-wrap">
-          <table className="g-table">
+          <table className="g-table g-emp-table">
             <thead>
               <tr>
                 <th>아이디</th>

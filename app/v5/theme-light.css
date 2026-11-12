@@ -3297,3 +3297,15 @@ html:root .v5 .g-matrix td {
   align-items: center;
   gap: 6px;
 }
+
+/* ───────── 설정 > 01 사원목록: 표 폭 20% 넓게(1000px → 1200px), 화면 가운데 (2026-11-12) ─────────
+   사원목록 표가 있는 화면만 내용 폭을 넓힌다. 소속·역할 칸이 한 글자씩 세로로 꺾이지 않게 줄바꿈도 막는다. */
+html:root .v5 .g-content:has(.g-emp-table) {
+  max-width: min(1200px, calc(100vw - 32px));
+  margin-left: auto;
+  margin-right: auto;
+}
+html:root .v5 .g-emp-table th,
+html:root .v5 .g-emp-table td {
+  white-space: nowrap;
+}
