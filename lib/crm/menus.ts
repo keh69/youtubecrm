@@ -2,7 +2,7 @@
 // 역할(role)마다 어떤 메뉴를 볼 수 있는지는 youtubeCRM_role_menu_permissions 에
 // (role_type = 역할 code, menu_key) 로 저장된다. 사용자가 여러 역할을 가지면 합집합.
 
-export const MENU_KEYS = ['attendance', 'attendance_team', 'videos', 'stats', 'settings', 'payroll'] as const
+export const MENU_KEYS = ['attendance', 'attendance_team', 'videos', 'stats', 'stats_compare', 'settings', 'payroll'] as const
 export type MenuKey = (typeof MENU_KEYS)[number]
 
 export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; description: string }> = [
@@ -10,6 +10,7 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
   { key: 'attendance_team', label: '직원근태', path: '/team-attendance', description: '직원 근태 통계 확인, 결근 처리' },
   { key: 'videos', label: '영상등록', path: '/videos', description: '종목명 + 유튜브 주소로 영상 등록' },
   { key: 'stats', label: '영상통계', path: '/stats', description: '영상 조회수·재생시간·업로드 현황' },
+  { key: 'stats_compare', label: '통계비교', path: '/stats-compare', description: '두 기간·두 직원의 영상통계를 차트로 비교(오른 것·내린 것)' }, // 영상등록 드롭다운: 통계 아래
   { key: 'settings', label: '설정', path: '/settings', description: '역할부여, 역할설정, 아이디생성' },
   { key: 'payroll', label: '급여계산', path: '/payroll', description: '급여계산, 식대계산(출근 1일당 1만 원)' } // 상단 메뉴에서 설정 오른쪽
 ]
@@ -17,7 +18,7 @@ export const MENUS: ReadonlyArray<{ key: MenuKey; label: string; path: string; d
 // v5전용: 0 때 해제 — 아직 v5 에만 페이지가 있는 메뉴. 다른 스킨의 메뉴 줄에는 안 나온다.
 // (누구에게 보일지 정하는 역할설정 표에는 모든 스킨에서 나온다. 새 기능 메뉴는 항상 MENUS 에 넣어 역할설정에서 켜고 끈다.)
 // 사용자가 '0' 을 치면 다른 스킨에 페이지를 만들고 이 목록에서 뺀다.
-export const V5_ONLY_MENUS: MenuKey[] = [] // 2026-11-12 '0': 급여계산도 모든 스킨에 페이지가 생겼다
+export const V5_ONLY_MENUS: MenuKey[] = ['stats_compare'] // 2026-11-13 통계비교는 아직 v5 에만 페이지가 있다
 
 // 관리자급 역할: 이 역할을 가진 사람은 남이 등록한 영상도 고칠 수 있다. 삭제가 막힌 것은 총 관리자뿐(isSystemRole).
 export const ADMIN_ROLE_CODES = ['super_admin', 'admin'] as const

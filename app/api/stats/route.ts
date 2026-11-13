@@ -16,9 +16,11 @@ const MAX_DAYS = 366
 export async function GET(request: Request) {
   try {
     const ctx = await getContext(request)
-    requireMenu(ctx, 'stats')
-    await processReservations(ctx) // 공개된 예약 영상을 먼저 영상등록으로 옮긴다
+    // 영상통계 또는 통계비교(같은 데이터를 두 번 불러 비교한다) 권한
+    if (!ctx.menus.includes('stats_compare')) requireMenu(ctx, 'stats')
     const url = new URL(request.url)
+    // 통계비교는 여러 번 동시에 부르므로 예약 옮기기는 건너뛴다(?sync=0)
+    if (url.searchParams.get('sync') !== '0') await processReservations(ctx) // 공개된 예약 영상을 먼저 영상등록으로 옮긴다
     const today = getKstYmd(new Date())
     let to = url.searchParams.get('to') || today
     let from = url.searchParams.get('from') || addDaysToYmd(today, -29)

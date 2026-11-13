@@ -3888,3 +3888,326 @@ html:root .v5 table.g-table.g-resv-table .g-btn.sm {
   padding-left: clamp(8px, 1.2cqi, 14px);
   padding-right: clamp(8px, 1.2cqi, 14px);
 }
+
+/* ───────── 메뉴 드롭다운: 하위 메뉴가 여러 개(영상등록 → 통계, 통계비교) (2026-11-13) ───────── */
+html:root .v5 .g-dd-menu a + a {
+  margin-top: 6px;
+}
+@media (hover: none), (max-width: 760px) {
+  html:root .v5 .g-dd-menu {
+    display: inline-flex;
+    gap: 4px;
+  }
+  html:root .v5 .g-dd-menu a + a {
+    margin-top: 0;
+  }
+}
+
+/* ───────── 통계비교 (2026-11-13) ─────────
+   A(기준) = 회색 점선, B(비교) = 보라 실선. 오름 = 초록 ▲, 내림 = 빨강 ▼ (색만으로 구분하지 않게 기호를 같이) */
+html:root .v5 {
+  --cmp-a: #9b97b0;
+  --cmp-b: #7c5cff;
+  --cmp-up: #15803d;
+  --cmp-down: #dc2626;
+}
+:root:not([data-theme='light']) .v5 {
+  --cmp-a: #8b879c;
+  --cmp-b: #a78bfa;
+  --cmp-up: #4ade80;
+  --cmp-down: #f87171;
+}
+html:root .v5 .cmp-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+html:root .v5 .cmp-controls .g-seg {
+  align-self: flex-start;
+}
+html:root .v5 .cmp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+}
+html:root .v5 .cmp-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+html:root .v5 .cmp-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+html:root .v5 .cmp-presets .g-chip {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+  font-size: 12.5px;
+}
+html:root .v5 .cmp-sw {
+  display: inline-block;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+html:root .v5 .cmp-sw.a {
+  background: repeating-linear-gradient(90deg, var(--cmp-a) 0 4px, transparent 4px 6px);
+}
+html:root .v5 .cmp-sw.b {
+  background: var(--cmp-b);
+}
+html:root .v5 .cmp-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+html:root .v5 .cmp-dim {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+html:root .v5 .cmp-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+html:root .v5 .g-card-head .cmp-sum {
+  margin: 0;
+}
+html:root .v5 .cmp-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  font-size: 12.5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .cmp-delta.up {
+  color: var(--cmp-up);
+}
+html:root .v5 .cmp-delta.down {
+  color: var(--cmp-down);
+}
+html:root .v5 .cmp-delta.flat {
+  color: var(--muted);
+  font-weight: 500;
+}
+/* 지표 카드: A·B 막대 두 줄 */
+html:root .v5 .cmp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+html:root .v5 .cmp-card {
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+html:root .v5 .cmp-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+html:root .v5 .cmp-bars {
+  display: grid;
+  gap: 5px;
+}
+html:root .v5 .cmp-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .cmp-bar i {
+  display: block;
+  height: 8px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+}
+html:root .v5 .cmp-bar.a i {
+  background: var(--cmp-a);
+  opacity: 0.6;
+}
+html:root .v5 .cmp-bar.b i {
+  background: var(--cmp-b);
+}
+html:root .v5 .cmp-bar b {
+  font-weight: 400;
+  white-space: nowrap;
+}
+html:root .v5 .cmp-bar.a b {
+  color: var(--muted);
+}
+/* 꺾은선 차트 */
+html:root .v5 .cmp-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+html:root .v5 .cmp-chart {
+  margin: 0;
+}
+html:root .v5 .cmp-chart figcaption {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+html:root .v5 .cmp-chart-box {
+  position: relative;
+}
+html:root .v5 .cmp-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+html:root .v5 .cmp-chart .grid {
+  stroke: currentColor;
+  stroke-opacity: 0.08;
+}
+html:root .v5 .cmp-chart .ax {
+  fill: currentColor;
+  fill-opacity: 0.5;
+  font-size: 10.5px;
+}
+html:root .v5 .cmp-chart .cross {
+  stroke: currentColor;
+  stroke-opacity: 0.25;
+}
+html:root .v5 .cmp-chart .ln {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+html:root .v5 .cmp-chart .ln.a {
+  stroke: var(--cmp-a);
+  stroke-dasharray: 5 4;
+}
+html:root .v5 .cmp-chart .ln.b {
+  stroke: var(--cmp-b);
+}
+html:root .v5 .cmp-chart .dot {
+  stroke: var(--glass-strong, #fff);
+  stroke-width: 2;
+}
+html:root .v5 .cmp-chart .dot.a {
+  fill: var(--cmp-a);
+}
+html:root .v5 .cmp-chart .dot.b {
+  fill: var(--cmp-b);
+}
+html:root .v5 .cmp-tip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 2px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  background: var(--glass-strong, #fff);
+  box-shadow: 0 6px 18px rgba(45, 42, 62, 0.16);
+  z-index: 2;
+}
+:root:not([data-theme='light']) .v5 .cmp-tip {
+  background: #26262b;
+}
+html:root .v5 .cmp-chart-sum {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+html:root .v5 .va {
+  color: var(--muted);
+}
+/* 비교 표 */
+html:root .v5 table.g-table.cmp-table th,
+html:root .v5 table.g-table.cmp-table td {
+  padding: 8px 10px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 table.g-table.cmp-table th.center {
+  text-align: center;
+}
+html:root .v5 table.g-table.cmp-table td.ab {
+  text-align: right;
+  padding-right: 4px;
+}
+html:root .v5 table.g-table.cmp-table td.ab b {
+  font-weight: 600;
+}
+html:root .v5 table.g-table.cmp-table td.dl {
+  text-align: left;
+  padding-left: 6px;
+  min-width: 70px;
+}
+html:root .v5 table.g-table.cmp-table tr.sep > * {
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+html:root .v5 .cmp-name {
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+html:root .v5 .cmp-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* 직원별 조회수 변화: 가운데 0 기준 좌(내림)·우(오름) 막대 */
+html:root .v5 td.cmp-div {
+  min-width: 120px;
+}
+html:root .v5 .cmp-div-track {
+  position: relative;
+  display: block;
+  height: 10px;
+  background: linear-gradient(90deg, transparent calc(50% - 0.5px), color-mix(in srgb, currentColor 25%, transparent) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+}
+html:root .v5 .cmp-div-track i {
+  position: absolute;
+  top: 1px;
+  height: 8px;
+}
+html:root .v5 .cmp-div-track i.up {
+  left: 50%;
+  background: var(--cmp-up);
+  border-radius: 0 4px 4px 0;
+}
+html:root .v5 .cmp-div-track i.down {
+  right: 50%;
+  background: var(--cmp-down);
+  border-radius: 4px 0 0 4px;
+}
+html:root .v5 .g-card-head .cmp-sum .g-input {
+  width: auto;
+}

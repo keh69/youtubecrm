@@ -4,7 +4,7 @@ import { loadWorkHours } from '@/lib/crm/server/work-hours'
 import { TABLES } from '@/lib/supabase/tables'
 import { verifyAccessToken } from '@/lib/auth/verify-token'
 import { getBearerToken } from '@/lib/auth/session'
-import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, STATS_ALL_MENU_KEY, VIDEOS_EDIT_MENU_KEY, STATS_EDIT_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
+import { ADMIN_ROLE_CODES, LOCKED_ROLE_CODE, MENU_KEYS, RETIRED_ROLE_CODE, SETTINGS_SUBS, SETTINGS_SUB_KEYS, defaultMenusForRole, isMenuKey, resolveSettingsSubs, ATTENDANCE_EDIT_MENU_KEY, VIDEOS_EDIT_MENU_KEY, STATS_EDIT_MENU_KEY, type MenuKey, type SettingsSubKey } from '@/lib/crm/menus'
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>
 
@@ -189,12 +189,8 @@ export async function getContext(request: Request): Promise<CrmContext> {
     const codes = roles.filter((r) => menuMap.get(r.code)?.has('attendance_team')).map((r) => r.code)
     canEditAttendance = (await loadRoleFlagCodes(db, ATTENDANCE_EDIT_MENU_KEY, codes)).size > 0
   }
-  // 영상통계 '관리자': 총 관리자는 항상, 그 외에는 영상통계가 켜진 역할 중 하나라도 '관리자'가 켜져 있으면
-  let canSeeAllStats = isSuperAdmin
-  if (!canSeeAllStats && menus.has('stats')) {
-    const codes = roles.filter((r) => menuMap.get(r.code)?.has('stats')).map((r) => r.code)
-    canSeeAllStats = (await loadRoleFlagCodes(db, STATS_ALL_MENU_KEY, codes)).size > 0
-  }
+  // 영상통계 전 직원 영상: 총 관리자만(2026-11-13 역할설정의 '관리자' 체크칸을 뺐다). 그 외는 나와 내 소속 하부의 영상
+  const canSeeAllStats = isSuperAdmin
 
   // 영상등록 '수정권한'·'삭제권한': 총 관리자는 항상, 그 외에는 영상등록이 켜진 역할 중 하나라도 켜져 있으면
   let canEditVideos = isSuperAdmin

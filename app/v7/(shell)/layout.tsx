@@ -12,6 +12,7 @@ const TABLE: Record<NavItem['key'], string> = {
   attendance_team: 'team_attendance',
   videos: 'videos',
   stats: 'video_stats',
+  stats_compare: 'stats_compare',
   payroll: 'payroll',
   settings: 'settings',
   skin: 'skins',

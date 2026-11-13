@@ -100,12 +100,14 @@ export function useMenuGuard(menu: MenuKey) {
 
 // 메뉴 옆에 붙는 작은 [통계] 버튼: 근태체크 옆 → 직원근태(근태통계), 영상등록 옆 → 영상통계
 export type NavSub = { key: MenuKey; label: string; href: string; active: boolean }
-export type NavItem = { key: MenuKey | 'skin' | 'me'; label: string; path: string; description: string; href: string; active: boolean; sub?: NavSub }
+export type NavItem = { key: MenuKey | 'skin' | 'me'; label: string; path: string; description: string; href: string; active: boolean; sub?: NavSub; subs?: NavSub[] }
 
 // 부모 메뉴 → 그 옆 [통계] 버튼이 여는 메뉴. 이 둘(직원근태, 영상통계)은 메뉴 줄에 따로 나오지 않는다.
 // (부모 메뉴 권한이 없고 자식 권한만 있는 사람에게는 예외로 자식을 그냥 메뉴로 보여 준다.)
-const NAV_SUBS: Partial<Record<MenuKey, MenuKey>> = { attendance: 'attendance_team', videos: 'stats' }
-const SUB_KEYS = new Set<MenuKey>(Object.values(NAV_SUBS) as MenuKey[])
+// 하위 메뉴가 여러 개면 드롭다운에 차례로 나온다(영상등록 → 통계, 통계비교).
+const NAV_SUBS: Partial<Record<MenuKey, MenuKey[]>> = { attendance: ['attendance_team'], videos: ['stats', 'stats_compare'] }
+const SUB_LABEL: Partial<Record<MenuKey, string>> = { stats_compare: '통계비교' }
+const SUB_KEYS = new Set<MenuKey>(Object.values(NAV_SUBS).flat() as MenuKey[])
 
 // 내 메뉴 목록(권한 있는 것만) + 현재 위치 표시. 맨 끝의 '내정보'는 누구에게나 보인다. (스킨 메뉴는 2026-11-11 메뉴에서 뺐다)
 // 부모 메뉴의 active 는 [통계] 페이지에 있을 때도 켜진다.
@@ -117,15 +119,17 @@ export function useNav(): NavItem[] {
     const isV5 = base === '/v5' || base.startsWith('/v5/')
     const has = (k: MenuKey) => me.menus.includes(k) && (isV5 || !V5_ONLY_MENUS.includes(k)) // v5전용: 0 때 해제
     const items: Array<Omit<NavItem, 'href' | 'active' | 'sub'>> = [
-      ...MENUS.filter((m) => has(m.key) && !(SUB_KEYS.has(m.key) && Object.entries(NAV_SUBS).some(([p, c]) => c === m.key && has(p as MenuKey)))),
+      ...MENUS.filter((m) => has(m.key) && !(SUB_KEYS.has(m.key) && Object.entries(NAV_SUBS).some(([p, c]) => c!.includes(m.key) && has(p as MenuKey)))),
       { key: 'me', label: '내정보', path: '/me', description: '내 정보 확인, 비밀번호 변경' }
     ]
     return items.map((m) => {
       const href = `${base}${m.path}`
-      const childKey = NAV_SUBS[m.key as MenuKey]
-      const child = childKey && has(childKey) ? MENUS.find((x) => x.key === childKey) : undefined
-      const sub = child ? { key: child.key, label: '통계', href: `${base}${child.path}`, active: isOn(`${base}${child.path}`) } : undefined
-      return { ...m, href, active: isOn(href) || Boolean(sub?.active), sub }
+      const subs = (NAV_SUBS[m.key as MenuKey] || [])
+        .filter((k) => has(k))
+        .map((k) => MENUS.find((x) => x.key === k)!)
+        .map((child) => ({ key: child.key, label: SUB_LABEL[child.key] || '통계', href: `${base}${child.path}`, active: isOn(`${base}${child.path}`) }))
+      const sub = subs[0]
+      return { ...m, href, active: isOn(href) || subs.some((x) => x.active), sub, subs: subs.length ? subs : undefined }
     })
   }, [base, me.menus, pathname])
 }

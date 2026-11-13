@@ -26,7 +26,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="g-menu" aria-label="메뉴">
             {nav.map((item) => {
-              const here = item.active && !item.sub?.active
+              const here = item.active && !item.subs?.some((x) => x.active)
               const link = (
                 <Link key={item.key} href={item.href} className={here ? 'on' : item.active ? 'half' : ''} aria-current={here ? 'page' : undefined}>
                   {item.label}
@@ -49,15 +49,17 @@ function Shell({ children }: { children: React.ReactNode }) {
                 >
                   {link}
                   <span className="g-dd-menu" role="menu" aria-label={`${item.label} 하위 메뉴`}>
-                    <Link href={item.sub.href} role="menuitem" className={item.sub.active ? 'on' : ''} aria-current={item.sub.active ? 'page' : undefined}>
-                      <span className="g-dd-ico" aria-hidden="true">
-                        📊
-                      </span>
-                      <span>
-                        <b>{item.sub.label}</b>
-                        <small>{item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}</small>
-                      </span>
-                    </Link>
+                    {(item.subs || [item.sub]).map((sub) => (
+                      <Link key={sub.key} href={sub.href} role="menuitem" className={sub.active ? 'on' : ''} aria-current={sub.active ? 'page' : undefined}>
+                        <span className="g-dd-ico" aria-hidden="true">
+                          {sub.key === 'stats_compare' ? '📈' : '📊'}
+                        </span>
+                        <span>
+                          <b>{sub.label}</b>
+                          <small>{sub.key === 'stats_compare' ? '기간·직원 비교 차트' : item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}</small>
+                        </span>
+                      </Link>
+                    ))}
                   </span>
                 </span>
               )

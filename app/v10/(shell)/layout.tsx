@@ -12,6 +12,7 @@ const FILES: Record<NavItem['key'], { name: string; ext: string; glyph: string }
   attendance_team: { name: 'team-attendance.tsx', ext: 'tsx', glyph: '<>' },
   videos: { name: 'videos.tsx', ext: 'tsx', glyph: '<>' },
   stats: { name: 'stats.sql', ext: 'sql', glyph: 'DB' },
+  stats_compare: { name: 'compare.sql', ext: 'sql', glyph: 'VS' },
   payroll: { name: 'payroll.ts', ext: 'ts', glyph: 'TS' },
   settings: { name: 'settings.json', ext: 'json', glyph: '{}' },
   skin: { name: 'skin.css', ext: 'css', glyph: '#' },
