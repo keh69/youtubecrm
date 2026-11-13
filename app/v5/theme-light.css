@@ -4219,3 +4219,188 @@ html:root .v5 table.g-table.g-ds-person tr > :first-child {
 html:root .v5 table.g-table.g-ds-person tr > :first-child .g-who {
   justify-content: center;
 }
+
+/* ───────── 통계비교 > 한눈에 보기: 전체 판정 + 지표별 수치표 (2026-11-13) ───────── */
+html:root .v5 .cmp-verdict {
+  display: grid;
+  grid-template-columns: auto minmax(200px, 1fr) auto;
+  align-items: center;
+  gap: 14px 24px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+html:root .v5 .cmp-verdict.up {
+  background: color-mix(in srgb, var(--cmp-up) 9%, transparent);
+  border-color: color-mix(in srgb, var(--cmp-up) 30%, transparent);
+}
+html:root .v5 .cmp-verdict.down {
+  background: color-mix(in srgb, var(--cmp-down) 9%, transparent);
+  border-color: color-mix(in srgb, var(--cmp-down) 30%, transparent);
+}
+html:root .v5 .cmp-v-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+html:root .v5 .cmp-v-main > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+html:root .v5 .cmp-v-main b {
+  font-size: 18px;
+  font-weight: 800;
+}
+html:root .v5 .cmp-v-main small {
+  font-size: 12px;
+  color: var(--muted);
+}
+html:root .v5 .cmp-v-arrow {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #fff;
+  background: var(--muted);
+}
+html:root .v5 .cmp-verdict.up .cmp-v-arrow {
+  background: var(--cmp-up);
+}
+html:root .v5 .cmp-verdict.down .cmp-v-arrow {
+  background: var(--cmp-down);
+}
+html:root .v5 .cmp-v-main b {
+  color: inherit;
+}
+html:root .v5 .cmp-verdict.up .cmp-v-main b {
+  color: var(--cmp-up);
+}
+html:root .v5 .cmp-verdict.down .cmp-v-main b {
+  color: var(--cmp-down);
+}
+/* 지표별 오르내림 띠: 지표 하나 = 칸 하나(오름 초록 → 그대로 회색 → 내림 빨강) */
+html:root .v5 .cmp-strip {
+  display: flex;
+  gap: 2px;
+  height: 16px;
+}
+html:root .v5 .cmp-strip i {
+  flex: 1;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+html:root .v5 .cmp-strip i:first-child {
+  border-radius: 8px 3px 3px 8px;
+}
+html:root .v5 .cmp-strip i:last-child {
+  border-radius: 3px 8px 8px 3px;
+}
+html:root .v5 .cmp-strip i.up {
+  background: var(--cmp-up);
+}
+html:root .v5 .cmp-strip i.down {
+  background: var(--cmp-down);
+}
+html:root .v5 .cmp-v-count {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+}
+html:root .v5 .cmp-v-keys {
+  display: flex;
+  gap: 18px;
+}
+html:root .v5 .cmp-key {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+html:root .v5 .cmp-key small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+html:root .v5 .cmp-key b {
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .cmp-key.up b {
+  color: var(--cmp-up);
+}
+html:root .v5 .cmp-key.down b {
+  color: var(--cmp-down);
+}
+html:root .v5 .cmp-key.flat b {
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  html:root .v5 .cmp-verdict {
+    grid-template-columns: 1fr;
+  }
+}
+/* 지표별 수치표: 넓은 화면은 두 칸 */
+html:root .v5 .cmp-grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+html:root .v5 table.g-table.cmp-ds {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 table.g-table.cmp-ds th,
+html:root .v5 table.g-table.cmp-ds td {
+  padding: 7px 6px;
+  white-space: nowrap;
+}
+html:root .v5 table.g-table.cmp-ds thead th {
+  font-size: 12px;
+}
+html:root .v5 table.g-table.cmp-ds thead th.num {
+  text-align: right;
+}
+html:root .v5 table.g-table.cmp-ds thead th.center {
+  text-align: center;
+}
+html:root .v5 table.g-table.cmp-ds tbody th {
+  font-weight: 600;
+  text-align: left;
+}
+html:root .v5 table.g-table.cmp-ds td b {
+  font-weight: 600;
+}
+html:root .v5 .cmp-diff.up {
+  color: var(--cmp-up);
+}
+html:root .v5 .cmp-diff.down {
+  color: var(--cmp-down);
+}
+html:root .v5 .cmp-diff.flat {
+  color: var(--muted);
+}
+html:root .v5 td.cmp-rate {
+  width: 40%;
+  min-width: 130px;
+}
+html:root .v5 .cmp-rate-in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+}
+html:root .v5 .cmp-rate-in .cmp-div-track {
+  flex: 1;
+  min-width: 50px;
+}
+html:root .v5 .cmp-rate-in .cmp-delta {
+  min-width: 62px;
+  justify-content: flex-end;
+}

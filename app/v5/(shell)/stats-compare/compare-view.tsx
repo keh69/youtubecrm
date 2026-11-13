@@ -5,7 +5,7 @@ import { fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm
 import { channelGroups } from '@/lib/crm/client/channels'
 import type { Stats, Video } from '@/lib/crm/client/types'
 
-// 통계비교(v5) 결과 화면: 한눈에 보기(지표 카드) · 일자별 흐름(꺾은선) · 채널별·폼종류별 · 직원별
+// 통계비교(v5) 결과 화면: 한눈에 보기(전체 판정 + 지표별 수치표) · 일자별 흐름(꺾은선) · 채널별·폼종류별 · 직원별
 export type Mode = 'period' | 'people'
 
 /* ───────── 지표 계산 ───────── */
@@ -49,14 +49,20 @@ function change(a: number, b: number) {
   const dir: 'up' | 'down' | 'flat' = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat'
   return { diff, pct, dir }
 }
+// 변화율 글자: +12% / −5.3% / 새로 생김 / 변화 없음
+function pctText(c: ReturnType<typeof change>) {
+  const sign = c.diff > 0 ? '+' : c.diff < 0 ? '−' : ''
+  return c.dir === 'flat' ? '변화 없음' : c.pct === null ? '새로 생김' : `${sign}${Math.abs(c.pct * 100).toFixed(Math.abs(c.pct) < 0.1 ? 1 : 0)}%`
+}
+// 한눈에 보기 판정 옆에 크게 보여 줄 핵심 지표
+const KEY_METRICS: Array<keyof Agg> = ['views', 'count', 'avgViews']
 function Delta({ a, b, fmtDiff }: { a: number; b: number; fmtDiff?: (n: number) => string }) {
   const c = change(a, b)
   const sign = c.diff > 0 ? '+' : c.diff < 0 ? '−' : ''
-  const pctText = c.dir === 'flat' ? '변화 없음' : c.pct === null ? '새로 생김' : `${sign}${Math.abs(c.pct * 100).toFixed(Math.abs(c.pct) < 0.1 ? 1 : 0)}%`
   const icon = c.dir === 'up' ? '▲' : c.dir === 'down' ? '▼' : '＝'
   return (
     <span className={`cmp-delta ${c.dir}`} title={`${sign}${(fmtDiff || fmtNumber)(Math.abs(c.diff))}`}>
-      <span aria-hidden="true">{icon}</span> {pctText}
+      <span aria-hidden="true">{icon}</span> {pctText(c)}
     </span>
   )
 }
@@ -68,6 +74,9 @@ export function CompareBody({ a, b, labelA, labelB, mode, loading, onPickPerson 
   const moves = METRICS.map((m) => ({ m, c: change(ga[m.key], gb[m.key]) }))
   const ups = moves.filter((x) => x.c.dir === 'up')
   const downs = moves.filter((x) => x.c.dir === 'down')
+  const flats = moves.filter((x) => x.c.dir === 'flat')
+  const maxPct = Math.max(0.05, ...moves.map((x) => (x.c.pct === null ? 0 : Math.abs(x.c.pct)))) // 변화율 막대 눈금(최소 5%)
+  const verdict: 'up' | 'down' | 'flat' = ups.length > downs.length ? 'up' : downs.length > ups.length ? 'down' : 'flat'
   const sameDates = mode === 'people'
 
   return (
@@ -85,35 +94,100 @@ export function CompareBody({ a, b, labelA, labelB, mode, loading, onPickPerson 
             </span>
           </span>
         </div>
-        <p className="cmp-sum">
-          <span className="cmp-delta up">▲ 오른 지표 {ups.length}개</span>
-          <span className="cmp-delta down">▼ 내린 지표 {downs.length}개</span>
-          <span className="g-muted">{mode === 'period' ? '비교(B) 기간이 기준(A) 기간보다' : 'B 직원이 A 직원보다'} 얼마나 오르고 내렸는지입니다.</span>
-        </p>
-        <div className="cmp-cards">
-          {METRICS.map((m) => {
-            const va = ga[m.key]
-            const vb = gb[m.key]
-            const max = Math.max(va, vb, 1)
-            return (
-              <div key={m.key} className="cmp-card">
-                <div className="cmp-card-head">
-                  <span title={m.tip}>{m.label}</span>
-                  <Delta a={va} b={vb} fmtDiff={m.key === 'duration' ? fmtTotalDuration : m.key === 'avgDuration' ? (n) => fmtDuration(n) : undefined} />
+        {/* 전체 판정: 큰 화살표 + 지표별 오르내림 띠(오름 → 그대로 → 내림 순) + 핵심 3개 */}
+        <div className={`cmp-verdict ${verdict}`}>
+          <div className="cmp-v-main">
+            <span className="cmp-v-arrow" aria-hidden="true">
+              {verdict === 'up' ? '▲' : verdict === 'down' ? '▼' : '＝'}
+            </span>
+            <span>
+              <b>{verdict === 'up' ? '전체적으로 올랐습니다' : verdict === 'down' ? '전체적으로 내렸습니다' : '전체적으로 비슷합니다'}</b>
+              <small>{mode === 'period' ? '비교 기간(B)이 기준 기간(A)보다' : 'B 직원이 A 직원보다'} · 지표 {METRICS.length}개 중</small>
+            </span>
+          </div>
+          <div className="cmp-v-strip">
+            <div className="cmp-strip" role="img" aria-label={`오른 지표 ${ups.length}개, 내린 지표 ${downs.length}개`}>
+              {[...ups, ...flats, ...downs].map((x) => (
+                <i key={x.m.key} className={x.c.dir} title={`${x.m.label} ${pctText(x.c)}`} />
+              ))}
+            </div>
+            <div className="cmp-v-count">
+              <span className="cmp-delta up">▲ 오름 {ups.length}</span>
+              {flats.length > 0 && <span className="cmp-delta flat">＝ 그대로 {flats.length}</span>}
+              <span className="cmp-delta down">▼ 내림 {downs.length}</span>
+            </div>
+          </div>
+          <div className="cmp-v-keys">
+            {KEY_METRICS.map((k) => {
+              const m = METRICS.find((x) => x.key === k)!
+              const c = change(ga[k], gb[k])
+              return (
+                <div key={k} className={`cmp-key ${c.dir}`}>
+                  <small>{m.label}</small>
+                  <b>
+                    {c.dir === 'up' ? '▲' : c.dir === 'down' ? '▼' : '＝'} {pctText(c)}
+                  </b>
                 </div>
-                <div className="cmp-bars">
-                  <div className="cmp-bar a" title={`${labelA}: ${m.fmt(va)}`}>
-                    <i style={{ width: `${(va / max) * 100}%` }} />
-                    <b>{m.fmt(va)}</b>
-                  </div>
-                  <div className="cmp-bar b" title={`${labelB}: ${m.fmt(vb)}`}>
-                    <i style={{ width: `${(vb / max) * 100}%` }} />
-                    <b>{m.fmt(vb)}</b>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 지표별 수치표: 기준 · 비교 · 증감 · 변화율(가운데 0 기준 막대). 넓은 화면은 두 칸으로 */}
+        <div className="cmp-grid2">
+          {[METRICS.slice(0, 6), METRICS.slice(6)].map((list, ti) => (
+            <div key={ti} className="g-table-wrap">
+              <table className="g-table cmp-ds">
+                <thead>
+                  <tr>
+                    <th scope="col">지표</th>
+                    <th scope="col" className="num">
+                      <i className="cmp-sw a" aria-hidden="true" /> {mode === 'period' ? '기준' : 'A'}
+                    </th>
+                    <th scope="col" className="num">
+                      <i className="cmp-sw b" aria-hidden="true" /> {mode === 'period' ? '비교' : 'B'}
+                    </th>
+                    <th scope="col" className="num">
+                      증감
+                    </th>
+                    <th scope="col" className="center">
+                      변화율
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((m) => {
+                    const va = ga[m.key]
+                    const vb = gb[m.key]
+                    const c = change(va, vb)
+                    const w = c.dir === 'flat' ? 0 : c.pct === null ? 50 : (Math.abs(c.pct) / maxPct) * 50 // 가장 크게 변한 지표가 막대 끝까지
+                    return (
+                      <tr key={m.key}>
+                        <th scope="row" title={m.tip}>
+                          {m.label}
+                        </th>
+                        <td className="num va">{m.fmt(va)}</td>
+                        <td className="num">
+                          <b>{m.fmt(vb)}</b>
+                        </td>
+                        <td className={`num cmp-diff ${c.dir}`}>{c.dir === 'flat' ? '-' : `${c.diff > 0 ? '+' : '−'}${m.fmt(Math.abs(c.diff))}`}</td>
+                        <td className="cmp-rate">
+                          <span className="cmp-rate-in">
+                          <span className="cmp-div-track" title={pctText(c)}>
+                            <i className={c.dir === 'down' ? 'down' : 'up'} style={{ width: `${w}%` }} />
+                          </span>
+                          <span className={`cmp-delta ${c.dir}`}>
+                            <span aria-hidden="true">{c.dir === 'up' ? '▲' : c.dir === 'down' ? '▼' : '＝'}</span> {pctText(c)}
+                          </span>
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       </section>
 
