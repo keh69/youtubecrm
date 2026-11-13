@@ -5,6 +5,7 @@ import { fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm
 import type { Video } from '@/lib/crm/client/types'
 import type { useStats } from '@/lib/crm/client/hooks'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
+import { channelGroups, uploadedKstYmd } from '@/lib/crm/client/channels'
 
 // 영상통계 수치표 묶음(모든 스킨 공통 부품): 요약 한 줄 · 일자별 표 · 담당자별 표.
 // v5 는 예전 class(g-ds-*) 그대로, 다른 스킨은 그 스킨의 카드·표 모양(useSkinUi) + xs-ds-* 배치로 그린다.
@@ -18,6 +19,7 @@ export function StatsKpiSection({ st }: { st: St }) {
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const list = st.data?.videos || []
   const days = st.data?.daily.length || 0 // 기간 날 수(서버가 기간의 날짜마다 한 줄씩 준다)
+  if (v5) return <KpiByChannel list={list} days={days} rangeText={rangeText} /> // v5전용: 0 때 해제 — 채널별 한 줄씩 + 합계
   return (
     <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
       <dl className={v5 ? undefined : 'xs-ds-kpi'}>
@@ -62,6 +64,58 @@ export function StatsKpiSection({ st }: { st: St }) {
   )
 }
 
+// 요약 수치표(v5): 유튜브 채널마다 한 줄, 채널이 2개 이상이면 맨 아래 합계 줄
+function KpiByChannel({ list, days, rangeText }: { list: Video[]; days: number; rangeText: string }) {
+  const groups = channelGroups(list)
+  const agg = (vs: Video[]) => ({
+    n: vs.length,
+    views: vs.reduce((s, v) => s + v.viewCount, 0),
+    dur: vs.reduce((s, v) => s + (v.durationSeconds || 0), 0),
+    long: vs.filter((v) => v.contentType === 'longform').length,
+    short: vs.filter((v) => v.contentType !== 'longform').length
+  })
+  const rows = [
+    ...groups.map((g) => ({ key: g.name, total: false, label: <span className={`vt-ch t${g.tone}`} title={g.name}>{g.name}</span>, ...agg(g.videos) })),
+    ...(groups.length !== 1 ? [{ key: '__total', total: true, label: <>합계</>, ...agg(list) }] : [])
+  ]
+  return (
+    <section className="g-glass g-ds-kpi" aria-label="기간 요약 (채널별)">
+      <table className="g-ds-kpi-t">
+        <thead>
+          <tr>
+            <th scope="col" className="period">
+              기간<b>{rangeText}</b>
+            </th>
+            <th scope="col">올린 영상</th>
+            <th scope="col">총 조회수</th>
+            <th scope="col" title="총 조회수 ÷ 기간 날 수(이번 달·이번 주는 오늘까지)">일 평균 조회수</th>
+            <th scope="col">영상당 평균 조회수</th>
+            <th scope="col" title="올린 영상 길이의 합">총 재생시간</th>
+            <th scope="col">영상당 평균 길이</th>
+            <th scope="col">롱폼 / 숏폼</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key} className={r.total ? 'total' : undefined}>
+              <th scope="row">{r.label}</th>
+              <td>{fmtNumber(r.n)}개</td>
+              <td>{fmtNumber(r.views)}</td>
+              <td>{days > 0 ? fmtNumber(Math.round(r.views / days)) : '-'}</td>
+              <td>{r.n > 0 ? fmtNumber(Math.round(r.views / r.n)) : '-'}</td>
+              <td>{fmtTotalDuration(r.dur)}</td>
+              <td>{r.n > 0 ? fmtDuration(Math.round(r.dur / r.n)) : '-'}</td>
+              <td>
+                {fmtNumber(r.long)} / {fmtNumber(r.short)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
 /* ───────── 일자별 표: 날짜를 가로로, 올린 개수·조회수를 줄로. 개수 칸은 많을수록 진한 보라(한 색 농도) ───────── */
 const weekdayOf = (ymd: string) => ['일', '월', '화', '수', '목', '금', '토'][new Date(`${ymd}T12:00:00Z`).getUTCDay()]
 const isWeekend = (ymd: string) => {
@@ -77,6 +131,7 @@ export function StatsDailySection({ st, onPickDay, pickedDay }: { st: St; onPick
   const v5 = ui.key === 'v5'
   const daily = st.data?.daily || []
   if (daily.length === 0) return null
+  if (v5) return <DailyByChannel st={st} daily={daily} onPickDay={onPickDay} pickedDay={pickedDay} /> // v5전용: 0 때 해제 — 채널별 줄 + 합계
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
   return (
     <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
@@ -137,6 +192,123 @@ export function StatsDailySection({ st, onPickDay, pickedDay }: { st: St; onPick
       <p className={ui.muted}>
         올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.
         {onPickDay && ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.'}
+      </p>
+    </section>
+  )
+}
+
+// 일자별 표(v5): 채널마다 '올린 개수·조회수' 두 줄씩, 채널이 2개 이상이면 맨 아래 합계 두 줄.
+// 올린 개수 칸을 누르면 그날로 영상리스트 거르기(합계 줄, 채널이 하나면 그 채널 줄)
+type Day = { date: string; count: number; views: number }
+function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Day[]; onPickDay?: (ymd: string) => void; pickedDay?: string | null }) {
+  const ui = useSkinUi()
+  const groups = channelGroups(st.data?.videos || [])
+  const chRows = groups.map((g) => {
+    const byDay = new Map<string, { count: number; views: number }>()
+    for (const v of g.videos) {
+      const d = uploadedKstYmd(v)
+      const x = byDay.get(d) || { count: 0, views: 0 }
+      x.count += 1
+      x.views += v.viewCount
+      byDay.set(d, x)
+    }
+    return {
+      key: g.name,
+      total: false,
+      label: (
+        <span className={`vt-ch t${g.tone}`} title={g.name}>
+          {g.name}
+        </span>
+      ),
+      cells: daily.map((d) => ({ date: d.date, ...(byDay.get(d.date) || { count: 0, views: 0 }) }))
+    }
+  })
+  const showTotal = groups.length !== 1
+  const rows = [...chRows, ...(showTotal ? [{ key: '__total', total: true, label: <>합계</>, cells: daily.map((d) => ({ ...d })) }] : [])]
+  const clickKey = showTotal ? '__total' : rows[0]?.key
+  const maxCh = Math.max(1, ...chRows.flatMap((r) => r.cells.map((c) => c.count)))
+  const maxTot = Math.max(1, ...daily.map((d) => d.count))
+  return (
+    <section className="g-glass">
+      <div className="g-card-head">
+        <h2 className="g-h2">일자별</h2>
+        <span className={ui.muted}>채널별{showTotal ? ' · 합계' : ''}</span>
+      </div>
+      <div className={ui.tableWrap}>
+        <table className="g-table g-ds-daily g-ds-daily-ch" style={{ minWidth: 250 + daily.length * 40 }} /* 날짜가 많으면(한 달 등) 숫자가 잘리지 않게 옆으로 밀어 보기 */>
+          <colgroup>
+            <col className="c-ch" />
+            <col className="c-metric" />
+            {daily.map((d) => (
+              <col key={d.date} />
+            ))}
+            <col className="c-sum" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col" colSpan={2}>
+                날짜
+              </th>
+              {daily.map((d) => (
+                <th key={d.date} scope="col" className={isWeekend(d.date) ? 'we' : undefined} title={fmtYmdShort(d.date)}>
+                  {Number(d.date.slice(8))}
+                  <small>{weekdayOf(d.date)}</small>
+                </th>
+              ))}
+              <th scope="col" className="sum">
+                합계
+              </th>
+            </tr>
+          </thead>
+          {rows.map((r) => {
+            const max = r.total ? maxTot : maxCh
+            const pick = onPickDay && r.key === clickKey ? onPickDay : undefined
+            return (
+              <tbody key={r.key} className={r.total ? 'total' : undefined}>
+                <tr>
+                  <th scope="rowgroup" rowSpan={2} className="ch">
+                    {r.label}
+                  </th>
+                  <th scope="row">올린 개수</th>
+                  {r.cells.map((c) => (
+                    <td
+                      key={c.date}
+                      className={c.count > 0 ? (c.count / max > 0.55 ? 'heat hi' : 'heat') : 'zero'}
+                      style={c.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (c.count / max)).toFixed(2) } : undefined}
+                      title={`${fmtYmdShort(c.date)} · ${c.count}개 · 조회수 ${fmtNumber(c.views)}`}
+                    >
+                      {c.count > 0 ? (
+                        pick ? (
+                          <button type="button" className={`ds-cell ds-pick${pickedDay === c.date ? ' on' : ''}`} onClick={() => pick(c.date)} title={`${fmtYmdShort(c.date)} 올린 영상 ${c.count}개만 아래 영상리스트에 보기`}>
+                            {c.count}
+                          </button>
+                        ) : (
+                          <span className="ds-cell">{c.count}</span>
+                        )
+                      ) : (
+                        '·'
+                      )}
+                    </td>
+                  ))}
+                  <td className="sum">{fmtNumber(r.cells.reduce((n, c) => n + c.count, 0))}</td>
+                </tr>
+                <tr>
+                  <th scope="row">조회수</th>
+                  {r.cells.map((c) => (
+                    <td key={c.date} className={c.views > 0 ? undefined : 'zero'} title={`${fmtYmdShort(c.date)} · 조회수 ${fmtNumber(c.views)}`}>
+                      {c.views > 0 ? shortNum(c.views) : '·'}
+                    </td>
+                  ))}
+                  <td className="sum">{shortNum(r.cells.reduce((n, c) => n + c.views, 0))}</td>
+                </tr>
+              </tbody>
+            )
+          })}
+        </table>
+      </div>
+      <p className={ui.muted}>
+        올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.
+        {onPickDay && (showTotal ? ' 합계 줄의 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.' : ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.')}
       </p>
     </section>
   )

@@ -6,6 +6,7 @@ import { deleteVideo, updateVideo } from '@/lib/crm/client/hooks'
 import type { Video } from '@/lib/crm/client/types'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
+import { channelGroups } from '@/lib/crm/client/channels'
 
 // 영상 표(영상통계·영상등록이 함께 쓴다).
 const PAGE_SIZES = [10, 20, 30, 50, 100]
@@ -123,9 +124,7 @@ export function VideoTable({
   const showTime = true
   const showChannel = ui.key === 'v5' // v5전용: 0 때 해제 — 썸네일 오른쪽 '채널'(어느 유튜브 채널에 올렸나) 열
   // 채널마다 색을 정해 한눈에 구분(채널 이름 가나다순으로 색 차례)
-  const channelTone = new Map(
-    [...new Set(videos.map((v) => v.channelName || '').filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko')).map((n, i) => [n, i % 4])
-  )
+  const channelTone = new Map(channelGroups(videos).map((g) => [g.name, g.tone]))
   const vf = useVideoFilters(videos)
   // 머리칸 눌러 정렬(모든 스킨)
   const sortable = true
