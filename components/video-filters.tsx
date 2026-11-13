@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { fmtDate, videoFormatLabel } from '@/lib/crm/client/format'
 import { useSkinUi } from '@/lib/crm/client/skin-ui'
+import { NO_CHANNEL } from '@/lib/crm/client/channels'
 
 // 영상통계 > 영상 표 필터(모든 스킨 공통).
 // 열마다 조건을 걸 수 있고, 여러 열 조건을 한꺼번에 걸면 모두 맞는 영상만 남는다(중복 필터).
@@ -18,10 +19,12 @@ type V = {
   publishedAt: string | null
   createdAt: string
   contentType?: string
+  channelName?: string | null
 }
 
 type Filters = {
   title: string
+  channels: string[] // 올린 유튜브 채널
   owners: string[]
   formats: string[]
   stocks: string[]
@@ -32,7 +35,7 @@ type Filters = {
   dateFrom: string // YYYY-MM-DD
   dateTo: string
 }
-const EMPTY: Filters = { title: '', owners: [], formats: [], stocks: [], viewsMin: '', viewsMax: '', durMin: '', durMax: '', dateFrom: '', dateTo: '' }
+const EMPTY: Filters = { title: '', channels: [], owners: [], formats: [], stocks: [], viewsMin: '', viewsMax: '', durMin: '', durMax: '', dateFrom: '', dateTo: '' }
 const ymd = (v: V) => fmtDate(v.publishedAt || v.createdAt).replace(/\./g, '-')
 
 export function useVideoFilters<T extends V>(videos: T[]) {
@@ -41,7 +44,8 @@ export function useVideoFilters<T extends V>(videos: T[]) {
     () => ({
       owners: [...new Set(videos.map((v) => v.ownerName || '-'))].sort((a, b) => a.localeCompare(b, 'ko')),
       stocks: [...new Set(videos.map((v) => v.stockName))].sort((a, b) => a.localeCompare(b, 'ko')),
-      formats: ['롱폼', '숏폼']
+      formats: ['롱폼', '숏폼'],
+      channels: [...new Set(videos.map((v) => v.channelName || NO_CHANNEL))].sort((a, b) => (a === NO_CHANNEL ? 1 : b === NO_CHANNEL ? -1 : a.localeCompare(b, 'ko')))
     }),
     [videos]
   )
@@ -54,6 +58,7 @@ export function useVideoFilters<T extends V>(videos: T[]) {
     const q = f.title.trim().toLowerCase()
     return videos.filter((v) => {
       if (q && !v.title.toLowerCase().includes(q)) return false
+      if (f.channels.length && !f.channels.includes(v.channelName || NO_CHANNEL)) return false
       if (f.owners.length && !f.owners.includes(v.ownerName || '-')) return false
       if (f.formats.length && !f.formats.includes(videoFormatLabel(v))) return false
       if (f.stocks.length && !f.stocks.includes(v.stockName)) return false
@@ -70,6 +75,7 @@ export function useVideoFilters<T extends V>(videos: T[]) {
   }, [videos, f])
   const activeCount =
     (f.title.trim() ? 1 : 0) +
+    (f.channels.length ? 1 : 0) +
     (f.owners.length ? 1 : 0) +
     (f.formats.length ? 1 : 0) +
     (f.stocks.length ? 1 : 0) +
@@ -131,6 +137,7 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   const ui = useSkinUi()
   const resetBtn = ui.key === 'v5' // v5전용: 0 때 해제 — 필터 줄 오른쪽 끝 [필터 초기화]
+  const channelPick = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽 '채널' 필터(영상 표 '채널' 열과 같은 자리)
   const status = (
     <div className={oneLine ? 'vf-status vf-status-top' : 'vf-status'}>
       <span>
@@ -154,7 +161,7 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
     <>
     {oneLine && status}
     <div className={oneLine ? 'vf-bar vf-one' : 'vf-bar'} role="group" aria-label="영상 필터">
-      {/* 표 열 순서대로: 올린 날짜 · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 */}
+      {/* 표 열 순서대로: 올린 날짜 · (v5: 채널) · 영상 · 재생시간 · 폼종류 · 종목 · 담당자 · 조회수 */}
       <div className="vf-field">
         <span className="vf-label">올린 날짜</span>
         <span className="vf-range">
@@ -162,6 +169,7 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
           <input className="vf-input" type="date" value={f.dateTo} onChange={(e) => set({ dateTo: e.target.value })} aria-label="올린 날짜 끝" />
         </span>
       </div>
+      {channelPick && <MultiPick label="채널" all={options.channels} value={f.channels} onChange={(channels) => set({ channels })} />}
       {!hideTitle && (
         <label className="vf-field vf-grow">
           <span className="vf-label">영상(제목)</span>

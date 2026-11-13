@@ -25,8 +25,9 @@ function fmtKst(iso: string | null) {
 
 // 공개 시각은 받지 않는다(유튜브에서 정한 시각을 API 로 읽을 수 없고, 등록은 실제 공개를 보고 한다)
 // 예약 표 필터: 예약한 날(범위)·등록자·폼종류·종목·상태. 여러 개를 걸면 모두 맞는 것만.
-type RF = { from: string; to: string; owners: string[]; formats: string[]; stocks: string[]; states: string[] }
-const RF_EMPTY: RF = { from: '', to: '', owners: [], formats: [], stocks: [], states: [] }
+type RF = { from: string; to: string; channels: string[]; owners: string[]; formats: string[]; stocks: string[]; states: string[] }
+const RF_EMPTY: RF = { from: '', to: '', channels: [], owners: [], formats: [], stocks: [], states: [] }
+const CH_UNKNOWN = '채널 미확인(공개 전)'
 const PAGE_SIZE = 5 // 예약 표는 5개씩, 넘으면 아래 페이지 번호
 const FORMAT_LABEL = { longform: '롱폼', shortform: '숏폼' } as const
 const stateLabel = (x: Reservation) => (x.status === 'waiting' ? '공개 대기' : '등록됨')
@@ -53,26 +54,31 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
     setRf((f) => ({ ...f, ...patch }))
     setPage(1)
   }
+  // 예약의 채널: 공개되어 영상리스트에 들어간 영상의 채널(아직이면 '채널 미확인(공개 전)')
+  const channelOf = (x: Reservation) => listedByYt.get(x.youtubeVideoId)?.channelName || CH_UNKNOWN
   const opts = useMemo(
     () => ({
+      channels: [...new Set(r.items.map(channelOf))].sort((a, b) => (a === CH_UNKNOWN ? 1 : b === CH_UNKNOWN ? -1 : a.localeCompare(b, 'ko'))),
       owners: uniq(r.items.map((x) => x.ownerName || '')),
       formats: uniq(r.items.map((x) => FORMAT_LABEL[x.contentType])),
       stocks: uniq(r.items.map((x) => x.stockName)),
       states: ['공개 대기', '등록됨']
     }),
-    [r.items]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [r.items, listedByYt]
   )
   const filtered = r.items.filter((x) => {
     const d = kstYmd(x.createdAt)
     if (rf.from && d < rf.from) return false
     if (rf.to && d > rf.to) return false
+    if (rf.channels.length && !rf.channels.includes(channelOf(x))) return false
     if (rf.owners.length && !rf.owners.includes(x.ownerName || '')) return false
     if (rf.formats.length && !rf.formats.includes(FORMAT_LABEL[x.contentType])) return false
     if (rf.stocks.length && !rf.stocks.includes(x.stockName)) return false
     if (rf.states.length && !rf.states.includes(stateLabel(x))) return false
     return true
   })
-  const activeCount = [rf.from || rf.to, rf.owners.length, rf.formats.length, rf.stocks.length, rf.states.length].filter(Boolean).length
+  const activeCount = [rf.from || rf.to, rf.channels.length, rf.owners.length, rf.formats.length, rf.stocks.length, rf.states.length].filter(Boolean).length
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const cur = Math.min(page, pages)
   const pageItems = filtered.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE)
@@ -171,6 +177,7 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
               <input className="vf-input" type="date" value={rf.to} onChange={(e) => setFilter({ to: e.target.value })} aria-label="예약한 날 끝" />
             </span>
           </div>
+          <MultiPick label="채널" all={opts.channels} value={rf.channels} onChange={(channels) => setFilter({ channels })} />
           {showOwner && <MultiPick label="등록자" all={opts.owners} value={rf.owners} onChange={(owners) => setFilter({ owners })} />}
           <MultiPick label="폼종류" all={opts.formats} value={rf.formats} onChange={(formats) => setFilter({ formats })} />
           <MultiPick label="종목" all={opts.stocks} value={rf.stocks} onChange={(stocks) => setFilter({ stocks })} />

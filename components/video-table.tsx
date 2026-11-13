@@ -98,7 +98,7 @@ export function VideoTable({
   focus = null,
   dayFilter = null
 }: {
-  dayFilter?: { ymd: string; n: number } | null // 이 날 올린 영상만 보이게 '올린 날짜' 필터를 맞추고 표로 스크롤(n 이 바뀔 때마다)
+  dayFilter?: { ymd: string; n: number; channel?: string | null } | null // 이 날(+ 이 채널) 올린 영상만 보이게 필터를 맞추고 표로 스크롤(n 이 바뀔 때마다)
   focus?: { id: string; n: number } | null // 이 영상이 있는 쪽으로 넘기고, 그 줄로 스크롤해 잠깐 강조한다(n 이 바뀔 때마다)
   videos: Video[]
   canEdit: boolean
@@ -183,7 +183,7 @@ export function VideoTable({
   const tableTop = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!dayFilter) return
-    vf.setF({ ...vf.f, dateFrom: dayFilter.ymd, dateTo: dayFilter.ymd })
+    vf.setF({ ...vf.f, dateFrom: dayFilter.ymd, dateTo: dayFilter.ymd, channels: dayFilter.channel ? [dayFilter.channel] : [] })
     tableTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayFilter])

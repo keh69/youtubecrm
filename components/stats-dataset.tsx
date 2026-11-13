@@ -126,12 +126,12 @@ const isWeekend = (ymd: string) => {
 const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만` : n.toLocaleString('ko-KR'))
 
 // onPickDay: 올린 개수 칸을 누르면 그날(YYYY-MM-DD)을 알려 준다(영상리스트를 그날로 거르기). pickedDay: 지금 고른 날(칸 강조)
-export function StatsDailySection({ st, onPickDay, pickedDay }: { st: St; onPickDay?: (ymd: string) => void; pickedDay?: string | null }) {
+export function StatsDailySection({ st, onPickDay, pickedDay, pickedChannel }: { st: St; onPickDay?: (ymd: string, channel?: string | null) => void; pickedDay?: string | null; pickedChannel?: string | null }) {
   const ui = useSkinUi()
   const v5 = ui.key === 'v5'
   const daily = st.data?.daily || []
   if (daily.length === 0) return null
-  if (v5) return <DailyByChannel st={st} daily={daily} onPickDay={onPickDay} pickedDay={pickedDay} /> // v5전용: 0 때 해제 — 채널별 줄 + 합계
+  if (v5) return <DailyByChannel st={st} daily={daily} onPickDay={onPickDay} pickedDay={pickedDay} pickedChannel={pickedChannel} /> // v5전용: 0 때 해제 — 채널별 줄 + 합계
   const maxCount = Math.max(1, ...daily.map((d) => d.count))
   return (
     <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
@@ -198,9 +198,9 @@ export function StatsDailySection({ st, onPickDay, pickedDay }: { st: St; onPick
 }
 
 // 일자별 표(v5): 채널마다 '올린 개수·조회수' 두 줄씩, 채널이 2개 이상이면 맨 아래 합계 두 줄.
-// 올린 개수 칸을 누르면 그날로 영상리스트 거르기(합계 줄, 채널이 하나면 그 채널 줄)
+// 올린 개수 칸을 누르면 영상리스트 거르기: 채널 줄 → 그날 + 그 채널, 합계 줄 → 그날(모든 채널)
 type Day = { date: string; count: number; views: number }
-function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Day[]; onPickDay?: (ymd: string) => void; pickedDay?: string | null }) {
+function DailyByChannel({ st, daily, onPickDay, pickedDay, pickedChannel }: { st: St; daily: Day[]; onPickDay?: (ymd: string, channel?: string | null) => void; pickedDay?: string | null; pickedChannel?: string | null }) {
   const ui = useSkinUi()
   const groups = channelGroups(st.data?.videos || [])
   const chRows = groups.map((g) => {
@@ -225,7 +225,6 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Da
   })
   const showTotal = groups.length !== 1
   const rows = [...chRows, ...(showTotal ? [{ key: '__total', total: true, label: <>합계</>, cells: daily.map((d) => ({ ...d })) }] : [])]
-  const clickKey = showTotal ? '__total' : rows[0]?.key
   const maxCh = Math.max(1, ...chRows.flatMap((r) => r.cells.map((c) => c.count)))
   const maxTot = Math.max(1, ...daily.map((d) => d.count))
   return (
@@ -262,7 +261,8 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Da
           </thead>
           {rows.map((r) => {
             const max = r.total ? maxTot : maxCh
-            const pick = onPickDay && r.key === clickKey ? onPickDay : undefined
+            const channel = r.total ? null : r.key // 합계 줄은 채널 없이 그날 전체
+            const isOn = (date: string) => pickedDay === date && (pickedChannel || null) === channel
             return (
               <tbody key={r.key} className={r.total ? 'total' : undefined}>
                 <tr>
@@ -278,8 +278,8 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Da
                       title={`${fmtYmdShort(c.date)} · ${c.count}개 · 조회수 ${fmtNumber(c.views)}`}
                     >
                       {c.count > 0 ? (
-                        pick ? (
-                          <button type="button" className={`ds-cell ds-pick${pickedDay === c.date ? ' on' : ''}`} onClick={() => pick(c.date)} title={`${fmtYmdShort(c.date)} 올린 영상 ${c.count}개만 아래 영상리스트에 보기`}>
+                        onPickDay ? (
+                          <button type="button" className={`ds-cell ds-pick${isOn(c.date) ? ' on' : ''}`} onClick={() => onPickDay(c.date, channel)} title={`${fmtYmdShort(c.date)}${channel ? ` · ${channel}` : ''} 올린 영상 ${c.count}개만 아래 영상리스트에 보기`}>
                             {c.count}
                           </button>
                         ) : (
@@ -308,7 +308,7 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay }: { st: St; daily: Da
       </div>
       <p className={ui.muted}>
         올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.
-        {onPickDay && (showTotal ? ' 합계 줄의 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.' : ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.')}
+        {onPickDay && ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다(채널 줄은 그 채널만, 합계 줄은 모든 채널).'}
       </p>
     </section>
   )

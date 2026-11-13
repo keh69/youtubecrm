@@ -12,7 +12,7 @@ export default function V5Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
-  const [day, setDay] = useState<{ ymd: string; n: number } | null>(null) // 일자별 표에서 누른 날 → 영상리스트 거르기 (v5)
+  const [day, setDay] = useState<{ ymd: string; n: number; channel?: string | null } | null>(null) // 일자별 표에서 누른 날 → 영상리스트 거르기 (v5)
 
   if (!allowed) return null
   const videos = st.videos
@@ -59,7 +59,7 @@ export default function V5Stats() {
 
       {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
       <StatsKpiSection st={st} />
-      <StatsDailySection st={st} pickedDay={day?.ymd ?? null} onPickDay={(ymd) => setDay({ ymd, n: Date.now() })} />
+      <StatsDailySection st={st} pickedDay={day?.ymd ?? null} pickedChannel={day?.channel ?? null} onPickDay={(ymd, channel) => setDay({ ymd, channel: channel ?? null, n: Date.now() })} />
       <StatsPersonSection st={st} meId={me.id} />
 
       <section className="g-glass">
