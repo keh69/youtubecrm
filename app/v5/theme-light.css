@@ -3855,3 +3855,36 @@ html:root .v5 .g-ds-kpi-t tbody tr.total td {
   font-size: clamp(11px, 1.4cqi, 14px);
   font-weight: 400;
 }
+
+/* ───────── 영상등록 > 예약등록 표(g-resv-table): 가로 스크롤 없이 카드 폭에 맞추기 (2026-11-13) ─────────
+   g-table 기본 여백(14px)이 이겨서 넘쳤다 → 더 센 선택자로, 표 폭(cqi)에 따라 여백 → 글자 → 칩 순으로 줄인다.
+   예약 링크는 칸이 모자라면 끝을 … 으로 줄인다(마우스를 올리면 전체 주소). */
+html:root .v5 .g-table-wrap:has(> table.g-resv-table) {
+  container-type: inline-size;
+}
+html:root .v5 table.g-table.g-resv-table {
+  font-size: clamp(11.5px, 1.35cqi, 14px);
+}
+html:root .v5 table.g-table.g-resv-table th,
+html:root .v5 table.g-table.g-resv-table td {
+  padding-left: clamp(3px, 0.75cqi, 10px);
+  padding-right: clamp(3px, 0.75cqi, 10px);
+}
+html:root .v5 table.g-table.g-resv-table th {
+  font-size: clamp(10.5px, 1.2cqi, 12.5px);
+}
+html:root .v5 table.g-table.g-resv-table td a {
+  display: inline-block;
+  max-width: clamp(110px, 17cqi, 200px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+html:root .v5 table.g-table.g-resv-table .g-chip {
+  padding: 0 clamp(6px, 0.9cqi, 11px);
+  font-size: clamp(11px, 1.2cqi, 13px);
+}
+html:root .v5 table.g-table.g-resv-table .g-btn.sm {
+  padding-left: clamp(8px, 1.2cqi, 14px);
+  padding-right: clamp(8px, 1.2cqi, 14px);
+}
