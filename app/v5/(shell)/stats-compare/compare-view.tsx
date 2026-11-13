@@ -68,7 +68,7 @@ function Delta({ a, b, fmtDiff }: { a: number; b: number; fmtDiff?: (n: number) 
 }
 
 /* ───────── 비교 결과 ───────── */
-export function CompareBody({ a, b, labelA, labelB, mode, loading, onPickPerson }: { a: Stats; b: Stats; labelA: string; labelB: string; mode: Mode; loading: boolean; onPickPerson: (id: string) => void }) {
+export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPickPerson }: { a: Stats; b: Stats; labelA: string; labelB: string; phrase: string; mode: Mode; loading: boolean; onPickPerson: (id: string) => void }) {
   const ga = agg(a.videos, a.daily.length)
   const gb = agg(b.videos, b.daily.length)
   const moves = METRICS.map((m) => ({ m, c: change(ga[m.key], gb[m.key]) }))
@@ -102,7 +102,9 @@ export function CompareBody({ a, b, labelA, labelB, mode, loading, onPickPerson 
             </span>
             <span>
               <b>{verdict === 'up' ? '전체적으로 올랐습니다' : verdict === 'down' ? '전체적으로 내렸습니다' : '전체적으로 비슷합니다'}</b>
-              <small>{mode === 'period' ? '비교 기간(B)이 기준 기간(A)보다' : 'B 직원이 A 직원보다'} · 지표 {METRICS.length}개 중</small>
+              <small>
+                {phrase} · 지표 {METRICS.length}개 중
+              </small>
             </span>
           </div>
           <div className="cmp-v-strip">

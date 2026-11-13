@@ -24,10 +24,17 @@ const shiftMonthStart = (ymd: string, delta: number) => {
   const d = new Date(Date.UTC(y, m - 1 + delta, 1, 12))
   return d.toISOString().slice(0, 10)
 }
+// 받침이 있으면 '이', 없으면 '가' (끝 글자가 숫자면 숫자 읽는 소리로)
+function josaIGa(word: string) {
+  const m = word.replace(/[^가-힣0-9]+$/, '').slice(-1)
+  if (/[0-9]/.test(m)) return '013678'.includes(m) ? '이' : '가'
+  const code = m.charCodeAt(0) - 0xac00
+  return code >= 0 && code <= 11171 && code % 28 !== 0 ? '이' : '가'
+}
 const rangeText = (r: Range) => (r.from === r.to ? fmtYmdShort(r.from) : `${fmtYmdShort(r.from)} ~ ${fmtYmdShort(r.to)}`)
 
 // 기간 비교 빠른 선택: [기준 A, 비교 B]
-function periodPresets(): Array<{ key: string; label: string; a: Range; b: Range }> {
+function periodPresets(): Array<{ key: string; label: string; a: Range; b: Range; an: string; bn: string }> {
   const t = todayKst()
   const ms = monthStart(t)
   const elapsed = daysBetween(ms, t) // 이번 달 오늘까지 날 수
@@ -37,12 +44,12 @@ function periodPresets(): Array<{ key: string; label: string; a: Range; b: Range
   const ws = weekStart(t)
   const lws = addDays(ws, -7)
   return [
-    { key: 'w', label: '이번 주 vs 지난 주(같은 요일까지)', a: { from: lws, to: addDays(lws, daysBetween(ws, t) - 1) }, b: { from: ws, to: t } },
-    { key: 'm', label: '이번 달 vs 지난 달(같은 날까지)', a: { from: pms, to: pmSame }, b: { from: ms, to: t } },
-    { key: 'd7', label: '최근 7일 vs 그 전 7일', a: { from: addDays(t, -13), to: addDays(t, -7) }, b: { from: addDays(t, -6), to: t } },
-    { key: 'd30', label: '최근 30일 vs 그 전 30일', a: { from: addDays(t, -59), to: addDays(t, -30) }, b: { from: addDays(t, -29), to: t } },
-    { key: 'lw', label: '지난 주 vs 그 전 주', a: { from: addDays(lws, -7), to: addDays(lws, -1) }, b: { from: lws, to: addDays(ws, -1) } },
-    { key: 'lm', label: '지난 달 vs 그 전 달', a: { from: shiftMonthStart(t, -2), to: lastDayOfMonth(shiftMonthStart(t, -2)) }, b: { from: pms, to: pmEnd } }
+    { key: 'w', label: '이번 주 vs 저번 주(같은 요일까지)', bn: '이번 주', an: '저번 주', a: { from: lws, to: addDays(lws, daysBetween(ws, t) - 1) }, b: { from: ws, to: t } },
+    { key: 'm', label: '이번 달 vs 저번 달(같은 날까지)', bn: '이번 달', an: '저번 달', a: { from: pms, to: pmSame }, b: { from: ms, to: t } },
+    { key: 'd7', label: '최근 7일 vs 그 전 7일', bn: '최근 7일', an: '그 전 7일', a: { from: addDays(t, -13), to: addDays(t, -7) }, b: { from: addDays(t, -6), to: t } },
+    { key: 'd30', label: '최근 30일 vs 그 전 30일', bn: '최근 30일', an: '그 전 30일', a: { from: addDays(t, -59), to: addDays(t, -30) }, b: { from: addDays(t, -29), to: t } },
+    { key: 'lw', label: '저번 주 vs 그 전 주', bn: '저번 주', an: '그 전 주', a: { from: addDays(lws, -7), to: addDays(lws, -1) }, b: { from: lws, to: addDays(ws, -1) } },
+    { key: 'lm', label: '저번 달 vs 그 전 달', bn: '저번 달', an: '그 전 달', a: { from: shiftMonthStart(t, -2), to: lastDayOfMonth(shiftMonthStart(t, -2)) }, b: { from: pms, to: pmEnd } }
   ]
 }
 // 직원 비교 빠른 기간
@@ -51,7 +58,7 @@ function onePresets(): Array<{ key: string; label: string; r: Range }> {
   const pms = shiftMonthStart(t, -1)
   return [
     { key: 'm', label: '이번 달', r: { from: monthStart(t), to: t } },
-    { key: 'pm', label: '지난 달', r: { from: pms, to: lastDayOfMonth(pms) } },
+    { key: 'pm', label: '저번 달', r: { from: pms, to: lastDayOfMonth(pms) } },
     { key: 'd7', label: '최근 7일', r: { from: addDays(t, -6), to: t } },
     { key: 'd30', label: '최근 30일', r: { from: addDays(t, -29), to: t } }
   ]
@@ -114,8 +121,13 @@ export default function V5StatsCompare() {
 
   if (!allowed) return null
   const nameOf = (who: string) => (who === 'all' ? '전체 직원' : who === 'me' ? `나 (${me.name})` : people.find((p) => p.id === who)?.name || '-')
-  const labelA = mode === 'period' ? `기준 · ${rangeText(ra)}` : `A · ${nameOf(pa)}`
-  const labelB = mode === 'period' ? `비교 · ${rangeText(rb)}` : `B · ${nameOf(pb)}`
+  // 빠른 선택과 같은 기간이면 '이번 주'·'저번 주'처럼 이름으로, 아니면 기준·비교
+  const preset = presets.find((p) => p.a.from === ra.from && p.a.to === ra.to && p.b.from === rb.from && p.b.to === rb.to)
+  const nameA = mode === 'period' ? preset?.an || rangeText(ra) : nameOf(pa)
+  const nameB = mode === 'period' ? preset?.bn || rangeText(rb) : nameOf(pb)
+  const labelA = mode === 'period' ? `${preset?.an || '기준'} · ${rangeText(ra)}` : `A · ${nameOf(pa)}`
+  const labelB = mode === 'period' ? `${preset?.bn || '비교'} · ${rangeText(rb)}` : `B · ${nameOf(pb)}`
+  const phrase = `${nameB}${josaIGa(nameB)} ${nameA}보다` // 예) 이번 주가 저번 주보다
   const loading = A.loading || B.loading
 
   const personOptions = (
@@ -237,7 +249,7 @@ export default function V5StatsCompare() {
           <Loading />
         </section>
       ) : (
-        <CompareBody a={A.data} b={B.data} labelA={labelA} labelB={labelB} mode={mode} loading={loading} onPickPerson={(id) => setTarget(id)} />
+        <CompareBody a={A.data} b={B.data} labelA={labelA} labelB={labelB} phrase={phrase} mode={mode} loading={loading} onPickPerson={(id) => setTarget(id)} />
       )}
     </>
   )
