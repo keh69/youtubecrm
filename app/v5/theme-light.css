@@ -4211,3 +4211,11 @@ html:root .v5 .cmp-div-track i.down {
 html:root .v5 .g-card-head .cmp-sum .g-input {
   width: auto;
 }
+
+/* 영상통계 > 담당자별 표: 담당자 열(머리칸·이름·합계) 가운데 정렬 (2026-11-13) */
+html:root .v5 table.g-table.g-ds-person tr > :first-child {
+  text-align: center;
+}
+html:root .v5 table.g-table.g-ds-person tr > :first-child .g-who {
+  justify-content: center;
+}
