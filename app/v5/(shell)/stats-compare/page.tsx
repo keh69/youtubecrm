@@ -44,8 +44,8 @@ function periodPresets(): Array<{ key: string; label: string; a: Range; b: Range
   const ws = weekStart(t)
   const lws = addDays(ws, -7)
   return [
-    { key: 'w', label: '이번 주 vs 저번 주(같은 요일까지)', bn: '이번 주', an: '저번 주', a: { from: lws, to: addDays(lws, daysBetween(ws, t) - 1) }, b: { from: ws, to: t } },
-    { key: 'm', label: '이번 달 vs 저번 달(같은 날까지)', bn: '이번 달', an: '저번 달', a: { from: pms, to: pmSame }, b: { from: ms, to: t } },
+    { key: 'w', label: '이번 주 vs 저번 주', bn: '이번 주', an: '저번 주', a: { from: lws, to: addDays(lws, daysBetween(ws, t) - 1) }, b: { from: ws, to: t } },
+    { key: 'm', label: '이번 달 vs 저번 달', bn: '이번 달', an: '저번 달', a: { from: pms, to: pmSame }, b: { from: ms, to: t } },
     { key: 'd7', label: '최근 7일 vs 그 전 7일', bn: '최근 7일', an: '그 전 7일', a: { from: addDays(t, -13), to: addDays(t, -7) }, b: { from: addDays(t, -6), to: t } },
     { key: 'd30', label: '최근 30일 vs 그 전 30일', bn: '최근 30일', an: '그 전 30일', a: { from: addDays(t, -59), to: addDays(t, -30) }, b: { from: addDays(t, -29), to: t } },
     { key: 'lw', label: '저번 주 vs 그 전 주', bn: '저번 주', an: '그 전 주', a: { from: addDays(lws, -7), to: addDays(lws, -1) }, b: { from: lws, to: addDays(ws, -1) } },
