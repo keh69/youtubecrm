@@ -3848,3 +3848,10 @@ html:root .v5 table.g-ds-daily-ch tbody.total th.ch {
 html:root .v5 table.g-ds-daily-ch tbody.total td:not(.zero) {
   font-weight: 700;
 }
+
+/* 영상통계 요약 수치표: 숫자 굵게 빼고 14px (좁은 화면에서만 한 줄을 지키려고 11px 까지 줄어듦) (2026-11-13) */
+html:root .v5 .g-ds-kpi-t tbody td,
+html:root .v5 .g-ds-kpi-t tbody tr.total td {
+  font-size: clamp(11px, 1.4cqi, 14px);
+  font-weight: 400;
+}
