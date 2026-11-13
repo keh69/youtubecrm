@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { TABLES } from '@/lib/supabase/tables'
 import { getContext, handleError, requireMenu } from '@/lib/crm/server/context'
-import { VIDEO_FIELDS, toVideoDto } from '@/lib/crm/server/videos'
+import { VIDEO_FIELDS, loadChannelNames, toVideoDto } from '@/lib/crm/server/videos'
 import { processReservations } from '@/lib/crm/server/reservations'
 
 // 영상등록 화면 아래 영상리스트: 내가 등록한 영상(최근 500개).
@@ -23,7 +23,8 @@ export async function GET(request: Request) {
       const { data: users } = await ctx.db.from(TABLES.crmUsers).select('id, name').in('id', others)
       for (const u of users || []) names.set(u.id, u.name)
     }
-    return NextResponse.json({ items: rows.map((r) => toVideoDto(r, names.get(r.primary_owner_user_id) || undefined)) })
+    const channels = await loadChannelNames(ctx.db)
+    return NextResponse.json({ items: rows.map((r) => toVideoDto(r, names.get(r.primary_owner_user_id) || undefined, channels.get(r.channel_id))) })
   } catch (e) {
     return handleError(e, '내 영상 조회 실패')
   }

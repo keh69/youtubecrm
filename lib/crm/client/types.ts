@@ -107,6 +107,8 @@ export type Video = {
   contentType: 'longform' | 'shortform'
   ownerId: string
   ownerName?: string
+  channelId?: string | null // 올린 유튜브 채널
+  channelName?: string | null
 }
 
 export type Person = { id: string; name: string; loginId: string; affiliationName: string | null }

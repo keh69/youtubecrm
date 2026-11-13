@@ -11,12 +11,13 @@ import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 const PAGE_SIZES = [10, 20, 30, 50, 100]
 
 // 머리칸을 누르면 정렬: 오름차순 → 내림차순 → 기본(처음 순서) 순서로 바뀐다. 썸네일 칸은 정렬 없음.
-type SortKey = 'date' | 'time' | 'duration' | 'format' | 'stock' | 'owner' | 'views'
+type SortKey = 'date' | 'time' | 'channel' | 'duration' | 'format' | 'stock' | 'owner' | 'views'
 type Sort = { key: SortKey; dir: 'asc' | 'desc' } | null
 const uploadedIso = (v: Video) => v.publishedAt || v.createdAt
 const sortValue = (v: Video, key: SortKey): number | string => {
   if (key === 'date') return new Date(uploadedIso(v)).getTime() || 0
   if (key === 'time') return fmtHm24(uploadedIso(v)) // 하루 안의 시각(HH:mm)만 비교
+  if (key === 'channel') return v.channelName || ''
   if (key === 'duration') return v.durationSeconds ?? -1
   if (key === 'format') return videoFormatLabel(v)
   if (key === 'stock') return v.stockName || ''
@@ -120,6 +121,11 @@ export function VideoTable({
   // 2026-11-12 '0': 모든 스킨 — 영상 열은 썸네일만(제목 빼기), 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
   const hideTitle = true
   const showTime = true
+  const showChannel = ui.key === 'v5' // v5전용: 0 때 해제 — 썸네일 오른쪽 '채널'(어느 유튜브 채널에 올렸나) 열
+  // 채널마다 색을 정해 한눈에 구분(채널 이름 가나다순으로 색 차례)
+  const channelTone = new Map(
+    [...new Set(videos.map((v) => v.channelName || '').filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko')).map((n, i) => [n, i % 4])
+  )
   const vf = useVideoFilters(videos)
   // 머리칸 눌러 정렬(모든 스킨)
   const sortable = true
@@ -240,6 +246,7 @@ export function VideoTable({
               {sortTh('date', '올린 날짜')}
               {showTime && sortTh('time', '올린 시간')}
               <th className={hideTitle ? 'thumb-col' : undefined}>{hideTitle ? '썸네일' : '영상'}</th>
+              {showChannel && sortTh('channel', '채널')}
               {sortTh('duration', '재생시간', 'num')}
               {sortTh('format', '폼종류')}
               {sortTh('stock', '종목')}
@@ -268,6 +275,17 @@ export function VideoTable({
                       )}
                     </div>
                   </td>
+                  {showChannel && (
+                    <td className="nowrap">
+                      {v.channelName ? (
+                        <span className={`vt-ch t${channelTone.get(v.channelName) ?? 0}`} title={v.channelName}>
+                          {v.channelName}
+                        </span>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                  )}
                   <td className="num nowrap">{fmtDuration(v.durationSeconds)}</td>
                   <td className="nowrap">
                     {ed ? (

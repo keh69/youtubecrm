@@ -4,7 +4,7 @@ import { addDaysToYmd, getKstYmd, getYmdList } from '@/lib/attendance/time'
 import { HttpError, getContext, handleError, loadRolesForUsers, requireMenu } from '@/lib/crm/server/context'
 import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
-import { VIDEO_FIELDS, refreshStaleVideos, toVideoDto } from '@/lib/crm/server/videos'
+import { VIDEO_FIELDS, loadChannelNames, refreshStaleVideos, toVideoDto } from '@/lib/crm/server/videos'
 import { processReservations } from '@/lib/crm/server/reservations'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
@@ -53,7 +53,8 @@ export async function GET(request: Request) {
       return d >= from && d <= to
     })
     const rows = await refreshStaleVideos(ctx.db, inRange)
-    const videos = rows.map((r) => toVideoDto(r, nameById.get(r.primary_owner_user_id)))
+    const channels = await loadChannelNames(ctx.db)
+    const videos = rows.map((r) => toVideoDto(r, nameById.get(r.primary_owner_user_id), channels.get(r.channel_id)))
 
     const dayList = getYmdList(from, to)
     const daily = dayList.map((date) => {

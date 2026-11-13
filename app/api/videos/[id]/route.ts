@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError, type CrmContext } from '@/lib/crm/server/context'
-import { VIDEO_FIELDS, toVideoDto } from '@/lib/crm/server/videos'
+import { VIDEO_FIELDS, loadChannelNames, toVideoDto } from '@/lib/crm/server/videos'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
 
 type Params = { params: Promise<{ id: string }> }
@@ -43,7 +43,8 @@ export async function PATCH(request: Request, context: Params) {
       .select(VIDEO_FIELDS)
       .single()
     if (error) throw error
-    return NextResponse.json({ ok: true, video: toVideoDto(data) })
+    const channels = await loadChannelNames(ctx.db)
+    return NextResponse.json({ ok: true, video: toVideoDto(data, undefined, channels.get((data as any).channel_id)) })
   } catch (e) {
     return handleError(e, '영상 수정 실패')
   }

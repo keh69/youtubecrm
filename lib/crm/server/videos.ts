@@ -4,7 +4,7 @@ import { getActiveYoutubeKey } from '@/lib/youtube/default-account'
 import { HttpError, type Admin, type CrmContext } from '@/lib/crm/server/context'
 
 export const VIDEO_FIELDS =
-  'id, youtube_video_id, youtube_url, stock_name, title, thumbnail_url, view_count, like_count, comment_count, duration_seconds, published_at, created_at, content_type, primary_owner_user_id, last_synced_at'
+  'id, youtube_video_id, youtube_url, stock_name, title, thumbnail_url, view_count, like_count, comment_count, duration_seconds, published_at, created_at, content_type, primary_owner_user_id, last_synced_at, channel_id'
 
 export type VideoDto = {
   id: string
@@ -22,9 +22,17 @@ export type VideoDto = {
   contentType: 'longform' | 'shortform'
   ownerId: string
   ownerName?: string
+  channelId: string | null // 올린 유튜브 채널(CRM 채널 id)
+  channelName: string | null
 }
 
-export function toVideoDto(row: any, ownerName?: string): VideoDto {
+// 채널 id → 채널 이름(채널은 몇 개뿐이라 한 번에 다 읽는다)
+export async function loadChannelNames(db: Admin): Promise<Map<string, string>> {
+  const { data } = await db.from(TABLES.channels).select('id, name')
+  return new Map((data || []).map((c: any) => [c.id as string, (c.name as string) || '']))
+}
+
+export function toVideoDto(row: any, ownerName?: string, channelName?: string | null): VideoDto {
   return {
     id: row.id,
     youtubeVideoId: row.youtube_video_id,
@@ -40,7 +48,9 @@ export function toVideoDto(row: any, ownerName?: string): VideoDto {
     createdAt: row.created_at,
     contentType: row.content_type,
     ownerId: row.primary_owner_user_id,
-    ownerName
+    ownerName,
+    channelId: row.channel_id ?? null,
+    channelName: channelName ?? null
   }
 }
 
@@ -126,7 +136,7 @@ export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockNa
     payload_summary: { youtube_video_id: meta.youtubeVideoId, stock_name: stockName }
   })
 
-  return { video: toVideoDto(saved, profile.name), updated: Boolean(existing) }
+  return { video: toVideoDto(saved, profile.name, meta.channelName || null), updated: Boolean(existing) }
 }
 
 const STALE_MS = 30 * 60 * 1000
