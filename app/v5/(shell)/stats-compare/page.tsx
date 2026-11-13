@@ -151,95 +151,115 @@ export default function V5StatsCompare() {
     <>
       <PageHead emoji="📈" title="통계비교" desc="두 기간, 또는 두 직원의 영상통계를 나란히 놓고 무엇이 오르고 내렸는지 봅니다. 조회수는 그 기간에 올린 영상들의 지금 조회수 합입니다." />
 
+      {/* 비교 설정: 왼쪽 A · 가운데 VS · 오른쪽 B. 무엇과 무엇을 비교하는지 카드 두 장으로 바로 보이게 */}
       <section className="g-glass cmp-controls">
-        <div className="g-seg" role="group" aria-label="비교 방식">
-          <button type="button" className={mode === 'period' ? 'on' : ''} aria-pressed={mode === 'period'} onClick={() => setMode('period')}>
-            기간 비교
-          </button>
-          <button type="button" className={mode === 'people' ? 'on' : ''} aria-pressed={mode === 'people'} onClick={() => setMode('people')} disabled={people.length < 2} title={people.length < 2 ? '비교할 다른 직원이 없습니다' : undefined}>
-            직원 비교
-          </button>
+        <div className="cmp-top">
+          <div className="g-seg" role="group" aria-label="비교 방식">
+            <button type="button" className={mode === 'period' ? 'on' : ''} aria-pressed={mode === 'period'} onClick={() => setMode('period')}>
+              기간 비교
+            </button>
+            <button type="button" className={mode === 'people' ? 'on' : ''} aria-pressed={mode === 'people'} onClick={() => setMode('people')} disabled={people.length < 2} title={people.length < 2 ? '비교할 다른 직원이 없습니다' : undefined}>
+              직원 비교
+            </button>
+          </div>
+          {mode === 'period' ? (
+            <label className="cmp-target">
+              <select className="g-input sm" value={target} onChange={(e) => setTarget(e.target.value)} aria-label="비교할 대상">
+                <option value="all">전체 직원</option>
+                {personOptions}
+              </select>
+              <span>의 영상을 두 기간으로 비교합니다</span>
+            </label>
+          ) : (
+            <span className="cmp-target">같은 기간에 두 직원의 영상을 비교합니다</span>
+          )}
         </div>
 
-        {mode === 'period' ? (
-          <>
-            <div className="cmp-row">
-              <label className="g-field">
-                <span>대상</span>
-                <select className="g-input" value={target} onChange={(e) => setTarget(e.target.value)}>
-                  <option value="all">전체 직원</option>
-                  {personOptions}
-                </select>
-              </label>
-              <div className="g-field">
-                <span>
-                  <i className="cmp-sw a" aria-hidden="true" /> 기준 기간 (A)
+        <div className="cmp-vs">
+          <div className="cmp-side a">
+            <span className="cmp-side-tag">A · {mode === 'period' ? '기준' : '직원'}</span>
+            {mode === 'period' ? (
+              <>
+                <b className="cmp-side-name">{preset?.an || '직접 고른 기간'}</b>
+                <span className="cmp-side-sub">
+                  {rangeText(ra)} · {daysBetween(ra.from, ra.to)}일
                 </span>
                 {rangeInputs(ra, setRa, '기준 기간')}
-              </div>
-              <div className="g-field">
-                <span>
-                  <i className="cmp-sw b" aria-hidden="true" /> 비교 기간 (B)
+              </>
+            ) : (
+              <>
+                <select className="g-input cmp-side-pick" value={pa} onChange={(e) => setPa(e.target.value)} aria-label="직원 A">
+                  {personOptions}
+                </select>
+                <span className="cmp-side-sub">
+                  {rangeText(rp)} · {daysBetween(rp.from, rp.to)}일
+                </span>
+              </>
+            )}
+          </div>
+          <div className="cmp-vs-mid" aria-hidden="true">
+            <span>VS</span>
+          </div>
+          <div className="cmp-side b">
+            <span className="cmp-side-tag">B · {mode === 'period' ? '비교' : '직원'}</span>
+            {mode === 'period' ? (
+              <>
+                <b className="cmp-side-name">{preset?.bn || '직접 고른 기간'}</b>
+                <span className="cmp-side-sub">
+                  {rangeText(rb)} · {daysBetween(rb.from, rb.to)}일
                 </span>
                 {rangeInputs(rb, setRb, '비교 기간')}
-              </div>
-            </div>
-            <div className="cmp-presets" role="group" aria-label="빠른 선택">
-              {presets.map((p) => {
-                const on = p.a.from === ra.from && p.a.to === ra.to && p.b.from === rb.from && p.b.to === rb.to
-                return (
-                  <button
-                    key={p.key}
-                    type="button"
-                    className={`g-chip${on ? ' accent' : ''}`}
-                    aria-pressed={on}
-                    onClick={() => {
-                      setRa(p.a)
-                      setRb(p.b)
-                    }}
-                  >
-                    {p.label}
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="cmp-row">
-              <label className="g-field">
-                <span>
-                  <i className="cmp-sw a" aria-hidden="true" /> 직원 A
-                </span>
-                <select className="g-input" value={pa} onChange={(e) => setPa(e.target.value)}>
+              </>
+            ) : (
+              <>
+                <select className="g-input cmp-side-pick" value={pb} onChange={(e) => setPb(e.target.value)} aria-label="직원 B">
                   {personOptions}
                 </select>
-              </label>
-              <label className="g-field">
-                <span>
-                  <i className="cmp-sw b" aria-hidden="true" /> 직원 B
+                <span className="cmp-side-sub">
+                  {rangeText(rp)} · {daysBetween(rp.from, rp.to)}일
                 </span>
-                <select className="g-input" value={pb} onChange={(e) => setPb(e.target.value)}>
-                  {personOptions}
-                </select>
-              </label>
-              <div className="g-field">
-                <span>기간</span>
-                {rangeInputs(rp, setRp, '기간')}
-              </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="cmp-bottom">
+          {mode === 'people' && (
+            <div className="cmp-shared">
+              <span>기간</span>
+              {rangeInputs(rp, setRp, '기간')}
             </div>
-            <div className="cmp-presets" role="group" aria-label="빠른 기간">
-              {ones.map((p) => {
-                const on = p.r.from === rp.from && p.r.to === rp.to
-                return (
-                  <button key={p.key} type="button" className={`g-chip${on ? ' accent' : ''}`} aria-pressed={on} onClick={() => setRp(p.r)}>
-                    {p.label}
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        )}
+          )}
+          <div className="cmp-presets" role="group" aria-label="빠른 선택">
+            <span className="cmp-presets-label">빠른 선택</span>
+            {mode === 'period'
+              ? presets.map((p) => {
+                  const on = p.a.from === ra.from && p.a.to === ra.to && p.b.from === rb.from && p.b.to === rb.to
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      className={`g-chip${on ? ' accent' : ''}`}
+                      aria-pressed={on}
+                      onClick={() => {
+                        setRa(p.a)
+                        setRb(p.b)
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  )
+                })
+              : ones.map((p) => {
+                  const on = p.r.from === rp.from && p.r.to === rp.to
+                  return (
+                    <button key={p.key} type="button" className={`g-chip${on ? ' accent' : ''}`} aria-pressed={on} onClick={() => setRp(p.r)}>
+                      {p.label}
+                    </button>
+                  )
+                })}
+          </div>
+        </div>
         {loading && A.data && <span className="g-spinner g-filters-spin" aria-label="새로 불러오는 중" />}
       </section>
 

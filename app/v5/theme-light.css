@@ -4404,3 +4404,141 @@ html:root .v5 .cmp-rate-in .cmp-delta {
   min-width: 62px;
   justify-content: flex-end;
 }
+
+/* ───────── 통계비교 설정: A 카드 · VS · B 카드 (2026-11-13) ───────── */
+html:root .v5 .cmp-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+html:root .v5 .cmp-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+html:root .v5 .cmp-target select.g-input {
+  width: auto;
+  min-width: 150px;
+  font-weight: 700;
+  color: var(--text);
+}
+html:root .v5 .cmp-vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 12px;
+}
+html:root .v5 .cmp-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 14px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+html:root .v5 .cmp-side::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+html:root .v5 .cmp-side.a::before {
+  background: var(--cmp-a);
+}
+html:root .v5 .cmp-side.b::before {
+  background: var(--cmp-b);
+}
+html:root .v5 .cmp-side.b {
+  border-color: color-mix(in srgb, var(--cmp-b) 35%, transparent);
+  background: color-mix(in srgb, var(--cmp-b) 6%, transparent);
+}
+html:root .v5 .cmp-side-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+html:root .v5 .cmp-side.b .cmp-side-tag {
+  color: var(--cmp-b);
+}
+html:root .v5 .cmp-side-name {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+html:root .v5 .cmp-side-sub {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .cmp-side .cmp-range {
+  margin-top: 4px;
+}
+html:root .v5 .cmp-side .cmp-range .g-input {
+  height: 34px;
+  font-size: 13px;
+  padding-left: 10px;
+  padding-right: 8px;
+}
+html:root .v5 select.g-input.cmp-side-pick {
+  font-size: 18px;
+  font-weight: 800;
+  height: 44px;
+}
+html:root .v5 .cmp-vs-mid {
+  display: grid;
+  place-items: center;
+}
+html:root .v5 .cmp-vs-mid span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  background: var(--glass-strong, #fff);
+}
+:root:not([data-theme='light']) .v5 .cmp-vs-mid span {
+  background: #1f1f23;
+}
+html:root .v5 .cmp-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+html:root .v5 .cmp-shared {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+html:root .v5 .cmp-presets {
+  align-items: center;
+}
+html:root .v5 .cmp-presets-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 4px;
+}
+@media (max-width: 720px) {
+  html:root .v5 .cmp-vs {
+    grid-template-columns: 1fr;
+  }
+  html:root .v5 .cmp-vs-mid span {
+    width: 36px;
+    height: 36px;
+  }
+}
