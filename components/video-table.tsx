@@ -7,6 +7,7 @@ import type { Video } from '@/lib/crm/client/types'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
 import { channelGroups } from '@/lib/crm/client/channels'
+import { upperEn } from '@/lib/crm/stock'
 
 // 영상 표(영상통계·영상등록이 함께 쓴다).
 const PAGE_SIZES = [10, 20, 30, 50, 100]
@@ -304,7 +305,7 @@ export function VideoTable({
                         maxLength={60}
                         autoFocus
                         aria-label="종목명"
-                        onChange={(e) => setEditing({ ...ed, stockName: e.target.value })}
+                        onChange={(e) => setEditing({ ...ed, stockName: upperEn(e.target.value) })}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') void save()
                           if (e.key === 'Escape') setEditing(null)

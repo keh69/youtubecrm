@@ -9,6 +9,7 @@ import { MENUS, V5_ONLY_MENUS, firstAllowedPath, type MenuKey, type SettingsSubK
 import { api, getMeCached, getToken, impersonate, loginWithId, logout as doLogout, setLoginPath } from '@/lib/crm/client/api'
 import { SKINS, pathWithoutSkin, readSkinCookie, skinBase, skinOfPath, writeSkinCookie, type SkinKey } from '@/lib/crm/skins'
 import { addDays, monthStart, shiftMonth, todayKst, weekStart } from '@/lib/crm/client/format'
+import { upperEn } from '@/lib/crm/stock'
 import type { AccountPatch, MealPay, Me, Reservation, MyAttendance, NewAccount, SettingsData, Stats, TeamAttendance, TeamPeriod, Video } from '@/lib/crm/client/types'
 import { MOBILE_ATTENDANCE_MSG, isMobileDevice } from '@/lib/crm/client/device'
 
@@ -414,7 +415,8 @@ export function useVideoRegister(opts: { requireType?: boolean } = {}) {
     return res.ok ? { ok: true } : { ok: false, error: res.error }
   }
 
-  return { stockName, setStockName, contentType, setContentType, url, setUrl, busy, error, submit, reloadRecent, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
+  // 종목명: 영문은 적는 순간 대문자로(모든 스킨)
+  return { stockName, setStockName: (v: string) => setStockName(upperEn(v)), contentType, setContentType, url, setUrl, busy, error, submit, reloadRecent, lastAdded, clearLastAdded: () => setLastAdded(null), recent, recentLoading, remove, rename }
 }
 
 // 영상 고치기(종목명·롱폼/숏폼)·지우기: 영상등록·영상통계 표가 함께 쓴다

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { normalizeStockName } from '@/lib/crm/stock'
 import { getContext, handleError, requireMenu } from '@/lib/crm/server/context'
 import { listMyReservations, reserveVideo } from '@/lib/crm/server/reservations'
 
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
 }
 
 const bodySchema = z.object({
-  stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.'),
+  stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.').transform(normalizeStockName), // 영문은 대문자로
   youtubeUrl: z.string().trim().min(1, '유튜브 예약 링크를 입력해 주세요.'),
   contentType: z.enum(['longform', 'shortform']),
   scheduledAt: z.string().trim().max(40).optional().nullable() // 예약 공개 시각(참고용, ISO)

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { normalizeStockName } from '@/lib/crm/stock'
 import { getContext, handleError, requireMenu } from '@/lib/crm/server/context'
 import { registerVideo } from '@/lib/crm/server/videos'
 
 const bodySchema = z.object({
-  stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.'),
+  stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.').transform(normalizeStockName), // 영문은 대문자로
   youtubeUrl: z.string().trim().min(1, '유튜브 영상 주소를 입력해 주세요.'),
   // 롱폼/숏폼(등록 화면에서 고름). 예전 화면처럼 안 보내면 길이로 정한다.
   contentType: z.enum(['longform', 'shortform']).optional()

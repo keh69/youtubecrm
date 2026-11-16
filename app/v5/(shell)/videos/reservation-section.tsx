@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useReservations, useSession } from '@/lib/crm/client/hooks'
 import { MultiPick } from '@/components/video-filters'
+import { upperEn } from '@/lib/crm/stock'
 import type { Reservation, Video } from '@/lib/crm/client/types'
 import { fmtDuration } from '@/lib/crm/client/format'
 import { Loading, Note, type Msg } from '../../_components/ui'
@@ -125,7 +126,7 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
         </div>
         <label className="g-field">
           <span>종목명</span>
-          <input className="g-input" value={form.stockName} onChange={(e) => setForm({ ...form, stockName: e.target.value })} placeholder="예) 삼성전자" maxLength={60} />
+          <input className="g-input" value={form.stockName} onChange={(e) => setForm({ ...form, stockName: upperEn(e.target.value) })} placeholder="예) 삼성전자" maxLength={60} />
         </label>
         <div className="g-field">
           <span>형식 *</span>

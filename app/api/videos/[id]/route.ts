@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { normalizeStockName } from '@/lib/crm/stock'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError, type CrmContext } from '@/lib/crm/server/context'
 import { VIDEO_FIELDS, loadChannelNames, toVideoDto } from '@/lib/crm/server/videos'
@@ -9,7 +10,7 @@ type Params = { params: Promise<{ id: string }> }
 
 const patchSchema = z
   .object({
-    stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.').optional(),
+    stockName: z.string().trim().min(1, '종목명을 입력해 주세요.').max(60, '종목명이 너무 길어요.').transform(normalizeStockName).optional(), // 영문은 대문자로
     contentType: z.enum(['longform', 'shortform']).optional() // 롱폼/숏폼
   })
   .refine((b) => b.stockName !== undefined || b.contentType !== undefined, '고칠 내용이 없습니다.')

@@ -1,4 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
+import { normalizeStockName } from '@/lib/crm/stock'
 import { extractYoutubeVideoId, fetchYoutubeVideoMeta } from '@/lib/youtube/api'
 import { getActiveYoutubeKey } from '@/lib/youtube/default-account'
 import { HttpError, type CrmContext } from '@/lib/crm/server/context'
@@ -145,7 +146,7 @@ export async function reserveVideo(ctx: CrmContext, input: { youtubeUrl: string;
     .insert({
       youtube_video_id: videoId,
       youtube_url: input.youtubeUrl.trim(),
-      stock_name: input.stockName,
+      stock_name: normalizeStockName(input.stockName), // 영문은 대문자로
       content_type: input.contentType,
       owner_user_id: profile.id,
       scheduled_at: input.scheduledAt || null

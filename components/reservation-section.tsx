@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useReservations, useSession } from '@/lib/crm/client/hooks'
 import { MultiPick } from '@/components/video-filters'
+import { upperEn } from '@/lib/crm/stock'
 import type { Reservation, Video } from '@/lib/crm/client/types'
 import { fmtDuration } from '@/lib/crm/client/format'
 import { cx, useSkinUi } from '@/lib/crm/client/skin-ui'
@@ -123,7 +124,7 @@ export function ReservationSection({ onMoved, listed, onShow }: { onMoved: () =>
         </div>
         <label className={cx(ui.field, 'xs-field')}>
           <span>종목명</span>
-          <input className={cx(ui.input, 'xs-input')} value={form.stockName} onChange={(e) => setForm({ ...form, stockName: e.target.value })} placeholder="예) 삼성전자" maxLength={60} />
+          <input className={cx(ui.input, 'xs-input')} value={form.stockName} onChange={(e) => setForm({ ...form, stockName: upperEn(e.target.value) })} placeholder="예) 삼성전자" maxLength={60} />
         </label>
         <VideoTypePicker value={form.contentType} onChange={(k) => setForm({ ...form, contentType: k })} />
         <label className={cx(ui.field, 'xs-field xs-grow')}>

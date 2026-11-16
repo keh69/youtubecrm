@@ -1,4 +1,5 @@
 import { TABLES } from '@/lib/supabase/tables'
+import { normalizeStockName } from '@/lib/crm/stock'
 import { deriveContentType, extractYoutubeVideoId, fetchYoutubeStatsBatch, fetchYoutubeVideoMeta } from '@/lib/youtube/api'
 import { getActiveYoutubeKey } from '@/lib/youtube/default-account'
 import { HttpError, type Admin, type CrmContext } from '@/lib/crm/server/context'
@@ -99,7 +100,7 @@ export async function registerVideo(ctx: CrmContext, youtubeUrl: string, stockNa
         primary_owner_user_id: profile.id,
         youtube_url: youtubeUrl.trim(),
         content_type: contentType || deriveContentType(meta.durationSeconds, 'longform'),
-        stock_name: stockName,
+        stock_name: normalizeStockName(stockName), // 영문은 대문자로
         publish_state: 'published',
         title: meta.title || null,
         description: meta.description || null,
