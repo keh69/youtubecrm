@@ -22,7 +22,7 @@ export default function V5DbInput() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
-  const [newTag, setNewTag] = useState('기타') // 이름 옆 꼬리표 (기본 '기타')
+  const [newTag, setNewTag] = useState('재택') // 이름 옆 꼬리표 (처음 '재택', 비우면 '기타')
   const [adding, setAdding] = useState(false)
   const [note, setNote] = useState<Msg>(null)
   const seq = useRef(0)
