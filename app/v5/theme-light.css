@@ -4724,3 +4724,94 @@ html:root .v5 table.g-ds-daily-ch tbody.db td:not(.zero) {
 :root:not([data-theme='light']) .v5 table.g-ds-daily-ch tbody.db td:not(.zero) {
   color: #fcd34d;
 }
+
+/* ───────── 영상통계: 종목별 · 러닝타임별 (2026-11-16) ───────── */
+html:root .v5 .bd-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+html:root .v5 .bd-tools .g-input {
+  width: 160px;
+}
+html:root .v5 table.g-table.bd-table {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 table.g-table.bd-table th,
+html:root .v5 table.g-table.bd-table td {
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+html:root .v5 table.g-table.bd-table thead th.num {
+  text-align: right;
+}
+html:root .v5 table.g-table.bd-table thead th.num .vt-sort {
+  justify-content: flex-end;
+}
+html:root .v5 table.g-table.bd-table tbody th {
+  text-align: left;
+  font-weight: 600;
+}
+html:root .v5 table.g-table.bd-table td b {
+  font-weight: 600;
+}
+html:root .v5 .bd-sub {
+  margin-left: 5px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+html:root .v5 .bd-muted {
+  color: var(--muted);
+}
+html:root .v5 td.bd-barcell {
+  min-width: 110px;
+  width: 18%;
+}
+html:root .v5 .bd-bar {
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(100% - 40px);
+  min-width: 60px;
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  overflow: hidden;
+}
+html:root .v5 .bd-runtime .bd-bar {
+  width: 100%;
+}
+html:root .v5 .bd-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #8b5cf6;
+}
+html:root .v5 .bd-bar.soft i {
+  background: color-mix(in srgb, #8b5cf6 45%, transparent);
+}
+html:root .v5 .bd-pct {
+  display: inline-block;
+  width: 36px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+}
+html:root .v5 .bd-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 10px;
+}
+html:root .v5 .bd-best {
+  font-size: 13px;
+  color: var(--muted);
+}
+html:root .v5 .bd-best b {
+  color: var(--accent);
+  font-weight: 800;
+}
+html:root .v5 table.g-table.bd-runtime tr.best > * {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}

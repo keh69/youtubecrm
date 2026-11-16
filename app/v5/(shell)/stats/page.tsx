@@ -7,6 +7,7 @@ import { fmtDate, fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort, todayKs
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoTable } from '@/components/video-table'
 import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
+import { StatsByRuntime, StatsByStock } from '@/components/stats-breakdown'
 
 export default function V5Stats() {
   const allowed = useMenuGuard('stats')
@@ -61,6 +62,9 @@ export default function V5Stats() {
       <StatsKpiSection st={st} />
       <StatsDailySection st={st} pickedDay={day?.ymd ?? null} pickedChannel={day?.channel ?? null} onPickDay={(ymd, channel) => setDay({ ymd, channel: channel ?? null, n: Date.now() })} />
       <StatsPersonSection st={st} meId={me.id} />
+      {/* v5: 종목별 · 러닝타임별 (components/stats-breakdown.tsx) */}
+      <StatsByStock st={st} />
+      <StatsByRuntime st={st} />
 
       <section className="g-glass">
         <div className="g-card-head">
