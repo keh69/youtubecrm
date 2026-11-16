@@ -59,18 +59,25 @@ export default function V5DbInput() {
     const name = newName.trim()
     if (!name) return setNote({ tone: 'error', text: '추가할 이름을 적어 주세요.' })
     setAdding(true)
-    const res = await api<{ extra: { id: string; name: string } }>('/api/db-counts/extra', { method: 'POST', body: { name } })
+    const res = await api<{ extra: { id: string; name: string; tag: string } }>('/api/db-counts/extra', { method: 'POST', body: { name } })
     setAdding(false)
     if (!res.ok) return setNote({ tone: 'error', text: res.error })
     setNewName('')
     setNote({ tone: 'ok', text: `'${name}' (기타)를 추가했습니다. 통계에는 들어가지 않습니다.` })
     setData((d) => (d ? { ...d, extras: [...d.extras, res.data.extra].sort((a, b) => a.name.localeCompare(b.name, 'ko')) } : d))
   }
+  const editExtra = async (id: string, name: string, tag: string) => {
+    const res = await api<{ extra: { id: string; name: string; tag: string } }>('/api/db-counts/extra', { method: 'PATCH', body: { id, name, tag } })
+    if (!res.ok) return res.error
+    setNote({ tone: 'ok', text: `'${res.data.extra.name} (${res.data.extra.tag})'로 바꿨습니다.` })
+    setData((d) => (d ? { ...d, extras: d.extras.map((x) => (x.id === id ? res.data.extra : x)).sort((a, b) => a.name.localeCompare(b.name, 'ko')) } : d))
+    return null
+  }
   const removeExtra = async (id: string, name: string) => {
-    if (!window.confirm(`'${name}' (기타) 이름과 이 사람의 모든 달 DB 기록을 지울까요? 되돌릴 수 없습니다.`)) return
+    if (!window.confirm(`'${name}' 이름과 이 사람의 모든 달 DB 기록을 지울까요? 되돌릴 수 없습니다.`)) return
     const res = await api(`/api/db-counts/extra?id=${id}`, { method: 'DELETE' })
     if (!res.ok) return setNote({ tone: 'error', text: res.error })
-    setNote({ tone: 'ok', text: `'${name}' (기타)를 지웠습니다.` })
+    setNote({ tone: 'ok', text: `'${name}'을(를) 지웠습니다.` })
     setData((d) => (d ? { ...d, extras: d.extras.filter((x) => x.id !== id), extraCounts: d.extraCounts.filter((c) => c.personId !== id) } : d))
   }
 
@@ -109,7 +116,7 @@ export default function V5DbInput() {
           이 달 합계 <b>{fmtNumber(total)}</b>
         </span>
         {loading && data && <span className="g-spinner g-filters-spin" aria-label="불러오는 중" />}
-        <span className="g-muted db-tip">칸을 누르고 숫자를 적은 뒤 Enter(다음 날로) · ↑↓(다른 사람) · 칸을 비우면 지워집니다. 추가한 이름은 (기타)로 표시되고 통계에는 들어가지 않습니다.</span>
+        <span className="g-muted db-tip">칸을 누르고 숫자를 적은 뒤 Enter(다음 날로) · ↑↓(다른 사람) · 칸을 비우면 지워집니다(안 적은 칸은 0으로 셉니다). 추가한 이름은 (기타)로 표시되고 통계에는 들어가지 않으며, 오른쪽 클릭으로 수정·삭제합니다.</span>
       </section>
 
       <Note msg={note} />
@@ -117,7 +124,7 @@ export default function V5DbInput() {
       {data && !data.ready && <Note msg={{ tone: 'error', text: data.hint || 'DB 표가 아직 없습니다.' }} role="alert" />}
       {data && data.ready && !data.extraReady && <Note msg={{ tone: 'error', text: data.extraHint || '기타 이름 표가 아직 없습니다.' }} role="alert" />}
       <section className="g-glass">
-        {!data ? <Loading /> : data.people.length === 0 && data.extras.length === 0 ? <p className="g-empty">DB를 적을 사람이 없습니다.</p> : <DbGrid key={data.month} data={data} onSave={save} onRemoveExtra={removeExtra} />}
+        {!data ? <Loading /> : data.people.length === 0 && data.extras.length === 0 ? <p className="g-empty">DB를 적을 사람이 없습니다.</p> : <DbGrid key={data.month} data={data} onSave={save} onRemoveExtra={removeExtra} onEditExtra={editExtra} />}
       </section>
     </>
   )

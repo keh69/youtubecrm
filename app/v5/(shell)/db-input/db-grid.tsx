@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fmtNumber, fmtYmdShort } from '@/lib/crm/client/format'
 
 // 디비입력 표: 직원(세로) × 날짜(가로). 칸을 눌러 숫자를 적고 Enter·칸 밖을 누르면 저장한다.
@@ -16,7 +16,7 @@ export type DbData = {
   counts: Array<{ userId: string; date: string; count: number }>
   extraReady: boolean
   extraHint: string | null
-  extras: Array<{ id: string; name: string }>
+  extras: Array<{ id: string; name: string; tag: string }>
   extraCounts: Array<{ personId: string; date: string; count: number }>
 }
 export type RowKind = 'user' | 'extra'
@@ -24,19 +24,61 @@ export type RowKind = 'user' | 'extra'
 const weekday = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay()
 const WD = ['일', '월', '화', '수', '목', '금', '토']
 
-type GridRow = { kind: RowKind; id: string; name: string; title: string }
+type GridRow = { kind: RowKind; id: string; name: string; title: string; tag?: string }
 
-export function DbGrid({ data, onSave, onRemoveExtra }: { data: DbData; onSave: (kind: RowKind, id: string, date: string, count: number | null) => Promise<string | null>; onRemoveExtra: (id: string, name: string) => void }) {
+export function DbGrid({
+  data,
+  onSave,
+  onRemoveExtra,
+  onEditExtra
+}: {
+  data: DbData
+  onSave: (kind: RowKind, id: string, date: string, count: number | null) => Promise<string | null>
+  onRemoveExtra: (id: string, name: string) => void
+  onEditExtra: (id: string, name: string, tag: string) => Promise<string | null>
+}) {
   const days = Array.from({ length: Number(data.to.slice(8)) }, (_, i) => `${data.month}-${String(i + 1).padStart(2, '0')}`)
   const value = new Map<string, number>([...data.counts.map((c) => [`user:${c.userId}|${c.date}`, c.count] as const), ...data.extraCounts.map((c) => [`extra:${c.personId}|${c.date}`, c.count] as const)])
   const rows: GridRow[] = [
     ...data.people.map((p) => ({ kind: 'user' as const, id: p.id, name: p.name, title: `${p.name} (${p.loginId})${p.affiliationName ? ` · ${p.affiliationName}` : ''}` })),
-    ...data.extras.map((p) => ({ kind: 'extra' as const, id: p.id, name: p.name, title: `${p.name} (기타 · 회원가입 안 함, 통계 제외)` }))
+    ...data.extras.map((p) => ({ kind: 'extra' as const, id: p.id, name: p.name, tag: p.tag || '기타', title: `${p.name} (${p.tag || '기타'}) · 회원가입 안 함, 통계 제외 · 오른쪽 클릭: 수정·삭제` }))
   ]
   const [draft, setDraft] = useState<Record<string, string>>({}) // 적는 중인 칸
   const [state, setState] = useState<Record<string, 'saving' | 'ok' | 'err'>>({})
   const [msg, setMsg] = useState('')
   const box = useRef<HTMLTableElement>(null)
+  // 기타 줄 오른쪽 클릭 메뉴(수정·삭제)와 수정 창
+  const [menu, setMenu] = useState<{ x: number; y: number; row: GridRow } | null>(null)
+  const [editing, setEditing] = useState<{ x: number; y: number; row: GridRow; name: string; tag: string; busy: boolean; err: string } | null>(null)
+  useEffect(() => {
+    if (!menu) return
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key !== 'Escape') return
+      if (e.type === 'pointerdown' && (e.target as HTMLElement).closest('.db-ctx')) return
+      setMenu(null)
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [menu])
+  const place = (x: number, y: number, w: number, h: number) => ({ left: Math.max(8, Math.min(x, window.innerWidth - w - 8)), top: Math.max(8, Math.min(y, window.innerHeight - h - 8)) })
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editing) return
+    const name = editing.name.trim()
+    const tag = editing.tag.trim()
+    if (!name) return setEditing({ ...editing, err: '이름을 적어 주세요.' })
+    if (!tag) return setEditing({ ...editing, err: '꼬리표를 적어 주세요(예: 기타).' })
+    setEditing({ ...editing, busy: true, err: '' })
+    const err = await onEditExtra(editing.row.id, name, tag)
+    if (err) return setEditing((x) => (x ? { ...x, busy: false, err } : x))
+    setEditing(null)
+  }
 
   const focusCell = (r: number, c: number) => {
     const el = box.current?.querySelector<HTMLInputElement>(`input[data-r="${r}"][data-c="${c}"]`)
@@ -79,7 +121,7 @@ export function DbGrid({ data, onSave, onRemoveExtra }: { data: DbData; onSave: 
           const s = daySum(d, kind)
           return (
             <td key={d} className={s ? undefined : 'zero'}>
-              {s ? fmtNumber(s) : '·'}
+              {fmtNumber(s)}
             </td>
           )
         })}
@@ -127,17 +169,24 @@ export function DbGrid({ data, onSave, onRemoveExtra }: { data: DbData; onSave: 
               const ready = extra ? data.extraReady : data.ready
               const firstExtra = extra && (r === 0 || rows[r - 1].kind !== 'extra')
               return (
-                <tr key={`${row.kind}:${row.id}`} className={`${extra ? 'extra' : ''}${firstExtra ? ' first-extra' : ''}`}>
+                <tr
+                  key={`${row.kind}:${row.id}`}
+                  className={`${extra ? 'extra' : ''}${firstExtra ? ' first-extra' : ''}`}
+                  onContextMenu={
+                    extra
+                      ? (e) => {
+                          e.preventDefault()
+                          setEditing(null)
+                          setMenu({ x: e.clientX, y: e.clientY, row })
+                        }
+                      : undefined
+                  }
+                >
                   <th scope="row" title={row.title}>
                     <span className="db-name">
                       <span className="db-name-text">{row.name}</span>
-                      {extra && <small className="db-etc">(기타)</small>}
+                      {extra && <small className="db-etc">({row.tag})</small>}
                     </span>
-                    {extra && (
-                      <button type="button" className="db-del" onClick={() => onRemoveExtra(row.id, row.name)} title={`${row.name} 이름과 DB 기록 지우기`} aria-label={`${row.name} 지우기`}>
-                        ×
-                      </button>
-                    )}
                   </th>
                   {days.map((d, c) => {
                     const key = `${row.kind}:${row.id}|${d}`
@@ -199,8 +248,63 @@ export function DbGrid({ data, onSave, onRemoveExtra }: { data: DbData; onSave: 
       ) : (
         <p className="g-muted g-small">
           일평균은 합계 ÷ 이 달에 지난 날 수(오늘까지)입니다. 오늘 이후 날짜는 적을 수 없습니다. 저장되면 칸이 잠깐 초록으로 깜빡입니다.
-          {hasExtra && ' (기타) 줄은 데이터 저장용이라 영상통계·통계비교에 들어가지 않습니다.'}
+          {hasExtra && ' 추가한 이름 줄은 데이터 저장용이라 영상통계·통계비교에 들어가지 않습니다. 그 줄을 오른쪽 클릭하면 수정·삭제할 수 있습니다.'} 안 적은 칸은 0으로 셉니다.
         </p>
+      )}
+      {menu && (
+        <div className="db-ctx" role="menu" style={place(menu.x, menu.y, 160, 110)} onContextMenu={(e) => e.preventDefault()}>
+          <div className="db-ctx-title">
+            {menu.row.name} ({menu.row.tag})
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setEditing({ x: menu.x, y: menu.y, row: menu.row, name: menu.row.name, tag: menu.row.tag || '기타', busy: false, err: '' })
+              setMenu(null)
+            }}
+          >
+            ✏️ 수정
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="danger"
+            onClick={() => {
+              setMenu(null)
+              onRemoveExtra(menu.row.id, menu.row.name)
+            }}
+          >
+            🗑️ 삭제
+          </button>
+        </div>
+      )}
+      {editing && (
+        <form className="db-ctx db-edit" style={place(editing.x, editing.y, 270, 230)} onSubmit={saveEdit} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)}>
+          <div className="db-ctx-title">이름 수정</div>
+          <label>
+            <span>이름</span>
+            <input className="g-input sm" value={editing.name} maxLength={40} autoFocus onChange={(e) => setEditing({ ...editing, name: e.target.value, err: '' })} />
+          </label>
+          <label>
+            <span>꼬리표</span>
+            <span className="db-tag-edit">
+              ( <input className="g-input sm" value={editing.tag} maxLength={10} onChange={(e) => setEditing({ ...editing, tag: e.target.value, err: '' })} placeholder="기타" /> )
+            </span>
+          </label>
+          <p className="db-edit-preview">
+            미리보기: <b>{editing.name.trim() || '이름'}</b> <small className="db-etc">({editing.tag.trim() || '기타'})</small>
+          </p>
+          {editing.err && <p className="db-edit-err">{editing.err}</p>}
+          <div className="db-edit-btns">
+            <button type="button" className="g-btn ghost sm" onClick={() => setEditing(null)}>
+              취소
+            </button>
+            <button className="g-btn primary sm" disabled={editing.busy}>
+              {editing.busy ? '저장 중…' : '저장'}
+            </button>
+          </div>
+        </form>
       )}
     </>
   )

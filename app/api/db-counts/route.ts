@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       extraReady: extras.ready,
       extraHint: extras.ready ? null : DB_EXTRA_HINT,
-      extras: extras.people.map((p) => ({ id: p.id, name: p.name })),
+      extras: extras.people.map((p) => ({ id: p.id, name: p.name, tag: p.tag })),
       extraCounts: extras.counts,
       month,
       from,

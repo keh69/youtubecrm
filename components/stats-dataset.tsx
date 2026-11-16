@@ -350,8 +350,8 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay, pickedChannel }: { st
                 {daily.map((d) => {
                   const n = st.data!.db!.daily.find((x) => x.date === d.date)?.count || 0
                   return (
-                    <td key={d.date} className={n ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · DB ${n}개 (디비입력)`}>
-                      {n ? fmtNumber(n) : '·'}
+                    <td key={d.date} className={n ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · DB ${n}개 (디비입력, 안 적은 날은 0)`}>
+                      {fmtNumber(n)}
                     </td>
                   )
                 })}

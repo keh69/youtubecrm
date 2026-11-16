@@ -38,20 +38,26 @@ export async function loadDbPeople(ctx: CrmContext): Promise<ScopedUser[]> {
 
 // ── 기타(회원가입 안 한 사람): 디비입력에서 이름만 추가해 DB 를 적는다. 데이터 저장용이라 통계에는 넣지 않는다(SQL 280)
 export const DB_EXTRA_HINT = 'DB 업데이트가 필요합니다. supabase/sql/simple/280_db_extra.sql 을 Supabase SQL Editor에서 실행해 주세요.'
-export type DbExtraPerson = { id: string; name: string; ownerId: string }
+export const DB_EXTRA_TAG_HINT = '꼬리표를 바꾸려면 supabase/sql/simple/290_db_extra_tag.sql 을 Supabase SQL Editor에서 실행해 주세요.'
+export type DbExtraPerson = { id: string; name: string; tag: string; ownerId: string }
 
 // 내가 볼 수 있는 직원(나 포함)이 추가한 기타 사람들과 그 기간 DB
 export async function loadDbExtras(ctx: CrmContext, from: string, to: string): Promise<{ ready: boolean; people: DbExtraPerson[]; counts: Array<{ personId: string; date: string; count: number }> }> {
   const owners = (await loadVisibleUsers(ctx)).map((p) => p.id)
   if (!owners.includes(ctx.profile.id)) owners.push(ctx.profile.id)
-  let q = ctx.db.from(TABLES.dbExtraPeople).select('id, name, owner_user_id').order('name', { ascending: true })
-  if (!ctx.isSuperAdmin) q = q.in('owner_user_id', owners)
-  const { data, error } = await q
+  // 꼬리표(tag) 칸은 SQL 290 이후에 생긴다. 없으면 '기타'로
+  const read = (cols: string) => {
+    let q = ctx.db.from(TABLES.dbExtraPeople).select(cols).order('name', { ascending: true })
+    if (!ctx.isSuperAdmin) q = q.in('owner_user_id', owners)
+    return q
+  }
+  let { data, error } = await read('id, name, tag, owner_user_id')
+  if (error && isMissingSchema(error)) ({ data, error } = await read('id, name, owner_user_id'))
   if (error) {
     if (isMissingSchema(error)) return { ready: false, people: [], counts: [] }
     throw error
   }
-  const people = ((data || []) as any[]).map((r) => ({ id: r.id as string, name: r.name as string, ownerId: r.owner_user_id as string }))
+  const people = ((data || []) as any[]).map((r) => ({ id: r.id as string, name: r.name as string, tag: (r.tag as string) || '기타', ownerId: r.owner_user_id as string }))
   if (!people.length) return { ready: true, people, counts: [] }
   const res = await ctx.db
     .from(TABLES.dbExtraCounts)
