@@ -4998,3 +4998,21 @@ html:root .v5 .db-edit-btns {
   gap: 6px;
   margin-top: 2px;
 }
+
+/* 디비입력: 이름 추가 칸 옆 꼬리표 칸 · 안내 문구 줄바꿈 (2026-11-16) */
+html:root .v5 .db-add-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--muted);
+}
+html:root .v5 .db-add-tag .g-input {
+  width: 76px;
+  text-align: center;
+}
+html:root .v5 .db-head .db-tip {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

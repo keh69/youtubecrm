@@ -5,18 +5,28 @@ import { HttpError, getContext, handleError, isMissingSchema, requireMenu } from
 import { DB_EXTRA_HINT, DB_EXTRA_TAG_HINT, assertExtraEditable } from '@/lib/crm/server/db-counts'
 
 // 디비입력 > 기타 이름(회원가입 안 한 사람). 데이터 저장용이라 통계에는 들어가지 않는다.
-//  POST { name } → 추가(추가한 직원 = 나)
+//  POST { name, tag? } → 추가(추가한 직원 = 나, 꼬리표 기본 '기타')
 //  PATCH { id, name, tag } → 이름·꼬리표(기본 '기타') 고치기
 //  DELETE ?id= → 이름과 그 사람의 DB 기록을 모두 지운다
-const bodySchema = z.object({ name: z.string().trim().min(1, '이름을 적어 주세요.').max(40, '이름은 40자까지 적을 수 있습니다.') })
+const bodySchema = z.object({
+  name: z.string().trim().min(1, '이름을 적어 주세요.').max(40, '이름은 40자까지 적을 수 있습니다.'),
+  tag: z.string().trim().max(10, '꼬리표는 10자까지 적을 수 있습니다.').optional() // 비우면 '기타'
+})
 
 export async function POST(request: Request) {
   try {
     const ctx = await getContext(request)
     requireMenu(ctx, 'db_input')
     const body = bodySchema.parse(await request.json())
-    const { data, error } = await ctx.db.from(TABLES.dbExtraPeople).insert({ name: body.name, owner_user_id: ctx.profile.id }).select('id, name').single()
-    if (data) (data as any).tag = '기타'
+    const tag = body.tag || '기타'
+    let { data, error } = await ctx.db.from(TABLES.dbExtraPeople).insert({ name: body.name, tag, owner_user_id: ctx.profile.id }).select('id, name, tag').single()
+    if (error && isMissingSchema(error)) {
+      // 꼬리표 칸이 아직 없는 DB(SQL 290 전): 꼬리표가 '기타'일 때만 이름만 넣는다
+      if (tag !== '기타') throw new HttpError(409, DB_EXTRA_TAG_HINT)
+      const r = await ctx.db.from(TABLES.dbExtraPeople).insert({ name: body.name, owner_user_id: ctx.profile.id }).select('id, name').single()
+      data = r.data ? { ...(r.data as any), tag: '기타' } : null
+      error = r.error
+    }
     if (error) {
       if (isMissingSchema(error)) throw new HttpError(503, DB_EXTRA_HINT)
       throw error

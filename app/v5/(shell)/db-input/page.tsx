@@ -22,6 +22,7 @@ export default function V5DbInput() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [newName, setNewName] = useState('')
+  const [newTag, setNewTag] = useState('기타') // 이름 옆 꼬리표 (기본 '기타')
   const [adding, setAdding] = useState(false)
   const [note, setNote] = useState<Msg>(null)
   const seq = useRef(0)
@@ -59,11 +60,12 @@ export default function V5DbInput() {
     const name = newName.trim()
     if (!name) return setNote({ tone: 'error', text: '추가할 이름을 적어 주세요.' })
     setAdding(true)
-    const res = await api<{ extra: { id: string; name: string; tag: string } }>('/api/db-counts/extra', { method: 'POST', body: { name } })
+    const tag = newTag.trim() || '기타'
+    const res = await api<{ extra: { id: string; name: string; tag: string } }>('/api/db-counts/extra', { method: 'POST', body: { name, tag } })
     setAdding(false)
     if (!res.ok) return setNote({ tone: 'error', text: res.error })
-    setNewName('')
-    setNote({ tone: 'ok', text: `'${name}' (기타)를 추가했습니다. 통계에는 들어가지 않습니다.` })
+    setNewName('') // 꼬리표는 그대로 둬서 같은 꼬리표로 여러 명을 이어서 넣기 쉽게
+    setNote({ tone: 'ok', text: `'${name} (${res.data.extra.tag})'를 추가했습니다. 통계에는 들어가지 않습니다.` })
     setData((d) => (d ? { ...d, extras: [...d.extras, res.data.extra].sort((a, b) => a.name.localeCompare(b.name, 'ko')) } : d))
   }
   const editExtra = async (id: string, name: string, tag: string) => {
@@ -108,6 +110,9 @@ export default function V5DbInput() {
         </div>
         <form className="db-add" onSubmit={addName}>
           <input className="g-input sm" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="회원가입 안 한 사람 이름" maxLength={40} aria-label="추가할 이름" />
+          <span className="db-add-tag" title="이름 옆에 (꼬리표)로 보입니다. 비우면 (기타)">
+            ( <input className="g-input sm" value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="기타" maxLength={10} aria-label="꼬리표" /> )
+          </span>
           <button className="g-btn primary sm" disabled={adding || !data?.extraReady}>
             {adding ? '추가 중…' : '+ 이름 추가'}
           </button>
