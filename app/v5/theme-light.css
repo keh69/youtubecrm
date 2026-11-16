@@ -5016,3 +5016,12 @@ html:root .v5 .db-head .db-tip {
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* 영상통계 러닝타임별: 영상당 DB 숫자는 노란색 (2026-11-16) */
+html:root .v5 table.g-table.bd-table td.bd-dbper {
+  color: #b45309;
+  font-weight: 700;
+}
+:root:not([data-theme='light']) .v5 table.g-table.bd-table td.bd-dbper {
+  color: #facc15;
+}

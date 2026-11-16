@@ -10,11 +10,11 @@ import type { Stats, Video } from '@/lib/crm/client/types'
 
 type Group = { key: string; label: string; videos: Video[]; order?: number }
 type Row = { key: string; label: string; count: number; long: number; short: number; views: number; avg: number; max: number; db: number; order: number }
-type SortKey = 'label' | 'count' | 'views' | 'avg' | 'max' | 'db' | 'dbPer'
+type SortKey = 'label' | 'count' | 'views' | 'avg' | 'max' | 'db' | 'dbPer' | 'dbRate'
 // 머리칸 정렬: 누를 때마다 내림차순 → 오름차순 → 기본 정렬(null)
 type Sort = { key: SortKey; dir: 'asc' | 'desc' } | null
 const nextSort = (s: Sort, k: SortKey): Sort => (!s || s.key !== k ? { key: k, dir: 'desc' } : s.dir === 'desc' ? { key: k, dir: 'asc' } : null)
-const val = (r: Row, k: SortKey) => (k === 'dbPer' ? (r.count ? r.db / r.count : 0) : k === 'label' ? 0 : (r[k] as number))
+const val = (r: Row, k: SortKey) => (k === 'dbPer' ? (r.count ? r.db / r.count : 0) : k === 'dbRate' ? (r.views ? r.db / r.views : 0) : k === 'label' ? 0 : (r[k] as number))
 
 // 영상 1개당 추정 DB
 function dbShare(videos: Video[], db: Stats['db']): Map<string, number> {
@@ -96,14 +96,10 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
               <SortTh k="count" label="영상" sort={sort} set={setSort} num title="올린 영상 수 (롱폼 / 숏폼)" />
               <SortTh k="views" label="총 조회수" sort={sort} set={setSort} num />
               <th scope="col">조회수 비중</th>
-              <SortTh k="avg" label="영상당 평균" sort={sort} set={setSort} num />
+              <SortTh k="avg" label="평균 조회수" sort={sort} set={setSort} num title="영상 1개당 평균 조회수" />
               <SortTh k="max" label="최고 조회수" sort={sort} set={setSort} num />
               {hasDb && <SortTh k="db" label="추정 DB" sort={sort} set={setSort} num title="직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 추정값" />}
-              {hasDb && (
-                <th scope="col" className="num" title="추정 DB ÷ 총 조회수 × 100">
-                  조회수 대비
-                </th>
-              )}
+              {hasDb && <SortTh k="dbRate" label="조회수 대비 DB" sort={sort} set={setSort} num title="추정 DB ÷ 총 조회수 × 100" />}
             </tr>
           </thead>
           <tbody>
@@ -159,7 +155,7 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
     if (unknown.length) groups.push({ key: 'na', label: '길이 모름', order: 99, videos: unknown })
     return toRows(groups, share).filter((r) => r.count > 0)
   }, [videos, share])
-  const [sort, setSort] = useState<Sort>(null) // 기본: 짧은 길이 → 긴 길이
+  const [sort, setSort] = useState<Sort>({ key: 'dbPer', dir: 'desc' }) // 처음: 영상당 DB 많은 순(누르면 오름차순 → 길이 순)
   if (!videos.length) return null
   const sorted = sortRows(rows, sort, (a, b) => a.order - b.order)
   const maxAvg = Math.max(1, ...rows.map((r) => r.avg))
@@ -216,13 +212,13 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
                 </td>
                 <td className="num">{fmtNumber(r.max)}</td>
                 {hasDb && <td className="num">{r.db ? r.db.toFixed(1) : '-'}</td>}
-                {hasDb && <td className="num bd-muted">{r.count && r.db ? (r.db / r.count).toFixed(2) : '-'}</td>}
+                {hasDb && <td className="num bd-dbper">{r.count && r.db ? (r.db / r.count).toFixed(2) : '-'}</td>}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="g-muted g-small">영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다. 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬로 바뀝니다.</p>
+      <p className="g-muted g-small">영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다. 처음에는 영상당 DB 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(짧은 길이부터)로 바뀝니다.</p>
     </section>
   )
 }
