@@ -71,12 +71,12 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
     for (const v of videos) map.set(v.stockName || '-', [...(map.get(v.stockName || '-') || []), v])
     return toRows([...map].map(([k, list]) => ({ key: k, label: k, videos: list })), share)
   }, [videos, share])
-  const [sort, setSort] = useState<Sort>(null) // 기본: 총 조회수 많은 순
+  const [sort, setSort] = useState<Sort>({ key: 'avg', dir: 'desc' }) // 처음: 평균 조회수 많은 순
   const [all, setAll] = useState(false)
   const [q, setQ] = useState('')
   if (!videos.length) return null
   const totalViews = rows.reduce((s, r) => s + r.views, 0)
-  const shown = sortRows(rows, sort, (a, b) => b.views - a.views).filter((r) => !q.trim() || r.label.toLowerCase().includes(q.trim().toLowerCase()))
+  const shown = sortRows(rows, sort, (a, b) => b.avg - a.avg || b.views - a.views).filter((r) => !q.trim() || r.label.toLowerCase().includes(q.trim().toLowerCase()))
   const list = all || q.trim() ? shown : shown.slice(0, 10)
   const maxViews = Math.max(1, ...rows.map((r) => r.views))
   return (
@@ -138,7 +138,7 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
             {all ? '10개만 보기' : `전체 ${fmtNumber(shown.length)}개 보기`}
           </button>
         )}
-        <span className="g-muted g-small">머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(총 조회수 많은 순)로 바뀝니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
+        <span className="g-muted g-small">처음에는 평균 조회수 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(평균 조회수 많은 순)로 바뀝니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
       </div>
     </section>
   )
