@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { fmtNumber, fmtYmdShort } from '@/lib/crm/client/format'
 
 // 디비입력 표: 직원(세로) × 날짜(가로). 칸을 눌러 숫자를 적고 Enter·칸 밖을 누르면 저장한다.
@@ -66,6 +67,8 @@ export function DbGrid({
       window.removeEventListener('scroll', close, true)
     }
   }, [menu])
+  // 유리 카드(backdrop-filter) 안에 두면 position: fixed 가 카드 기준이 되어 마우스 자리에서 밀린다 → .v5 바로 아래로 띄운다
+  const layer = () => (typeof document !== 'undefined' ? document.querySelector('.v5') || document.body : null)
   const place = (x: number, y: number, w: number, h: number) => ({ left: Math.max(8, Math.min(x, window.innerWidth - w - 8)), top: Math.max(8, Math.min(y, window.innerHeight - h - 8)) })
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -251,7 +254,9 @@ export function DbGrid({
           {hasExtra && ' 추가한 이름 줄은 데이터 저장용이라 영상통계·통계비교에 들어가지 않습니다. 그 줄을 오른쪽 클릭하면 수정·삭제할 수 있습니다.'} 안 적은 칸은 0으로 셉니다.
         </p>
       )}
-      {menu && (
+      {menu &&
+        layer() &&
+        createPortal(
         <div className="db-ctx" role="menu" style={place(menu.x, menu.y, 160, 110)} onContextMenu={(e) => e.preventDefault()}>
           <div className="db-ctx-title">
             {menu.row.name} ({menu.row.tag})
@@ -277,9 +282,12 @@ export function DbGrid({
           >
             🗑️ 삭제
           </button>
-        </div>
-      )}
-      {editing && (
+        </div>,
+          layer()!
+        )}
+      {editing &&
+        layer() &&
+        createPortal(
         <form className="db-ctx db-edit" style={place(editing.x, editing.y, 270, 230)} onSubmit={saveEdit} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)}>
           <div className="db-ctx-title">이름 수정</div>
           <label>
@@ -304,8 +312,9 @@ export function DbGrid({
               {editing.busy ? '저장 중…' : '저장'}
             </button>
           </div>
-        </form>
-      )}
+        </form>,
+          layer()!
+        )}
     </>
   )
 }
