@@ -10,7 +10,11 @@ import type { Stats, Video } from '@/lib/crm/client/types'
 
 type Group = { key: string; label: string; videos: Video[]; order?: number }
 type Row = { key: string; label: string; count: number; long: number; short: number; views: number; avg: number; max: number; db: number; order: number }
-type SortKey = 'label' | 'count' | 'views' | 'avg' | 'max' | 'db'
+type SortKey = 'label' | 'count' | 'views' | 'avg' | 'max' | 'db' | 'dbPer'
+// 머리칸 정렬: 누를 때마다 내림차순 → 오름차순 → 기본 정렬(null)
+type Sort = { key: SortKey; dir: 'asc' | 'desc' } | null
+const nextSort = (s: Sort, k: SortKey): Sort => (!s || s.key !== k ? { key: k, dir: 'desc' } : s.dir === 'desc' ? { key: k, dir: 'asc' } : null)
+const val = (r: Row, k: SortKey) => (k === 'dbPer' ? (r.count ? r.db / r.count : 0) : k === 'label' ? 0 : (r[k] as number))
 
 // 영상 1개당 추정 DB
 function dbShare(videos: Video[], db: Stats['db']): Map<string, number> {
@@ -67,12 +71,12 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
     for (const v of videos) map.set(v.stockName || '-', [...(map.get(v.stockName || '-') || []), v])
     return toRows([...map].map(([k, list]) => ({ key: k, label: k, videos: list })), share)
   }, [videos, share])
-  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'views', dir: 'desc' })
+  const [sort, setSort] = useState<Sort>(null) // 기본: 총 조회수 많은 순
   const [all, setAll] = useState(false)
   const [q, setQ] = useState('')
   if (!videos.length) return null
   const totalViews = rows.reduce((s, r) => s + r.views, 0)
-  const shown = sortRows(rows, sort).filter((r) => !q.trim() || r.label.toLowerCase().includes(q.trim().toLowerCase()))
+  const shown = sortRows(rows, sort, (a, b) => b.views - a.views).filter((r) => !q.trim() || r.label.toLowerCase().includes(q.trim().toLowerCase()))
   const list = all || q.trim() ? shown : shown.slice(0, 10)
   const maxViews = Math.max(1, ...rows.map((r) => r.views))
   return (
@@ -138,7 +142,7 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
             {all ? '10개만 보기' : `전체 ${fmtNumber(shown.length)}개 보기`}
           </button>
         )}
-        <span className="g-muted g-small">머리칸을 누르면 정렬됩니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
+        <span className="g-muted g-small">머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(총 조회수 많은 순)로 바뀝니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
       </div>
     </section>
   )
@@ -155,7 +159,9 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
     if (unknown.length) groups.push({ key: 'na', label: '길이 모름', order: 99, videos: unknown })
     return toRows(groups, share).filter((r) => r.count > 0)
   }, [videos, share])
+  const [sort, setSort] = useState<Sort>(null) // 기본: 짧은 길이 → 긴 길이
   if (!videos.length) return null
+  const sorted = sortRows(rows, sort, (a, b) => a.order - b.order)
   const maxAvg = Math.max(1, ...rows.map((r) => r.avg))
   const maxCount = Math.max(1, ...rows.map((r) => r.count))
   const best = rows.reduce<Row | null>((b, r) => (r.count >= 3 && (!b || r.avg > b.avg) ? r : b), null)
@@ -173,35 +179,19 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
         <table className="g-table bd-table bd-runtime">
           <thead>
             <tr>
-              <th scope="col">러닝타임</th>
-              <th scope="col" className="num">
-                영상
-              </th>
+              <SortTh k="label" label="러닝타임" sort={sort} set={setSort} title="기본 정렬: 짧은 길이부터" />
+              <SortTh k="count" label="영상" sort={sort} set={setSort} num title="올린 영상 수 (롱폼 / 숏폼)" />
               <th scope="col">영상 수</th>
-              <th scope="col" className="num">
-                총 조회수
-              </th>
-              <th scope="col" className="num">
-                영상당 평균 조회수
-              </th>
+              <SortTh k="views" label="총 조회수" sort={sort} set={setSort} num />
+              <SortTh k="avg" label="영상당 평균 조회수" sort={sort} set={setSort} num />
               <th scope="col">평균 비교</th>
-              <th scope="col" className="num">
-                최고 조회수
-              </th>
-              {hasDb && (
-                <th scope="col" className="num" title="직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 추정값">
-                  추정 DB
-                </th>
-              )}
-              {hasDb && (
-                <th scope="col" className="num" title="추정 DB ÷ 영상 수">
-                  영상당 DB
-                </th>
-              )}
+              <SortTh k="max" label="최고 조회수" sort={sort} set={setSort} num />
+              {hasDb && <SortTh k="db" label="추정 DB" sort={sort} set={setSort} num title="직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 추정값" />}
+              {hasDb && <SortTh k="dbPer" label="영상당 DB" sort={sort} set={setSort} num title="추정 DB ÷ 영상 수" />}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.key} className={best?.key === r.key ? 'best' : undefined}>
                 <th scope="row">{r.label}</th>
                 <td className="num">
@@ -232,24 +222,29 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
           </tbody>
         </table>
       </div>
-      <p className="g-muted g-small">영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다.</p>
+      <p className="g-muted g-small">영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다. 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬로 바뀝니다.</p>
     </section>
   )
 }
 
-function sortRows(rows: Row[], sort: { key: SortKey; dir: 'asc' | 'desc' }) {
+// sort 가 없으면 기본 정렬(base). 러닝타임 줄은 길이 순서(order), 종목은 이름순
+function sortRows(rows: Row[], sort: Sort, base: (a: Row, b: Row) => number) {
+  if (!sort) return [...rows].sort(base)
   const sign = sort.dir === 'asc' ? 1 : -1
-  return [...rows].sort((a, b) => (sort.key === 'label' ? a.label.localeCompare(b.label, 'ko') : (a[sort.key] as number) - (b[sort.key] as number)) * sign || b.views - a.views)
+  return [...rows].sort((a, b) => {
+    const d = sort.key === 'label' ? (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label, 'ko')) : val(a, sort.key) - val(b, sort.key)
+    return d * sign || base(a, b)
+  })
 }
 
-function SortTh({ k, label, sort, set, num, title }: { k: SortKey; label: string; sort: { key: SortKey; dir: 'asc' | 'desc' }; set: (s: { key: SortKey; dir: 'asc' | 'desc' }) => void; num?: boolean; title?: string }) {
-  const on = sort.key === k
+function SortTh({ k, label, sort, set, num, title }: { k: SortKey; label: string; sort: Sort; set: (s: Sort) => void; num?: boolean; title?: string }) {
+  const on = sort?.key === k
   return (
-    <th scope="col" className={num ? 'num' : undefined} title={title} aria-sort={on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <button type="button" className={`vt-sort${on ? ' on' : ''}`} onClick={() => set({ key: k, dir: on && sort.dir === 'desc' ? 'asc' : 'desc' })}>
+    <th scope="col" className={num ? 'num' : undefined} title={title} aria-sort={on ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" className={`vt-sort${on ? ' on' : ''}`} onClick={() => set(nextSort(sort, k))}>
         {label}
         <span className="vt-sort-ico" aria-hidden="true">
-          {on ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅'}
+          {on ? (sort!.dir === 'asc' ? '▲' : '▼') : '⇅'}
         </span>
       </button>
     </th>
