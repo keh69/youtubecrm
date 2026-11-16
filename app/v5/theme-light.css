@@ -4815,3 +4815,89 @@ html:root .v5 .bd-best b {
 html:root .v5 table.g-table.bd-runtime tr.best > * {
   background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
+
+/* ───────── 디비입력: 기타(회원가입 안 한 사람) 이름 추가 · (기타) 표시 (2026-11-16) ───────── */
+html:root .v5 .db-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+html:root .v5 .db-add .g-input {
+  width: 190px;
+}
+html:root .v5 .db-head .db-tip {
+  flex-basis: 100%;
+}
+html:root .v5 table.g-table.db-grid tbody th {
+  position: relative;
+}
+html:root .v5 .db-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  overflow: hidden;
+}
+html:root .v5 .db-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html:root .v5 .db-etc {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #b45309;
+}
+:root:not([data-theme='light']) .v5 .db-etc {
+  color: #fcd34d;
+}
+html:root .v5 table.g-table.db-grid tr.extra > th:first-child {
+  font-weight: 500;
+}
+html:root .v5 table.g-table.db-grid tr.first-extra > * {
+  border-top: 1px dashed color-mix(in srgb, currentColor 22%, transparent);
+}
+html:root .v5 table.g-table.db-grid tr.extra td.has .db-cell {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+}
+html:root .v5 .db-del {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+}
+html:root .v5 tr:hover .db-del,
+html:root .v5 .db-del:focus {
+  opacity: 1;
+}
+html:root .v5 .db-del:hover {
+  color: #fff;
+  background: #ef4444;
+}
+html:root .v5 table.g-table.db-grid tfoot tr.extra > * {
+  font-weight: 500;
+  color: var(--muted);
+  border-top-style: dashed;
+}
+/* (기타)는 이름 바로 옆에 한 줄로 */
+html:root .v5 .db-grid col.c-name {
+  width: 116px;
+}
+html:root .v5 .db-name {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 3px;
+  padding-right: 14px;
+}
+html:root .v5 .db-etc {
+  flex: none;
+}

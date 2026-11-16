@@ -25,5 +25,7 @@ export const TABLES = {
   auditLogs: `${PREFIX}audit_logs`,
   appSettings: `${PREFIX}app_settings`, // 앱 설정값(출퇴근 기준시간 등)
   videoReservations: `${PREFIX}video_reservations`, // 영상 예약등록(공개되면 영상으로 옮김, SQL 260)
-  dbCounts: `${PREFIX}db_counts` // 디비입력: 직원별 하루 DB 개수(SQL 270)
+  dbCounts: `${PREFIX}db_counts`, // 디비입력: 직원별 하루 DB 개수(SQL 270)
+  dbExtraPeople: `${PREFIX}db_extra_people`, // 디비입력: 회원가입 안 한 사람(기타) 이름(SQL 280, 통계 제외)
+  dbExtraCounts: `${PREFIX}db_extra_counts` // 디비입력: 기타 사람의 하루 DB 개수(SQL 280, 통계 제외)
 } as const

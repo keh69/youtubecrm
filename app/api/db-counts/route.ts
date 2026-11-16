@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { TABLES } from '@/lib/supabase/tables'
 import { HttpError, getContext, handleError, isMissingSchema, requireMenu } from '@/lib/crm/server/context'
-import { DB_COUNTS_HINT, loadDbCounts, loadDbPeople } from '@/lib/crm/server/db-counts'
+import { DB_COUNTS_HINT, DB_EXTRA_HINT, assertExtraEditable, loadDbCounts, loadDbExtras, loadDbPeople } from '@/lib/crm/server/db-counts'
 import { getKstYmd } from '@/lib/attendance/time'
 
 // 디비입력: 한 달 동안 직원별 하루 DB 개수
@@ -28,7 +28,13 @@ export async function GET(request: Request) {
     // 사용 중인 직원 + 이 달에 적힌 기록이 있는 직원(퇴사·삭제된 사람 기록도 보이게)
     const withRows = new Set(rows.map((r) => r.userId))
     const list = people.filter((p) => p.active || withRows.has(p.id))
+    // 기타(회원가입 안 한 사람): 데이터 저장용, 통계 제외
+    const extras = await loadDbExtras(ctx, from, to)
     return NextResponse.json({
+      extraReady: extras.ready,
+      extraHint: extras.ready ? null : DB_EXTRA_HINT,
+      extras: extras.people.map((p) => ({ id: p.id, name: p.name })),
+      extraCounts: extras.counts,
       month,
       from,
       to,
@@ -44,7 +50,8 @@ export async function GET(request: Request) {
 }
 
 const bodySchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().uuid().optional(), // 직원 칸
+  extraId: z.string().uuid().optional(), // 기타 사람 칸(통계 제외)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   count: z.number().int().min(0).max(100000).nullable()
 })
@@ -55,6 +62,23 @@ export async function PUT(request: Request) {
     requireMenu(ctx, 'db_input')
     const body = bodySchema.parse(await request.json())
     if (body.date > getKstYmd(new Date())) throw new HttpError(400, '오늘 이후 날짜에는 적을 수 없습니다.')
+    if (body.extraId) {
+      await assertExtraEditable(ctx, body.extraId)
+      const t = ctx.db.from(TABLES.dbExtraCounts)
+      const { error } =
+        body.count === null
+          ? await t.delete().eq('person_id', body.extraId).eq('work_date', body.date)
+          : await t.upsert(
+              { person_id: body.extraId, work_date: body.date, db_count: body.count, updated_by: ctx.profile.id, updated_at: new Date().toISOString() },
+              { onConflict: 'person_id,work_date' }
+            )
+      if (error) {
+        if (isMissingSchema(error)) throw new HttpError(503, DB_EXTRA_HINT)
+        throw error
+      }
+      return NextResponse.json({ ok: true, extraId: body.extraId, date: body.date, count: body.count })
+    }
+    if (!body.userId) throw new HttpError(400, '누구의 칸인지 알 수 없습니다.')
     const people = await loadDbPeople(ctx)
     if (!people.some((p) => p.id === body.userId)) throw new HttpError(403, '이 직원의 DB를 적을 권한이 없습니다.')
     const t = ctx.db.from(TABLES.dbCounts)
