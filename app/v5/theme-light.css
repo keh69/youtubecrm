@@ -4542,3 +4542,185 @@ html:root .v5 .cmp-presets-label {
     height: 36px;
   }
 }
+
+/* ───────── 디비입력: 직원 × 날짜 표에 하루 DB 개수 직접 적기 (2026-11-16) ───────── */
+html:root .v5 .g-content:has(.db-grid) {
+  max-width: min(1180px, calc(100vw - 32px));
+}
+html:root .v5 .db-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  position: relative;
+}
+html:root .v5 .db-month {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+html:root .v5 .db-month b {
+  font-size: 18px;
+  font-weight: 800;
+  min-width: 110px;
+  text-align: center;
+}
+html:root .v5 .db-tip {
+  font-size: 12.5px;
+}
+html:root .v5 .db-total {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+html:root .v5 .db-total b {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-left: 4px;
+}
+html:root .v5 table.g-table.db-grid {
+  table-layout: fixed;
+  min-width: 900px;
+  font-variant-numeric: tabular-nums;
+}
+html:root .v5 .db-grid col.c-name {
+  width: 76px;
+}
+html:root .v5 .db-grid col.c-sum,
+html:root .v5 .db-grid col.c-avg {
+  width: 50px;
+}
+html:root .v5 table.g-table.db-grid th,
+html:root .v5 table.g-table.db-grid td {
+  padding: 3px 1px;
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+html:root .v5 table.g-table.db-grid thead th {
+  line-height: 1.15;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+html:root .v5 table.g-table.db-grid thead th small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.6;
+}
+html:root .v5 table.g-table.db-grid thead th.we {
+  color: #e8795f;
+}
+html:root .v5 table.g-table.db-grid thead th.today {
+  color: var(--accent);
+  font-weight: 800;
+}
+html:root .v5 table.g-table.db-grid tr > th:first-child {
+  text-align: left;
+  padding-left: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+html:root .v5 table.g-table.db-grid .sum {
+  font-weight: 700;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+html:root .v5 table.g-table.db-grid .sum.avg {
+  font-weight: 500;
+  color: var(--muted);
+}
+html:root .v5 table.g-table.db-grid tfoot th,
+html:root .v5 table.g-table.db-grid tfoot td {
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  font-weight: 700;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+html:root .v5 table.g-table.db-grid tfoot td.zero {
+  opacity: 0.35;
+}
+/* 칸: 평소엔 글자만, 마우스를 올리거나 누르면 입력칸 테두리 */
+html:root .v5 .db-cell {
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+html:root .v5 td.has .db-cell {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+html:root .v5 .db-cell:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+html:root .v5 .db-cell:focus {
+  border-color: var(--accent);
+  background: var(--glass-strong, #fff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+:root:not([data-theme='light']) .v5 .db-cell:focus {
+  background: #26262b;
+}
+html:root .v5 .db-cell:disabled {
+  background: transparent;
+  cursor: not-allowed;
+}
+html:root .v5 td.future {
+  opacity: 0.35;
+}
+html:root .v5 td.saving .db-cell {
+  opacity: 0.6;
+}
+html:root .v5 td.ok .db-cell {
+  background: color-mix(in srgb, #22c55e 30%, transparent);
+  border-color: #22c55e;
+}
+html:root .v5 td.err .db-cell {
+  border-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 14%, transparent);
+}
+
+/* ───────── 영상통계: 디비입력 DB 지표 (2026-11-16) ───────── */
+html:root .v5 .g-ds-kpi-t.ds-db {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, currentColor 18%, transparent);
+}
+html:root .v5 .g-ds-kpi-t.ds-db thead th {
+  padding-top: 10px;
+}
+html:root .v5 .ds-db-tag {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+:root:not([data-theme='light']) .v5 .ds-db-tag {
+  color: #fcd34d;
+}
+html:root .v5 .ds-db-hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+html:root .v5 table.g-ds-daily-ch tbody.db tr:first-child > * {
+  border-top: 1px dashed color-mix(in srgb, currentColor 22%, transparent);
+}
+html:root .v5 table.g-ds-daily-ch tbody.db td:not(.zero) {
+  font-weight: 700;
+  color: #b45309;
+}
+:root:not([data-theme='light']) .v5 table.g-ds-daily-ch tbody.db td:not(.zero) {
+  color: #fcd34d;
+}

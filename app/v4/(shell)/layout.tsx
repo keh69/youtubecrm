@@ -12,6 +12,7 @@ const NAV_ICON: Record<MenuKey | 'skin' | 'me', string> = {
   videos: '🎬',
   stats: '📊',
   stats_compare: '📈',
+  db_input: '🗂️',
   payroll: '💰',
   settings: '⚙',
   skin: '🎨',

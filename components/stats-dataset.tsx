@@ -19,7 +19,7 @@ export function StatsKpiSection({ st }: { st: St }) {
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const list = st.data?.videos || []
   const days = st.data?.daily.length || 0 // 기간 날 수(서버가 기간의 날짜마다 한 줄씩 준다)
-  if (v5) return <KpiByChannel list={list} days={days} rangeText={rangeText} /> // v5전용: 0 때 해제 — 채널별 한 줄씩 + 합계
+  if (v5) return <KpiByChannel list={list} days={days} rangeText={rangeText} db={st.data?.db} /> // v5전용: 0 때 해제 — 채널별 한 줄씩 + 합계 + DB 지표
   return (
     <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
       <dl className={v5 ? undefined : 'xs-ds-kpi'}>
@@ -65,7 +65,7 @@ export function StatsKpiSection({ st }: { st: St }) {
 }
 
 // 요약 수치표(v5): 유튜브 채널마다 한 줄, 채널이 2개 이상이면 맨 아래 합계 줄
-function KpiByChannel({ list, days, rangeText }: { list: Video[]; days: number; rangeText: string }) {
+function KpiByChannel({ list, days, rangeText, db }: { list: Video[]; days: number; rangeText: string; db?: DbStats }) {
   const groups = channelGroups(list)
   const agg = (vs: Video[]) => ({
     n: vs.length,
@@ -112,7 +112,43 @@ function KpiByChannel({ list, days, rangeText }: { list: Video[]; days: number; 
           ))}
         </tbody>
       </table>
+      {db && <DbKpi db={db} views={list.reduce((s, v) => s + v.viewCount, 0)} count={list.length} days={days} />}
     </section>
+  )
+}
+
+// 디비입력에서 적은 DB 지표(요약 아래 한 줄): DB 수 · 일 평균 DB · 조회수 대비 DB · 영상당 DB · DB 1개당 조회수
+type DbStats = NonNullable<NonNullable<St['data']>['db']>
+export const dbRateText = (db: number, views: number) => (views > 0 ? `${((db / views) * 100).toFixed(2)}%` : '-')
+function DbKpi({ db, views, count, days }: { db: DbStats; views: number; count: number; days: number }) {
+  if (!db.ready)
+    return <p className="ds-db-hint">DB 지표: 디비입력 표가 아직 없습니다(supabase/sql/simple/270_db_counts.sql 실행 필요).</p>
+  const n = db.total
+  return (
+    <table className="g-ds-kpi-t ds-db">
+      <thead>
+        <tr>
+          <th scope="col">디비입력</th>
+          <th scope="col">DB 수</th>
+          <th scope="col" title="DB 수 ÷ 기간 날 수">일 평균 DB</th>
+          <th scope="col" title="DB 수 ÷ 총 조회수 × 100">조회수 대비 DB</th>
+          <th scope="col" title="DB 수 ÷ 올린 영상 수">영상당 DB</th>
+          <th scope="col" title="총 조회수 ÷ DB 수">DB 1개당 조회수</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="total">
+          <th scope="row">
+            <span className="ds-db-tag">DB</span>
+          </th>
+          <td>{fmtNumber(n)}개</td>
+          <td>{days > 0 ? (n / days).toFixed(1) : '-'}</td>
+          <td>{dbRateText(n, views)}</td>
+          <td>{count > 0 ? (n / count).toFixed(2) : '-'}</td>
+          <td>{n > 0 ? fmtNumber(Math.round(views / n)) : '-'}</td>
+        </tr>
+      </tbody>
+    </table>
   )
 }
 
@@ -304,6 +340,25 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay, pickedChannel }: { st
               </tbody>
             )
           })}
+          {st.data?.db?.ready && (
+            <tbody className="db">
+              <tr>
+                <th scope="rowgroup" className="ch">
+                  <span className="ds-db-tag">DB</span>
+                </th>
+                <th scope="row">DB 개수</th>
+                {daily.map((d) => {
+                  const n = st.data!.db!.daily.find((x) => x.date === d.date)?.count || 0
+                  return (
+                    <td key={d.date} className={n ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · DB ${n}개 (디비입력)`}>
+                      {n ? fmtNumber(n) : '·'}
+                    </td>
+                  )
+                })}
+                <td className="sum">{fmtNumber(st.data.db.total)}</td>
+              </tr>
+            </tbody>
+          )}
         </table>
       </div>
       <p className={ui.muted}>
@@ -325,7 +380,7 @@ export function StatsPersonSection({ st, meId }: { st: St; meId: string }) {
         <h2 className={v5 ? 'g-h2' : cx(ui.h2, 'xs-h')}>담당자별</h2>
         <span className={ui.muted}>머리칸을 누르면 정렬 · [보기]를 누르면 그 사람 영상만</span>
       </div>
-      <PersonStatsTable people={st.data.perPerson} videos={st.data.videos} onPick={(id) => st.setWho(id === meId ? 'me' : id)} />
+      <PersonStatsTable people={st.data.perPerson} videos={st.data.videos} db={st.data.db} onPick={(id) => st.setWho(id === meId ? 'me' : id)} />
     </section>
   )
 }
@@ -347,8 +402,9 @@ type Row = {
   likes: number
   share: number // 전체 조회수 중 이 사람 비중(0~1)
   last: string | null // 가장 최근 올린 시각(ISO)
+  db: number // 디비입력에서 적은 DB 개수
 }
-type Key = 'name' | 'count' | 'views' | 'share' | 'avgViews' | 'maxViews' | 'duration' | 'avgDuration' | 'likes' | 'last'
+type Key = 'name' | 'count' | 'views' | 'share' | 'avgViews' | 'maxViews' | 'duration' | 'avgDuration' | 'likes' | 'db' | 'last'
 type Sort = { key: Key; dir: 'asc' | 'desc' } | null
 
 const uploaded = (v: Video) => v.publishedAt || v.createdAt
@@ -363,7 +419,7 @@ const shortDay = (iso: string | null) => {
   return `${p.month}.${p.day} (${p.weekday})`
 }
 
-function build(people: Person[], videos: Video[]): Row[] {
+function build(people: Person[], videos: Video[], dbBy: Map<string, number>): Row[] {
   const totalViews = videos.reduce((n, v) => n + v.viewCount, 0)
   return people.map((p) => {
     const list = videos.filter((v) => v.ownerId === p.userId)
@@ -383,7 +439,8 @@ function build(people: Person[], videos: Video[]): Row[] {
       avgDuration: withDur.length ? Math.round(duration / withDur.length) : null,
       likes: list.reduce((n, v) => n + (v.likeCount || 0), 0),
       share: totalViews > 0 ? views / totalViews : 0,
-      last: list.length ? list.map(uploaded).sort().slice(-1)[0] : null
+      last: list.length ? list.map(uploaded).sort().slice(-1)[0] : null,
+      db: dbBy.get(p.userId) || 0
     }
   })
 }
@@ -400,12 +457,17 @@ const COLS: Array<{ key: Key; label: string; num?: boolean; title?: string }> = 
   { key: 'likes', label: '좋아요', num: true },
   { key: 'last', label: '최근 업로드', title: '이 기간에 가장 최근 올린 날' }
 ]
+// v5: 좋아요 오른쪽에 DB(디비입력) 열
+const DB_COL = { key: 'db' as Key, label: 'DB', num: true, title: '디비입력에서 적은 DB 개수 (조회수 대비 %)' }
+const COLS_DB = [...COLS.slice(0, -1), DB_COL, COLS[COLS.length - 1]]
 
-function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos: Video[]; onPick: (userId: string) => void }) {
+function PersonStatsTable({ people, videos, onPick, db }: { people: Person[]; videos: Video[]; onPick: (userId: string) => void; db?: DbStats }) {
   const ui = useSkinUi()
   const v5 = ui.key === 'v5'
+  const showDb = v5 && Boolean(db?.ready) // v5전용: 0 때 해제 — DB 열
+  const cols = showDb ? COLS_DB : COLS
   const [sort, setSort] = useState<Sort>(null)
-  const rows = useMemo(() => build(people, videos), [people, videos])
+  const rows = useMemo(() => build(people, videos, new Map((db?.perPerson || []).map((x) => [x.userId, x.count]))), [people, videos, db])
   const sorted = useMemo(() => {
     if (!sort) return rows
     const sign = sort.dir === 'asc' ? 1 : -1
@@ -433,6 +495,7 @@ function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos
       duration,
       avgDuration: withDur ? Math.round(duration / withDur) : null,
       likes: rows.reduce((n, r) => n + r.likes, 0),
+      db: rows.reduce((n, r) => n + r.db, 0),
       active: rows.filter((r) => r.count > 0).length
     }
   }, [rows, videos])
@@ -442,7 +505,7 @@ function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos
       <table className={v5 ? 'g-table g-ds-person' : cx(ui.table, 'xs-ds-person')}>
         <thead>
           <tr>
-            {COLS.map((c) => (
+            {cols.map((c) => (
               <th key={c.key} className={c.num ? 'num' : undefined} title={c.title} aria-sort={sort?.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <button type="button" className={`vt-sort${sort?.key === c.key ? ' on' : ''}`} onClick={() => toggle(c.key)}>
                   {c.label}
@@ -483,6 +546,12 @@ function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos
               <td className="num nowrap">{r.count ? fmtTotalDuration(r.duration) : '-'}</td>
               <td className="num">{r.avgDuration == null ? '-' : fmtDuration(r.avgDuration)}</td>
               <td className="num">{r.count ? fmtNumber(r.likes) : '-'}</td>
+              {showDb && (
+                <td className="num nowrap" title={`조회수 대비 DB ${dbRateText(r.db, r.views)}`}>
+                  <b>{fmtNumber(r.db)}</b>
+                  {r.db > 0 && <small className="ds-sub">{dbRateText(r.db, r.views)}</small>}
+                </td>
+              )}
               <td className="nowrap">{shortDay(r.last)}</td>
               <td className="right">
                 <button type="button" className="ds-link" onClick={() => onPick(r.userId)} title={`${r.name}의 영상만 보기`}>
@@ -514,6 +583,12 @@ function PersonStatsTable({ people, videos, onPick }: { people: Person[]; videos
             <td className="num nowrap">{fmtTotalDuration(total.duration)}</td>
             <td className="num">{total.avgDuration == null ? '-' : fmtDuration(total.avgDuration)}</td>
             <td className="num">{fmtNumber(total.likes)}</td>
+            {showDb && (
+              <td className="num nowrap">
+                <b>{fmtNumber(total.db)}</b>
+                {total.db > 0 && <small className="ds-sub">{dbRateText(total.db, total.views)}</small>}
+              </td>
+            )}
             <td />
             <td />
           </tr>

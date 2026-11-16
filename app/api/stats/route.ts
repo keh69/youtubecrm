@@ -6,6 +6,7 @@ import { LOCKED_ROLE_CODE } from '@/lib/crm/menus'
 import { loadVisibleUsers } from '@/lib/crm/server/scope'
 import { VIDEO_FIELDS, loadChannelNames, refreshStaleVideos, toVideoDto } from '@/lib/crm/server/videos'
 import { processReservations } from '@/lib/crm/server/reservations'
+import { loadDbCounts } from '@/lib/crm/server/db-counts'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
 const MAX_DAYS = 366
@@ -80,7 +81,23 @@ export async function GET(request: Request) {
             .sort((a, b) => b.totalViews - a.totalViews || b.videoCount - a.videoCount)
         : []
 
+    // 디비입력에서 적은 DB 개수(같은 직원·같은 기간). 표가 아직 없으면 ready=false
+    const dbc = await loadDbCounts(ctx.db, ids, from, to)
+    const dbDaily = new Map<string, number>()
+    const dbByUser = new Map<string, number>()
+    for (const r of dbc.rows) {
+      dbDaily.set(r.date, (dbDaily.get(r.date) || 0) + r.count)
+      dbByUser.set(r.userId, (dbByUser.get(r.userId) || 0) + r.count)
+    }
+    const db = {
+      ready: dbc.ready,
+      total: dbc.rows.reduce((s, r) => s + r.count, 0),
+      daily: dayList.map((date) => ({ date, count: dbDaily.get(date) || 0 })),
+      perPerson: [...dbByUser].map(([userId, count]) => ({ userId, count }))
+    }
+
     return NextResponse.json({
+      db,
       from,
       to,
       who,

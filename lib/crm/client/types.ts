@@ -124,6 +124,8 @@ export type Stats = {
   daily: Array<{ date: string; count: number; views: number }>
   perPerson: Array<StatsSummary & { userId: string; name: string }>
   videos: Video[]
+  // 디비입력에서 적은 DB 개수(같은 직원·같은 기간). ready=false 면 DB 표가 아직 없음(SQL 270)
+  db?: { ready: boolean; total: number; daily: Array<{ date: string; count: number }>; perPerson: Array<{ userId: string; count: number }> }
 }
 
 export type SettingsRole = {

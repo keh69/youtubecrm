@@ -13,6 +13,7 @@ const TABLE: Record<NavItem['key'], string> = {
   videos: 'videos',
   stats: 'video_stats',
   stats_compare: 'stats_compare',
+  db_input: 'db_input',
   payroll: 'payroll',
   settings: 'settings',
   skin: 'skins',

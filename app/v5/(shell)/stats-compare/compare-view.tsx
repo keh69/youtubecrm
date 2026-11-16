@@ -9,8 +9,8 @@ import type { Stats, Video } from '@/lib/crm/client/types'
 export type Mode = 'period' | 'people'
 
 /* ───────── 지표 계산 ───────── */
-type Agg = { count: number; long: number; short: number; views: number; perDay: number; avgViews: number; maxViews: number; duration: number; avgDuration: number; likes: number; comments: number }
-function agg(videos: Video[], days: number): Agg {
+type Agg = { count: number; long: number; short: number; views: number; perDay: number; avgViews: number; maxViews: number; duration: number; avgDuration: number; likes: number; comments: number; db: number; dbPerDay: number; dbRate: number }
+function agg(videos: Video[], days: number, db = 0): Agg {
   const views = videos.reduce((s, v) => s + v.viewCount, 0)
   const duration = videos.reduce((s, v) => s + (v.durationSeconds || 0), 0)
   const n = videos.length
@@ -25,7 +25,10 @@ function agg(videos: Video[], days: number): Agg {
     duration,
     avgDuration: n ? Math.round(duration / n) : 0,
     likes: videos.reduce((s, v) => s + (v.likeCount || 0), 0),
-    comments: videos.reduce((s, v) => s + (v.commentCount || 0), 0)
+    comments: videos.reduce((s, v) => s + (v.commentCount || 0), 0),
+    db,
+    dbPerDay: days > 0 ? Math.round((db / days) * 10) / 10 : 0,
+    dbRate: views > 0 ? db / views : 0 // 조회수 대비 DB(0~1)
   }
 }
 const METRICS: Array<{ key: keyof Agg; label: string; fmt: (n: number) => string; tip?: string }> = [
@@ -40,6 +43,12 @@ const METRICS: Array<{ key: keyof Agg; label: string; fmt: (n: number) => string
   { key: 'short', label: '숏폼', fmt: (n) => `${fmtNumber(n)}개` },
   { key: 'likes', label: '좋아요', fmt: fmtNumber },
   { key: 'comments', label: '댓글', fmt: fmtNumber }
+]
+// 디비입력 DB 지표(DB 표가 있을 때만 붙는다)
+const DB_METRICS: typeof METRICS = [
+  { key: 'db', label: 'DB 수', fmt: (n) => `${fmtNumber(n)}개`, tip: '디비입력에서 적은 DB 개수' },
+  { key: 'dbPerDay', label: '일 평균 DB', fmt: (n) => n.toFixed(1), tip: 'DB 수 ÷ 기간 날 수' },
+  { key: 'dbRate', label: '조회수 대비 DB', fmt: (n) => `${(n * 100).toFixed(2)}%`, tip: 'DB 수 ÷ 총 조회수 × 100' }
 ]
 
 // 변화: B - A. pct 는 A 가 0 이면 null(새로 생김)
@@ -69,9 +78,11 @@ function Delta({ a, b, fmtDiff }: { a: number; b: number; fmtDiff?: (n: number) 
 
 /* ───────── 비교 결과 ───────── */
 export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPickPerson }: { a: Stats; b: Stats; labelA: string; labelB: string; phrase: string; mode: Mode; loading: boolean; onPickPerson: (id: string) => void }) {
-  const ga = agg(a.videos, a.daily.length)
-  const gb = agg(b.videos, b.daily.length)
-  const moves = METRICS.map((m) => ({ m, c: change(ga[m.key], gb[m.key]) }))
+  const ga = agg(a.videos, a.daily.length, a.db?.total || 0)
+  const gb = agg(b.videos, b.daily.length, b.db?.total || 0)
+  const hasDb = Boolean(a.db?.ready && b.db?.ready)
+  const metrics = hasDb ? [...METRICS, ...DB_METRICS] : METRICS
+  const moves = metrics.map((m) => ({ m, c: change(ga[m.key], gb[m.key]) }))
   const ups = moves.filter((x) => x.c.dir === 'up')
   const downs = moves.filter((x) => x.c.dir === 'down')
   const flats = moves.filter((x) => x.c.dir === 'flat')
@@ -103,7 +114,7 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
             <span>
               <b>{verdict === 'up' ? '전체적으로 올랐습니다' : verdict === 'down' ? '전체적으로 내렸습니다' : '전체적으로 비슷합니다'}</b>
               <small>
-                {phrase} · 지표 {METRICS.length}개 중
+                {phrase} · 지표 {metrics.length}개 중
               </small>
             </span>
           </div>
@@ -121,7 +132,7 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
           </div>
           <div className="cmp-v-keys">
             {KEY_METRICS.map((k) => {
-              const m = METRICS.find((x) => x.key === k)!
+              const m = metrics.find((x) => x.key === k)!
               const c = change(ga[k], gb[k])
               return (
                 <div key={k} className={`cmp-key ${c.dir}`}>
@@ -137,7 +148,7 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
 
         {/* 지표별 수치표: 기준 · 비교 · 증감 · 변화율(가운데 0 기준 막대). 넓은 화면은 두 칸으로 */}
         <div className="cmp-grid2">
-          {[METRICS.slice(0, 6), METRICS.slice(6)].map((list, ti) => (
+          {[metrics.slice(0, Math.ceil(metrics.length / 2)), metrics.slice(Math.ceil(metrics.length / 2))].map((list, ti) => (
             <div key={ti} className="g-table-wrap">
               <table className="g-table cmp-ds">
                 <thead>
@@ -202,6 +213,7 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
         <div className="cmp-charts">
           <LineCompare title="조회수" a={a.daily} b={b.daily} pick={(d) => d.views} labelA={labelA} labelB={labelB} sameDates={sameDates} />
           <LineCompare title="올린 개수" a={a.daily} b={b.daily} pick={(d) => d.count} labelA={labelA} labelB={labelB} sameDates={sameDates} unit="개" />
+          {hasDb && <LineCompare title="DB 개수" a={a.db!.daily.map((d) => ({ date: d.date, count: d.count, views: 0 }))} b={b.db!.daily.map((d) => ({ date: d.date, count: d.count, views: 0 }))} pick={(d) => d.count} labelA={labelA} labelB={labelB} sameDates={sameDates} unit="개" />}
         </div>
       </section>
 

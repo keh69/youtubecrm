@@ -1,1 +1,1 @@
-export const BUILD_VERSION = '2026년 11월 13일 (금) - 15'
+export const BUILD_VERSION = '2026년 11월 16일 (월) - 2'
