@@ -5063,3 +5063,12 @@ html:root .v5 input.g-cal-month {
 html:root .v5 .g-cal-nav .g-cal-hint {
   margin: 0;
 }
+/* [이번 달] 글자가 세로로 쪼개지지 않게 */
+html:root .v5 .g-cal-navbtn {
+  white-space: nowrap;
+  flex: none;
+}
+html:root .v5 .g-cal-nav {
+  flex-wrap: nowrap;
+  flex: none;
+}
