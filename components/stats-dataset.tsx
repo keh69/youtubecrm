@@ -13,59 +13,17 @@ type St = ReturnType<typeof useStats>
 
 /* ───────── 요약 한 줄 ───────── */
 export function StatsKpiSection({ st }: { st: St }) {
-  const ui = useSkinUi()
-  const v5 = ui.key === 'v5'
-  const s = st.data?.summary
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
   const list = st.data?.videos || []
   const days = st.data?.daily.length || 0 // 기간 날 수(서버가 기간의 날짜마다 한 줄씩 준다)
-  if (v5) return <KpiByChannel list={list} days={days} rangeText={rangeText} db={st.data?.db} /> // v5전용: 0 때 해제 — 채널별 한 줄씩 + 합계 + DB 지표
-  return (
-    <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel')} aria-label="기간 요약">
-      <dl className={v5 ? undefined : 'xs-ds-kpi'}>
-        <div className="period">
-          <dt>기간</dt>
-          <dd className="small">{rangeText}</dd>
-        </div>
-        <div>
-          <dt>올린 영상</dt>
-          <dd>{fmtNumber(s?.videoCount)}개</dd>
-        </div>
-        <div>
-          <dt>총 조회수</dt>
-          <dd>{fmtNumber(s?.totalViews)}</dd>
-        </div>
-        {v5 && ( // v5전용: 0 때 해제 — 일 평균 조회수(총 조회수 ÷ 기간 날 수)
-          <div>
-            <dt title="총 조회수 ÷ 기간 날 수(이번 달·이번 주는 오늘까지)">일 평균 조회수</dt>
-            <dd>{s && days > 0 ? fmtNumber(Math.round(s.totalViews / days)) : '-'}</dd>
-          </div>
-        )}
-        <div>
-          <dt>영상당 평균 조회수</dt>
-          <dd>{s && s.videoCount > 0 ? fmtNumber(Math.round(s.totalViews / s.videoCount)) : '-'}</dd>
-        </div>
-        <div>
-          <dt title="올린 영상 길이의 합">총 재생시간</dt>
-          <dd>{fmtTotalDuration(s?.totalDurationSeconds || 0)}</dd>
-        </div>
-        <div>
-          <dt>영상당 평균 길이</dt>
-          <dd>{s && s.videoCount > 0 ? fmtDuration(Math.round(s.totalDurationSeconds / s.videoCount)) : '-'}</dd>
-        </div>
-        <div>
-          <dt>롱폼 / 숏폼</dt>
-          <dd>
-            {fmtNumber(list.filter((v) => v.contentType === 'longform').length)} / {fmtNumber(list.filter((v) => v.contentType !== 'longform').length)}
-          </dd>
-        </div>
-      </dl>
-    </section>
-  )
+  // 2026-11-18 '0': 모든 스킨 — 채널별 한 줄씩 + 합계 + DB 지표(예전 한 줄 요약은 뺐다)
+  return <KpiByChannel list={list} days={days} rangeText={rangeText} db={st.data?.db} />
 }
 
 // 요약 수치표(v5): 유튜브 채널마다 한 줄, 채널이 2개 이상이면 맨 아래 합계 줄
 function KpiByChannel({ list, days, rangeText, db }: { list: Video[]; days: number; rangeText: string; db?: DbStats }) {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
   const groups = channelGroups(list)
   const agg = (vs: Video[]) => ({
     n: vs.length,
@@ -79,8 +37,8 @@ function KpiByChannel({ list, days, rangeText, db }: { list: Video[]; days: numb
     ...(groups.length !== 1 ? [{ key: '__total', total: true, label: <>합계</>, ...agg(list) }] : [])
   ]
   return (
-    <section className="g-glass g-ds-kpi" aria-label="기간 요약 (채널별)">
-      <table className="g-ds-kpi-t">
+    <section className={v5 ? 'g-glass g-ds-kpi' : cx(ui.section, 'xs-panel xs-ds-kpi-box')} aria-label="기간 요약 (채널별)">
+      <table className={v5 ? 'g-ds-kpi-t' : 'xs-ds-kpi-t'}>
         <thead>
           <tr>
             <th scope="col" className="period">
@@ -112,7 +70,7 @@ function KpiByChannel({ list, days, rangeText, db }: { list: Video[]; days: numb
           ))}
         </tbody>
       </table>
-      {db && <DbKpi db={db} views={list.reduce((s, v) => s + v.viewCount, 0)} count={list.length} days={days} />}
+      {db && <DbKpi db={db} views={list.reduce((s, v) => s + v.viewCount, 0)} count={list.length} days={days} tableClass={v5 ? 'g-ds-kpi-t ds-db' : 'xs-ds-kpi-t ds-db'} />}
     </section>
   )
 }
@@ -120,12 +78,12 @@ function KpiByChannel({ list, days, rangeText, db }: { list: Video[]; days: numb
 // 디비입력에서 적은 DB 지표(요약 아래 한 줄): DB 수 · 일 평균 DB · 조회수 대비 DB · 영상당 DB · DB 1개당 조회수
 type DbStats = NonNullable<NonNullable<St['data']>['db']>
 export const dbRateText = (db: number, views: number) => (views > 0 ? `${((db / views) * 100).toFixed(2)}%` : '-')
-function DbKpi({ db, views, count, days }: { db: DbStats; views: number; count: number; days: number }) {
+function DbKpi({ db, views, count, days, tableClass }: { db: DbStats; views: number; count: number; days: number; tableClass: string }) {
   if (!db.ready)
     return <p className="ds-db-hint">DB 지표: 디비입력 표가 아직 없습니다(supabase/sql/simple/270_db_counts.sql 실행 필요).</p>
   const n = db.total
   return (
-    <table className="g-ds-kpi-t ds-db">
+    <table className={tableClass}>
       <thead>
         <tr>
           <th scope="col">디비입력</th>
@@ -163,74 +121,10 @@ const shortNum = (n: number) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000
 
 // onPickDay: 올린 개수 칸을 누르면 그날(YYYY-MM-DD)을 알려 준다(영상리스트를 그날로 거르기). pickedDay: 지금 고른 날(칸 강조)
 export function StatsDailySection({ st, onPickDay, pickedDay, pickedChannel }: { st: St; onPickDay?: (ymd: string, channel?: string | null) => void; pickedDay?: string | null; pickedChannel?: string | null }) {
-  const ui = useSkinUi()
-  const v5 = ui.key === 'v5'
   const daily = st.data?.daily || []
   if (daily.length === 0) return null
-  if (v5) return <DailyByChannel st={st} daily={daily} onPickDay={onPickDay} pickedDay={pickedDay} pickedChannel={pickedChannel} /> // v5전용: 0 때 해제 — 채널별 줄 + 합계
-  const maxCount = Math.max(1, ...daily.map((d) => d.count))
-  return (
-    <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
-      <h2 className={v5 ? 'g-h2' : cx(ui.h2, 'xs-h')}>일자별</h2>
-      <div className={ui.tableWrap}>
-        <table className={v5 ? 'g-table g-ds-daily' : cx(ui.table, 'xs-ds-daily')}>
-          <thead>
-            <tr>
-              <th scope="col">날짜</th>
-              {daily.map((d) => (
-                <th key={d.date} scope="col" className={isWeekend(d.date) ? 'we' : undefined} title={fmtYmdShort(d.date)}>
-                  {Number(d.date.slice(8))}
-                  <small>{weekdayOf(d.date)}</small>
-                </th>
-              ))}
-              <th scope="col" className="sum">
-                합계
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">올린 개수</th>
-              {daily.map((d) => (
-                <td
-                  key={d.date}
-                  className={d.count > 0 ? (d.count / maxCount > 0.55 ? 'heat hi' : 'heat') : 'zero'}
-                  style={d.count > 0 ? { ['--a' as string]: (0.18 + 0.62 * (d.count / maxCount)).toFixed(2) } : undefined}
-                  title={`${fmtYmdShort(d.date)} · ${d.count}개 · 조회수 ${fmtNumber(d.views)}`}
-                >
-                  {d.count > 0 ? (
-                    onPickDay ? (
-                      <button type="button" className={`ds-cell ds-pick${pickedDay === d.date ? ' on' : ''}`} onClick={() => onPickDay(d.date)} title={`${fmtYmdShort(d.date)} 올린 영상 ${d.count}개만 아래 영상리스트에 보기`}>
-                        {d.count}
-                      </button>
-                    ) : (
-                      <span className="ds-cell">{d.count}</span>
-                    )
-                  ) : (
-                    '·'
-                  )}
-                </td>
-              ))}
-              <td className="sum">{fmtNumber(daily.reduce((n, d) => n + d.count, 0))}</td>
-            </tr>
-            <tr>
-              <th scope="row">조회수</th>
-              {daily.map((d) => (
-                <td key={d.date} className={d.views > 0 ? undefined : 'zero'} title={`${fmtYmdShort(d.date)} · 조회수 ${fmtNumber(d.views)}`}>
-                  {d.views > 0 ? shortNum(d.views) : '·'}
-                </td>
-              ))}
-              <td className="sum">{shortNum(daily.reduce((n, d) => n + d.views, 0))}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p className={ui.muted}>
-        올린 개수 칸은 그날 올린 영상이 많을수록 진하게 보입니다. 조회수는 그날 올린 영상들의 지금 조회수 합입니다. 칸에 마우스를 올리면 자세히 보입니다.
-        {onPickDay && ' 올린 개수 칸을 누르면 아래 영상리스트가 그날 올린 영상으로 걸러집니다.'}
-      </p>
-    </section>
-  )
+  // 2026-11-18 '0': 모든 스킨 — 채널별 줄 + 합계 + DB 줄
+  return <DailyByChannel st={st} daily={daily} onPickDay={onPickDay} pickedDay={pickedDay} pickedChannel={pickedChannel} />
 }
 
 // 일자별 표(v5): 채널마다 '올린 개수·조회수' 두 줄씩, 채널이 2개 이상이면 맨 아래 합계 두 줄.
@@ -238,6 +132,7 @@ export function StatsDailySection({ st, onPickDay, pickedDay, pickedChannel }: {
 type Day = { date: string; count: number; views: number }
 function DailyByChannel({ st, daily, onPickDay, pickedDay, pickedChannel }: { st: St; daily: Day[]; onPickDay?: (ymd: string, channel?: string | null) => void; pickedDay?: string | null; pickedChannel?: string | null }) {
   const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
   const groups = channelGroups(st.data?.videos || [])
   const chRows = groups.map((g) => {
     const byDay = new Map<string, { count: number; views: number }>()
@@ -264,13 +159,13 @@ function DailyByChannel({ st, daily, onPickDay, pickedDay, pickedChannel }: { st
   const maxCh = Math.max(1, ...chRows.flatMap((r) => r.cells.map((c) => c.count)))
   const maxTot = Math.max(1, ...daily.map((d) => d.count))
   return (
-    <section className="g-glass">
-      <div className="g-card-head">
-        <h2 className="g-h2">일자별</h2>
+    <section className={v5 ? 'g-glass' : cx(ui.section, 'xs-panel')}>
+      <div className={v5 ? 'g-card-head' : 'xs-head'}>
+        <h2 className={v5 ? 'g-h2' : cx(ui.h2, 'xs-h')}>일자별</h2>
         <span className={ui.muted}>채널별{showTotal ? ' · 합계' : ''}</span>
       </div>
       <div className={ui.tableWrap}>
-        <table className="g-table g-ds-daily g-ds-daily-ch" style={{ minWidth: 250 + daily.length * 40 }} /* 날짜가 많으면(한 달 등) 숫자가 잘리지 않게 옆으로 밀어 보기 */>
+        <table className={v5 ? 'g-table g-ds-daily g-ds-daily-ch' : cx(ui.table, 'xs-ds-daily xs-ds-daily-ch')} style={{ minWidth: 250 + daily.length * 40 }} /* 날짜가 많으면(한 달 등) 숫자가 잘리지 않게 옆으로 밀어 보기 */>
           <colgroup>
             <col className="c-ch" />
             <col className="c-metric" />
@@ -464,7 +359,7 @@ const COLS_DB = [...COLS.slice(0, -1), DB_COL, COLS[COLS.length - 1]]
 function PersonStatsTable({ people, videos, onPick, db }: { people: Person[]; videos: Video[]; onPick: (userId: string) => void; db?: DbStats }) {
   const ui = useSkinUi()
   const v5 = ui.key === 'v5'
-  const showDb = v5 && Boolean(db?.ready) // v5전용: 0 때 해제 — DB 열
+  const showDb = Boolean(db?.ready) // 2026-11-18 '0': 모든 스킨 — DB 열
   const cols = showDb ? COLS_DB : COLS
   const [sort, setSort] = useState<Sort>(null)
   const rows = useMemo(() => build(people, videos, new Map((db?.perPerson || []).map((x) => [x.userId, x.count]))), [people, videos, db])

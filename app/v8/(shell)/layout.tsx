@@ -23,23 +23,26 @@ function Shell({ children }: { children: React.ReactNode }) {
         <span className="side-label">$ ls ./menu</span>
         <nav className="side-nav" aria-label="메뉴">
           {nav.map((item) => {
-            const self = item.active && !item.sub?.active
+            // 하위 메뉴: 영상등록 → [통계] [통계비교], 근태체크 → [통계]
+            const subs = item.subs ?? (item.sub ? [item.sub] : [])
+            const self = item.active && !subs.some((s) => s.active)
             return (
               <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
                 <Link href={item.href} className={self ? 'active' : item.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
                   {item.label}
                 </Link>
-                {item.sub && (
+                {subs.map((sub) => (
                   <Link
-                    href={item.sub.href}
-                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                    aria-current={item.sub.active ? 'page' : undefined}
-                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                    key={sub.key}
+                    href={sub.href}
+                    className={`nav-sub${sub.active ? ' on' : ''}`}
+                    aria-current={sub.active ? 'page' : undefined}
+                    title={sub.key === 'stats_compare' ? '기간·직원 비교 차트' : item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
                     onClick={() => setOpen(false)}
                   >
-                    [{item.sub.label}]
+                    [{sub.label}]
                   </Link>
-                )}
+                ))}
               </div>
             )
           })}

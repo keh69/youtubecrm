@@ -136,8 +136,8 @@ export function VideoFilterBar({ ctl, total, hideTitle = false, oneLine = false,
   const { f, setF, options } = ctl
   const set = (patch: Partial<Filters>) => setF({ ...f, ...patch })
   const ui = useSkinUi()
-  const resetBtn = ui.key === 'v5' // v5전용: 0 때 해제 — 필터 줄 오른쪽 끝 [필터 초기화]
-  const channelPick = ui.key === 'v5' // v5전용: 0 때 해제 — 올린 날짜 오른쪽 '채널' 필터(영상 표 '채널' 열과 같은 자리)
+  const resetBtn = true // 2026-11-18 '0': 모든 스킨 — 필터 줄 오른쪽 끝 [필터 초기화]
+  const channelPick = true // 2026-11-18 '0': 모든 스킨 — 올린 날짜 오른쪽 '채널' 필터
   const status = (
     <div className={oneLine ? 'vf-status vf-status-top' : 'vf-status'}>
       <span>

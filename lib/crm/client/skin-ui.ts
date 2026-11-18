@@ -128,3 +128,30 @@ export function useSkinUi(): SkinUi & { key: string } {
 
 // 여러 class 를 빈칸 없이 합치기
 export const cx = (...names: Array<string | false | null | undefined>) => names.filter(Boolean).join(' ')
+
+// 공용 화면(통계비교·디비입력·종목별 …)이 쓰는 class 묶음: v5 는 예전 g-* 그대로, 다른 스킨은 그 스킨 모양(ui) + xs-* 배치
+export function useSkinCls() {
+  const ui = useSkinUi()
+  const v5 = ui.key === 'v5'
+  return {
+    v5,
+    ui,
+    section: v5 ? 'g-glass' : cx(ui.section, 'xs-panel'),
+    head: v5 ? 'g-card-head' : 'xs-head',
+    h2: v5 ? 'g-h2' : cx(ui.h2, 'xs-h'),
+    input: v5 ? 'g-input' : cx(ui.input, 'xs-input'),
+    inputSm: v5 ? 'g-input sm' : cx(ui.input, 'xs-input sm'),
+    date: v5 ? 'g-input g-date' : cx(ui.input, 'xs-input'),
+    muted: v5 ? 'g-muted' : ui.muted,
+    small: v5 ? 'g-muted g-small' : cx(ui.muted, 'xs-muted'),
+    wrap: v5 ? 'g-table-wrap' : ui.tableWrap,
+    table: (extra: string) => (v5 ? `g-table ${extra}` : cx(ui.table, extra)),
+    chip: v5 ? 'g-chip' : ui.chip,
+    chipOn: v5 ? 'g-chip accent' : cx(ui.chip, 'on'),
+    btn: v5 ? 'g-btn ghost sm' : ui.btn,
+    btnPrimary: v5 ? 'g-btn primary sm' : ui.btnPrimary,
+    seg: v5 ? 'g-seg' : 'xs-seg',
+    msgOk: v5 ? 'g-msg ok' : ui.msgOk,
+    msgErr: v5 ? 'g-msg error' : ui.msgErr
+  }
+}

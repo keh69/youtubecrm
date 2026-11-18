@@ -1,17 +1,20 @@
 'use client'
 
-import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
+import { useState } from 'react'
+import { STAT_PERIODS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtNumber, todayKst } from '@/lib/crm/client/format'
 import { Empty, Loading, Note, PageHead } from '../../_components/ui'
 import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { VideoTable } from '@/components/video-table'
 import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
+import { StatsByRuntime, StatsByStock } from '@/components/stats-breakdown'
 
 export default function V3Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
   const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
+  const [day, setDay] = useState<{ ymd: string; n: number; channel?: string | null } | null>(null) // 일자별 표에서 누른 날 → 영상리스트 거르기
   if (!allowed) return null
   const videos = vf.filtered
 
@@ -52,16 +55,6 @@ export default function V3Stats() {
           <span>특정날짜</span>
           <input type="date" value={st.date} max={todayKst()} onChange={(e) => st.setDate(e.target.value)} />
         </label>
-        <div className="j-field">
-          <span>정렬</span>
-          <div className="j-linkset" role="group" aria-label="정렬">
-            {STAT_SORTS.map((o) => (
-              <button key={o.key} type="button" className={st.sort === o.key ? 'on' : ''} aria-pressed={st.sort === o.key} onClick={() => st.setSort(o.key)}>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
         {st.loading && st.data && <span className="j-refreshing">새로 불러오는 중…</span>}
       </section>
 
@@ -71,8 +64,11 @@ export default function V3Stats() {
 
       {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
       <StatsKpiSection st={st} />
-      <StatsDailySection st={st} />
+      <StatsDailySection st={st} pickedDay={day?.ymd ?? null} pickedChannel={day?.channel ?? null} onPickDay={(ymd, channel) => setDay({ ymd, channel: channel ?? null, n: Date.now() })} />
       <StatsPersonSection st={st} meId={me.id} />
+      {/* 종목별 · 러닝타임별 (components/stats-breakdown.tsx) */}
+      <StatsByStock st={st} />
+      <StatsByRuntime st={st} />
 
       <hr className="j-double" />
 
@@ -85,7 +81,7 @@ export default function V3Stats() {
         ) : st.videos.length === 0 ? (
           <Empty>이 기간에 올린 영상이 없습니다.</Empty>
         ) : (
-          <VideoTable videos={st.videos} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="이 기간에 올린 영상이 없습니다." />
+          <VideoTable videos={st.videos} dayFilter={day} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{wrap: 'j-table-wrap', table: 'j-table j-vtable', vcell: 'j-vcell', thumb: 'j-thumb', vtitle: 'j-story-title', format: 'j-format', chip: 'j-tag', btn: 'j-textbtn', btnPrimary: 'j-btn ink small', btnDanger: 'j-textbtn danger', input: 'xs-input sm'}} emptyText="이 기간에 올린 영상이 없습니다." />
         )}
       </section>
     </>

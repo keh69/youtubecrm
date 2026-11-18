@@ -1,20 +1,22 @@
 'use client'
 
-import { STAT_PERIODS, STAT_SORTS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
+import { useState } from 'react'
+
+import { STAT_PERIODS, useMenuGuard, useSession, useStats } from '@/lib/crm/client/hooks'
 import { fmtDate, fmtDuration, fmtNumber, fmtYmdShort, todayKst, videoFormatLabel } from '@/lib/crm/client/format'
 import { GridFoot, Ico } from '../../_ui'
-import { VideoFilterBar, useVideoFilters } from '@/components/video-filters'
 import { VideoTable } from '@/components/video-table'
 import { StatsDailySection, StatsKpiSection, StatsPersonSection } from '@/components/stats-dataset'
+import { StatsByRuntime, StatsByStock } from '@/components/stats-breakdown'
 
 export default function V9Stats() {
   const allowed = useMenuGuard('stats')
   const { me } = useSession()
   const st = useStats()
-  const vf = useVideoFilters(st.videos) // 영상 표 열별 필터(여러 개 동시에)
+  const [day, setDay] = useState<{ ymd: string; n: number; channel?: string | null } | null>(null) // 일자별 표에서 누른 날 → 영상리스트 거르기
   if (!allowed) return null
 
-  const videos = vf.filtered
+  const videos = st.videos
   const rangeText = st.from === st.to ? fmtYmdShort(st.from) : `${fmtYmdShort(st.from)} ~ ${fmtYmdShort(st.to)}`
 
   return (
@@ -58,24 +60,17 @@ export default function V9Stats() {
           <span>특정날짜</span>
           <input type="date" value={st.date} max={todayKst()} onChange={(e) => st.setDate(e.target.value)} />
         </label>
-        <div className="field">
-          <span>정렬</span>
-          <div className="seg">
-            {STAT_SORTS.map((s) => (
-              <button key={s.key} type="button" className={st.sort === s.key ? 'on' : ''} onClick={() => st.setSort(s.key)}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </section>
 
       {st.error && <p className="msg error">{st.error}</p>}
 
       {/* 요약 한 줄 · 일자별 표 · 담당자별 표 (components/stats-dataset.tsx, 모든 스킨 공통) */}
       <StatsKpiSection st={st} />
-      <StatsDailySection st={st} />
+      <StatsDailySection st={st} pickedDay={day?.ymd ?? null} pickedChannel={day?.channel ?? null} onPickDay={(ymd, channel) => setDay({ ymd, channel: channel ?? null, n: Date.now() })} />
       <StatsPersonSection st={st} meId={me.id} />
+      {/* 종목별 · 러닝타임별 (components/stats-breakdown.tsx) */}
+      <StatsByStock st={st} />
+      <StatsByRuntime st={st} />
 
       <section className="card">
         <h2>영상리스트 ({fmtNumber(videos.length)})</h2>
@@ -85,7 +80,7 @@ export default function V9Stats() {
           <p className="empty">이 기간에 올린 영상이 없습니다.</p>
         ) : (
           <>
-          <VideoTable videos={st.videos} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{wrap: 'table-wrap', table: 'table vtable', vcell: 'vcell', thumb: 'thumb', vtitle: 'video-title', format: 'xs-chip', chip: 'chip', btn: 'btn ghost small', btnPrimary: 'btn primary small', btnDanger: 'btn ghost small danger-text', input: 'xs-input sm'}} emptyText="이 기간에 올린 영상이 없습니다." />
+          <VideoTable videos={st.videos} dayFilter={day} canEdit={Boolean(me.canEditStatsVideos)} onChanged={st.reload} cls={{wrap: 'table-wrap', table: 'table vtable', vcell: 'vcell', thumb: 'thumb', vtitle: 'video-title', format: 'xs-chip', chip: 'chip', btn: 'btn ghost small', btnPrimary: 'btn primary small', btnDanger: 'btn ghost small danger-text', input: 'xs-input sm'}} emptyText="이 기간에 올린 영상이 없습니다." />
           <GridFoot count={videos.length} note={rangeText} />
           </>
         )}

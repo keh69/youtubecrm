@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { CrmSessionProvider, useNav, useNow, useSession, type NavItem } from '@/lib/crm/client/hooks'
+import { CrmSessionProvider, useNav, useNow, useSession, type NavItem, type NavSub } from '@/lib/crm/client/hooks'
 import { ThemeToggle } from '@/lib/crm/client/theme'
 import { UnresolvedAlert } from '@/components/settings-extra'
 
@@ -24,12 +24,22 @@ function fileOf(item: NavItem) {
   return FILES[item.key] ?? { name: `${item.path.replace(/^\//, '')}.tsx`, ext: 'tsx', glyph: '<>' }
 }
 
-// [통계] 버튼이 여는 화면(직원근태·영상통계)의 파일 모양과 이름
-function subFileOf(item: NavItem) {
-  return item.sub ? FILES[item.sub.key] : null
+// 메뉴 옆 작은 버튼들: 근태체크 → [통계], 영상등록 → [통계] [통계비교]
+function subsOf(item: NavItem): NavSub[] {
+  return item.subs ?? (item.sub ? [item.sub] : [])
 }
-function subTitleOf(item: NavItem) {
+// 작은 버튼이 여는 화면(직원근태·영상통계·통계비교)의 파일 모양과 이름
+function subFileOf(sub: NavSub) {
+  return FILES[sub.key] ?? null
+}
+function subTitleOf(item: NavItem, sub: NavSub) {
+  if (sub.key === 'stats_compare') return '통계비교 · 기간·직원 비교'
   return item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'
+}
+function subLabelOf(sub: NavSub) {
+  if (sub.key === 'attendance_team') return '직원근태 > 근태통계'
+  if (sub.key === 'stats_compare') return '통계비교'
+  return '영상통계'
 }
 
 function FileIcon({ item, file }: { item?: NavItem; file?: { ext: string; glyph: string } }) {
@@ -84,10 +94,10 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const roles = me.roles.map((r) => r.name).join(', ') || '역할 없음'
   const current = nav.find((i) => i.active)
-  // [통계] 화면(직원근태·영상통계)에 있으면 탭·경로·상태 막대에 그 화면의 파일을 띄운다
-  const onSub = Boolean(current?.sub?.active)
-  const currentFile = current ? (onSub ? subFileOf(current) : fileOf(current)) : null
-  const currentLabel = current ? (onSub && current.sub?.key === 'attendance_team' ? '직원근태 > 근태통계' : onSub ? '영상통계' : current.label) : ''
+  // 작은 버튼 화면(직원근태·영상통계·통계비교)에 있으면 탭·경로·상태 막대에 그 화면의 파일을 띄운다
+  const activeSub = current ? subsOf(current).find((x) => x.active) : undefined
+  const currentFile = current ? (activeSub ? subFileOf(activeSub) : fileOf(current)) : null
+  const currentLabel = current ? (activeSub ? subLabelOf(activeSub) : current.label) : ''
   const clock = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now)
   const meActive = current?.key === 'me'
 
@@ -131,8 +141,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         </span>
         <nav className="side-nav" aria-label="메뉴">
           {nav.map((item) => {
-            const self = item.active && !item.sub?.active
-            const subFile = subFileOf(item)
+            const subs = subsOf(item)
+            const self = item.active && !subs.some((x) => x.active)
             return (
               <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
                 <Link href={item.href} className={self ? 'active' : item.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
@@ -142,18 +152,22 @@ function Shell({ children }: { children: React.ReactNode }) {
                     <span className="fname-en">{fileOf(item).name}</span>
                   </span>
                 </Link>
-                {item.sub && (
-                  <Link
-                    href={item.sub.href}
-                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                    aria-current={item.sub.active ? 'page' : undefined}
-                    title={subTitleOf(item)}
-                    onClick={() => setOpen(false)}
-                  >
-                    {subFile && <FileIcon file={subFile} />}
-                    {item.sub.label}
-                  </Link>
-                )}
+                {subs.map((sub) => {
+                  const subFile = subFileOf(sub)
+                  return (
+                    <Link
+                      key={sub.key}
+                      href={sub.href}
+                      className={`nav-sub${sub.active ? ' on' : ''}`}
+                      aria-current={sub.active ? 'page' : undefined}
+                      title={subTitleOf(item, sub)}
+                      onClick={() => setOpen(false)}
+                    >
+                      {subFile && <FileIcon file={subFile} />}
+                      {sub.label}
+                    </Link>
+                  )
+                })}
               </div>
             )
           })}

@@ -29,24 +29,29 @@ function Shell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="top-nav" aria-label="메뉴">
             {nav.map((item) => {
-              const here = item.active && !item.sub?.active
+              // 하위 메뉴(영상등록 → 통계 · 통계비교). 하위 메뉴가 켜져 있으면 부모는 '여기'가 아니다
+              const subs = item.subs ?? (item.sub ? [item.sub] : [])
+              const here = item.active && !subs.some((x) => x.active)
               const link = (
                 <Link key={item.key} href={item.href} className={here ? 'on' : item.active ? 'half' : ''} aria-current={here ? 'page' : undefined}>
                   {item.label}
                 </Link>
               )
-              if (!item.sub) return link
+              if (!subs.length) return link
               return (
                 <span key={item.key} className={`nav-row${item.active ? ' in' : ''}`}>
                   {link}
-                  <Link
-                    href={item.sub.href}
-                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                    aria-current={item.sub.active ? 'page' : undefined}
-                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
-                  >
-                    {item.sub.label}
-                  </Link>
+                  {subs.map((sub) => (
+                    <Link
+                      key={sub.key}
+                      href={sub.href}
+                      className={`nav-sub${sub.active ? ' on' : ''}`}
+                      aria-current={sub.active ? 'page' : undefined}
+                      title={sub.key === 'stats_compare' ? '기간·직원 비교 차트' : item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
                 </span>
               )
             })}

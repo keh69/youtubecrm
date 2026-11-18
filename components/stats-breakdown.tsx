@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { fmtNumber } from '@/lib/crm/client/format'
 import type { Stats, Video } from '@/lib/crm/client/types'
+import { useSkinCls } from '@/lib/crm/client/skin-ui'
 
 // 영상통계(v5) 추가 표: 종목별 · 러닝타임별.
 // DB 는 '디비입력'에 직원·날짜로만 적으므로 종목·영상별 실제 DB 는 알 수 없다.
@@ -63,6 +64,7 @@ const BUCKETS: Array<{ key: string; label: string; min: number; max: number }> =
 
 /* ───────── 종목별 ───────── */
 export function StatsByStock({ st }: { st: { data: Stats | null } }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const videos = st.data?.videos || []
   const hasDb = Boolean(st.data?.db?.ready)
   const share = useMemo(() => dbShare(videos, st.data?.db), [videos, st.data?.db])
@@ -80,16 +82,16 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
   const list = all || q.trim() ? shown : shown.slice(0, 10)
   const maxViews = Math.max(1, ...rows.map((r) => r.views))
   return (
-    <section className="g-glass">
-      <div className="g-card-head">
-        <h2 className="g-h2">종목별</h2>
+    <section className={k.section}>
+      <div className={k.head}>
+        <h2 className={k.h2}>종목별</h2>
         <span className="bd-tools">
-          <input className="g-input sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder="종목 찾기" aria-label="종목 찾기" />
-          <span className="g-muted">종목 {fmtNumber(rows.length)}개</span>
+          <input className={k.inputSm} value={q} onChange={(e) => setQ(e.target.value)} placeholder="종목 찾기" aria-label="종목 찾기" />
+          <span className={k.muted}>종목 {fmtNumber(rows.length)}개</span>
         </span>
       </div>
-      <div className="g-table-wrap">
-        <table className="g-table bd-table">
+      <div className={k.wrap}>
+        <table className={k.table('bd-table')}>
           <thead>
             <tr>
               <SortTh k="label" label="종목" sort={sort} set={setSort} />
@@ -106,7 +108,7 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
             {list.map((r) => (
               <tr key={r.key}>
                 <th scope="row">
-                  <span className="g-chip accent">{r.label}</span>
+                  <span className={k.chipOn}>{r.label}</span>
                 </th>
                 <td className="num">
                   <b>{fmtNumber(r.count)}</b>
@@ -134,11 +136,11 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
       </div>
       <div className="bd-foot">
         {!q.trim() && shown.length > 10 && (
-          <button type="button" className="g-btn ghost sm" onClick={() => setAll(!all)}>
+          <button type="button" className={k.btn} onClick={() => setAll(!all)}>
             {all ? '10개만 보기' : `전체 ${fmtNumber(shown.length)}개 보기`}
           </button>
         )}
-        <span className="g-muted g-small">처음에는 평균 조회수 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(평균 조회수 많은 순)로 바뀝니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
+        <span className={k.small}>처음에는 평균 조회수 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(평균 조회수 많은 순)로 바뀝니다.{hasDb ? ' 추정 DB는 직원별 DB를 그 직원 영상들의 조회수 비중으로 나눈 값입니다(종목별 실제 DB는 따로 적지 않으므로 추정).' : ''}</span>
       </div>
     </section>
   )
@@ -146,6 +148,7 @@ export function StatsByStock({ st }: { st: { data: Stats | null } }) {
 
 /* ───────── 러닝타임별 ───────── */
 export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const videos = st.data?.videos || []
   const hasDb = Boolean(st.data?.db?.ready)
   const share = useMemo(() => dbShare(videos, st.data?.db), [videos, st.data?.db])
@@ -162,17 +165,17 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
   const maxCount = Math.max(1, ...rows.map((r) => r.count))
   const best = rows.reduce<Row | null>((b, r) => (r.count >= 3 && (!b || r.avg > b.avg) ? r : b), null)
   return (
-    <section className="g-glass">
-      <div className="g-card-head">
-        <h2 className="g-h2">러닝타임별</h2>
+    <section className={k.section}>
+      <div className={k.head}>
+        <h2 className={k.h2}>러닝타임별</h2>
         {best && (
           <span className="bd-best">
             영상당 평균 조회수가 가장 높은 길이: <b>{best.label}</b> ({fmtNumber(best.avg)})
           </span>
         )}
       </div>
-      <div className="g-table-wrap">
-        <table className="g-table bd-table bd-runtime">
+      <div className={k.wrap}>
+        <table className={k.table('bd-table bd-runtime')}>
           <thead>
             <tr>
               <SortTh k="label" label="러닝타임" sort={sort} set={setSort} title="기본 정렬: 짧은 길이부터" />
@@ -218,7 +221,7 @@ export function StatsByRuntime({ st }: { st: { data: Stats | null } }) {
           </tbody>
         </table>
       </div>
-      <p className="g-muted g-small">영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다. 처음에는 영상당 DB 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(짧은 길이부터)로 바뀝니다.</p>
+      <p className={k.small}>영상 길이로 나눠서 어떤 길이의 영상이 조회수가 잘 나오는지 봅니다. 영상 3개 이상인 구간 중 영상당 평균 조회수가 가장 높은 줄이 강조됩니다. 처음에는 영상당 DB 많은 순이고, 머리칸을 누를 때마다 내림차순 → 오름차순 → 기본 정렬(짧은 길이부터)로 바뀝니다.</p>
     </section>
   )
 }

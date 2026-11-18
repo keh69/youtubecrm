@@ -2,17 +2,32 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { CrmSessionProvider, useNav, useSession } from '@/lib/crm/client/hooks'
+import { CrmSessionProvider, useNav, useSession, type NavItem, type NavSub } from '@/lib/crm/client/hooks'
 import { UnresolvedAlert } from '@/components/settings-extra'
+
+// 메뉴 옆 작은 버튼들: 근태체크 → [통계], 영상등록 → [통계] [통계비교]
+function subsOf(item: NavItem): NavSub[] {
+  return item.subs ?? (item.sub ? [item.sub] : [])
+}
+function subLabelOf(sub: NavSub) {
+  if (sub.key === 'attendance_team') return '직원근태 > 근태통계'
+  if (sub.key === 'stats_compare') return '통계비교'
+  return '영상통계'
+}
+function subTitleOf(item: NavItem, sub: NavSub) {
+  if (sub.key === 'stats_compare') return '통계비교 · 기간·직원 비교'
+  return item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'
+}
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, base, logout } = useSession()
   const nav = useNav()
   const [open, setOpen] = useState(false)
   const current = nav.find((n) => n.active)
-  // [통계] 화면(직원근태·영상통계)에 있으면 주소창에는 그 화면의 경로·이름을 띄운다
-  const view = current?.sub?.active
-    ? { path: current.sub.href.slice(base.length), label: current.sub.key === 'attendance_team' ? '직원근태 > 근태통계' : '영상통계' }
+  // 작은 버튼 화면(직원근태·영상통계·통계비교)에 있으면 주소창에는 그 화면의 경로·이름을 띄운다
+  const activeSub = current ? subsOf(current).find((x) => x.active) : undefined
+  const view = activeSub
+    ? { path: activeSub.href.slice(base.length), label: subLabelOf(activeSub) }
     : current
       ? { path: current.path, label: current.label }
       : undefined
@@ -28,24 +43,26 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="side-nav" aria-label="메뉴">
           {nav.map((item) => {
-            const self = item.active && !item.sub?.active
+            const subs = subsOf(item)
+            const self = item.active && !subs.some((x) => x.active)
             return (
               <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
                 <Link href={item.href} className={self ? 'active' : item.active ? 'parent' : ''} aria-current={self ? 'page' : undefined} onClick={() => setOpen(false)}>
                   <span className="nav-dot" aria-hidden="true" />
                   {item.label}
                 </Link>
-                {item.sub && (
+                {subs.map((sub) => (
                   <Link
-                    href={item.sub.href}
-                    className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                    aria-current={item.sub.active ? 'page' : undefined}
-                    title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                    key={sub.key}
+                    href={sub.href}
+                    className={`nav-sub${sub.active ? ' on' : ''}`}
+                    aria-current={sub.active ? 'page' : undefined}
+                    title={subTitleOf(item, sub)}
                     onClick={() => setOpen(false)}
                   >
-                    {item.sub.label}
+                    {sub.label}
                   </Link>
-                )}
+                ))}
               </div>
             )
           })}

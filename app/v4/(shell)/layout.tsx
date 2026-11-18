@@ -34,7 +34,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="nav" aria-label="메뉴">
           {nav.map((item) => {
-            const here = item.active && !item.sub?.active
+            const subs = item.subs ?? (item.sub ? [item.sub] : [])
+            const here = item.active && !subs.some((x) => x.active)
             const link = (
               <Link key={item.key} href={item.href} className={here ? 'active' : item.active ? 'half' : ''} aria-current={here ? 'page' : undefined}>
                 <span className="nav-ico" aria-hidden="true">
@@ -43,18 +44,21 @@ function Shell({ children }: { children: React.ReactNode }) {
                 <span className="nav-label">{item.label}</span>
               </Link>
             )
-            if (!item.sub) return link
+            if (!subs.length) return link
             return (
               <div key={item.key} className={`nav-row${item.active ? ' in' : ''}`}>
                 {link}
-                <Link
-                  href={item.sub.href}
-                  className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                  aria-current={item.sub.active ? 'page' : undefined}
-                  title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
-                >
-                  {item.sub.label}
-                </Link>
+                {subs.map((sub) => (
+                  <Link
+                    key={sub.key}
+                    href={sub.href}
+                    className={`nav-sub${sub.active ? ' on' : ''}`}
+                    aria-current={sub.active ? 'page' : undefined}
+                    title={sub.key === 'stats_compare' ? '기간·직원 비교' : item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                  >
+                    {sub.label}
+                  </Link>
+                ))}
               </div>
             )
           })}

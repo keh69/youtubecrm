@@ -13,8 +13,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const current = nav.find((n) => n.active)
   // [통계] 페이지(직원근태·영상통계)에 있으면 탭에는 부모 메뉴 대신 그 화면 이름을 띄운다
-  const tab = current?.sub?.active
-    ? { label: current.sub.key === 'attendance_team' ? '직원근태 > 근태통계' : '영상통계', key: current.sub.key }
+  const curSub = current ? (current.subs ?? (current.sub ? [current.sub] : [])).find((s) => s.active) : undefined
+  const tab = curSub
+    ? { label: curSub.key === 'attendance_team' ? '직원근태 > 근태통계' : curSub.key === 'stats_compare' ? '통계비교' : '영상통계', key: curSub.key }
     : current
       ? { label: current.label, key: current.key }
       : undefined
@@ -71,7 +72,9 @@ function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <nav className="side-nav" aria-label="메뉴">
               {nav.map((item) => {
-                const self = item.active && !item.sub?.active
+                // 하위 메뉴: 영상등록 → 통계 · 통계비교, 근태체크 → 통계
+                const subs = item.subs ?? (item.sub ? [item.sub] : [])
+                const self = item.active && !subs.some((s) => s.active)
                 return (
                   <div key={item.key} className={`nav-row${item.active ? ' on' : ''}`}>
                     <Link
@@ -85,18 +88,19 @@ function Shell({ children }: { children: React.ReactNode }) {
                       <span className="nav-label">{item.label}</span>
                       <span className="nav-key">{item.key}</span>
                     </Link>
-                    {item.sub && (
+                    {subs.map((sub) => (
                       <Link
-                        href={item.sub.href}
-                        className={`nav-sub${item.sub.active ? ' on' : ''}`}
-                        aria-current={item.sub.active ? 'page' : undefined}
-                        title={item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
+                        key={sub.key}
+                        href={sub.href}
+                        className={`nav-sub${sub.active ? ' on' : ''}`}
+                        aria-current={sub.active ? 'page' : undefined}
+                        title={sub.key === 'stats_compare' ? '기간·직원 비교 차트' : item.key === 'attendance' ? '직원근태 · 근태통계' : '영상통계'}
                         onClick={() => setOpen(false)}
                       >
                         <span className="view-ico" aria-hidden="true" />
-                        {item.sub.label}
+                        {sub.label}
                       </Link>
-                    )}
+                    ))}
                   </div>
                 )
               })}

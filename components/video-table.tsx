@@ -123,7 +123,7 @@ export function VideoTable({
   // 2026-11-12 '0': 모든 스킨 — 영상 열은 썸네일만(제목 빼기), 올린 날짜 오른쪽에 '올린 시간'(24시간) 열
   const hideTitle = true
   const showTime = true
-  const showChannel = ui.key === 'v5' // v5전용: 0 때 해제 — 썸네일 오른쪽 '채널'(어느 유튜브 채널에 올렸나) 열
+  const showChannel = true // 2026-11-18 '0': 모든 스킨 — 썸네일 오른쪽 '채널' 열
   // 채널마다 색을 정해 한눈에 구분(채널 이름 가나다순으로 색 차례)
   const channelTone = new Map(channelGroups(videos).map((g) => [g.name, g.tone]))
   const vf = useVideoFilters(videos)

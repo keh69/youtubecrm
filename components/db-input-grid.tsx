@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { fmtNumber, fmtYmdShort } from '@/lib/crm/client/format'
+import { cx, useSkinCls } from '@/lib/crm/client/skin-ui'
 
 // 디비입력 표: 직원(세로) × 날짜(가로). 칸을 눌러 숫자를 적고 Enter·칸 밖을 누르면 저장한다.
 // 직원 아래에는 '기타'(회원가입 안 한 사람, 이름만 추가) 줄이 붙는다. 기타는 데이터 저장용이라 통계·합계에 넣지 않는다.
@@ -38,6 +39,7 @@ export function DbGrid({
   onRemoveExtra: (id: string, name: string) => void
   onEditExtra: (id: string, name: string, tag: string) => Promise<string | null>
 }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const days = Array.from({ length: Number(data.to.slice(8)) }, (_, i) => `${data.month}-${String(i + 1).padStart(2, '0')}`)
   const value = new Map<string, number>([...data.counts.map((c) => [`user:${c.userId}|${c.date}`, c.count] as const), ...data.extraCounts.map((c) => [`extra:${c.personId}|${c.date}`, c.count] as const)])
   const rows: GridRow[] = [
@@ -136,8 +138,8 @@ export function DbGrid({
 
   return (
     <>
-      <div className="g-table-wrap">
-        <table className="g-table db-grid" ref={box}>
+      <div className={k.wrap}>
+        <table className={k.table('db-grid')} ref={box}>
           <colgroup>
             <col className="c-name" />
             {days.map((d) => (
@@ -245,11 +247,11 @@ export function DbGrid({
         </table>
       </div>
       {msg ? (
-        <p className="g-msg error" role="alert">
+        <p className={k.msgErr} role="alert">
           {msg}
         </p>
       ) : (
-        <p className="g-muted g-small">
+        <p className={k.small}>
           일평균은 합계 ÷ 이 달에 지난 날 수(오늘까지)입니다. 오늘 이후 날짜는 적을 수 없습니다. 저장되면 칸이 잠깐 초록으로 깜빡입니다.
           {hasExtra && ' 추가한 이름 줄은 데이터 저장용이라 영상통계·통계비교에 들어가지 않습니다. 그 줄을 오른쪽 클릭하면 수정·삭제할 수 있습니다.'} 안 적은 칸은 0으로 셉니다.
         </p>
@@ -292,12 +294,12 @@ export function DbGrid({
           <div className="db-ctx-title">이름 수정</div>
           <label>
             <span>이름</span>
-            <input className="g-input sm" value={editing.name} maxLength={40} autoFocus onChange={(e) => setEditing({ ...editing, name: e.target.value, err: '' })} />
+            <input className={k.inputSm} value={editing.name} maxLength={40} autoFocus onChange={(e) => setEditing({ ...editing, name: e.target.value, err: '' })} />
           </label>
           <label>
             <span>꼬리표</span>
             <span className="db-tag-edit">
-              ( <input className="g-input sm" value={editing.tag} maxLength={10} onChange={(e) => setEditing({ ...editing, tag: e.target.value, err: '' })} placeholder="기타" /> )
+              ( <input className={k.inputSm} value={editing.tag} maxLength={10} onChange={(e) => setEditing({ ...editing, tag: e.target.value, err: '' })} placeholder="기타" /> )
             </span>
           </label>
           <p className="db-edit-preview">
@@ -305,10 +307,10 @@ export function DbGrid({
           </p>
           {editing.err && <p className="db-edit-err">{editing.err}</p>}
           <div className="db-edit-btns">
-            <button type="button" className="g-btn ghost sm" onClick={() => setEditing(null)}>
+            <button type="button" className={k.btn} onClick={() => setEditing(null)}>
               취소
             </button>
-            <button className="g-btn primary sm" disabled={editing.busy}>
+            <button className={k.btnPrimary} disabled={editing.busy}>
               {editing.busy ? '저장 중…' : '저장'}
             </button>
           </div>

@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { fmtDuration, fmtNumber, fmtTotalDuration, fmtYmdShort } from '@/lib/crm/client/format'
 import { channelGroups } from '@/lib/crm/client/channels'
 import type { Stats, Video } from '@/lib/crm/client/types'
+import { cx, useSkinCls } from '@/lib/crm/client/skin-ui'
 
-// 통계비교(v5) 결과 화면: 한눈에 보기(전체 판정 + 지표별 수치표) · 일자별 흐름(꺾은선) · 채널별·폼종류별 · 직원별
+// 통계비교 결과 화면(모든 스킨 공용, v5 는 g-* 그대로): 한눈에 보기(전체 판정 + 지표별 수치표) · 일자별 흐름(꺾은선) · 채널별·폼종류별 · 직원별
 export type Mode = 'period' | 'people'
 
 /* ───────── 지표 계산 ───────── */
@@ -78,6 +79,7 @@ function Delta({ a, b, fmtDiff }: { a: number; b: number; fmtDiff?: (n: number) 
 
 /* ───────── 비교 결과 ───────── */
 export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPickPerson }: { a: Stats; b: Stats; labelA: string; labelB: string; phrase: string; mode: Mode; loading: boolean; onPickPerson: (id: string) => void }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const ga = agg(a.videos, a.daily.length, a.db?.total || 0)
   const gb = agg(b.videos, b.daily.length, b.db?.total || 0)
   const hasDb = Boolean(a.db?.ready && b.db?.ready)
@@ -93,9 +95,9 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
   return (
     <div className={loading ? 'cmp-dim' : undefined}>
       {/* 1) 한눈에: 지표마다 A·B 막대와 오르내림 */}
-      <section className="g-glass">
-        <div className="g-card-head">
-          <h2 className="g-h2">한눈에 보기</h2>
+      <section className={k.section}>
+        <div className={k.head}>
+          <h2 className={k.h2}>한눈에 보기</h2>
           <span className="cmp-legend">
             <span>
               <i className="cmp-sw a" aria-hidden="true" /> {labelA}
@@ -149,8 +151,8 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
         {/* 지표별 수치표: 기준 · 비교 · 증감 · 변화율(가운데 0 기준 막대). 넓은 화면은 두 칸으로 */}
         <div className="cmp-grid2">
           {[metrics.slice(0, Math.ceil(metrics.length / 2)), metrics.slice(Math.ceil(metrics.length / 2))].map((list, ti) => (
-            <div key={ti} className="g-table-wrap">
-              <table className="g-table cmp-ds">
+            <div key={ti} className={k.wrap}>
+              <table className={k.table('cmp-ds')}>
                 <thead>
                   <tr>
                     <th scope="col">지표</th>
@@ -205,10 +207,10 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
       </section>
 
       {/* 2) 일자별 흐름 */}
-      <section className="g-glass">
-        <div className="g-card-head">
-          <h2 className="g-h2">일자별 흐름</h2>
-          <span className="g-muted">{sameDates ? '같은 날짜끼리 겹쳐 봅니다' : '두 기간을 1일째, 2일째 … 순서로 겹쳐 봅니다'} · 마우스를 올리면 그날 숫자</span>
+      <section className={k.section}>
+        <div className={k.head}>
+          <h2 className={k.h2}>일자별 흐름</h2>
+          <span className={k.muted}>{sameDates ? '같은 날짜끼리 겹쳐 봅니다' : '두 기간을 1일째, 2일째 … 순서로 겹쳐 봅니다'} · 마우스를 올리면 그날 숫자</span>
         </div>
         <div className="cmp-charts">
           <LineCompare title="조회수" a={a.daily} b={b.daily} pick={(d) => d.views} labelA={labelA} labelB={labelB} sameDates={sameDates} />
@@ -218,16 +220,16 @@ export function CompareBody({ a, b, labelA, labelB, phrase, mode, loading, onPic
       </section>
 
       {/* 3) 채널별 · 폼종류별 */}
-      <section className="g-glass">
-        <div className="g-card-head">
-          <h2 className="g-h2">채널별 · 폼종류별</h2>
-          <span className="g-muted">A → B 와 변화</span>
+      <section className={k.section}>
+        <div className={k.head}>
+          <h2 className={k.h2}>채널별 · 폼종류별</h2>
+          <span className={k.muted}>A → B 와 변화</span>
         </div>
         <GroupTable
           rows={[
             ...mergeGroups(channelGroups(a.videos), channelGroups(b.videos)).map((g) => ({ key: `c-${g.name}`, label: <span className={`vt-ch t${g.tone}`}>{g.name}</span>, a: g.a, b: g.b })),
-            { key: 'f-long', label: <span className="g-format long">롱폼</span>, a: a.videos.filter((v) => v.contentType === 'longform'), b: b.videos.filter((v) => v.contentType === 'longform'), sep: true },
-            { key: 'f-short', label: <span className="g-format short">숏폼</span>, a: a.videos.filter((v) => v.contentType !== 'longform'), b: b.videos.filter((v) => v.contentType !== 'longform') }
+            { key: 'f-long', label: <span className={k.v5 ? 'g-format long' : cx(k.ui.chip, 'xs-fmt long')}>롱폼</span>, a: a.videos.filter((v) => v.contentType === 'longform'), b: b.videos.filter((v) => v.contentType === 'longform'), sep: true },
+            { key: 'f-short', label: <span className={k.v5 ? 'g-format short' : cx(k.ui.chip, 'xs-fmt short')}>숏폼</span>, a: a.videos.filter((v) => v.contentType !== 'longform'), b: b.videos.filter((v) => v.contentType !== 'longform') }
           ]}
         />
       </section>
@@ -245,14 +247,15 @@ function mergeGroups(ga: ReturnType<typeof channelGroups>, gb: ReturnType<typeof
 }
 
 function GroupTable({ rows }: { rows: Array<{ key: string; label: React.ReactNode; a: Video[]; b: Video[]; sep?: boolean }> }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const cols: Array<{ label: string; get: (vs: Video[]) => number; fmt: (n: number) => string }> = [
     { label: '올린 영상', get: (vs) => vs.length, fmt: (n) => `${fmtNumber(n)}개` },
     { label: '총 조회수', get: (vs) => vs.reduce((s, v) => s + v.viewCount, 0), fmt: fmtNumber },
     { label: '영상당 평균 조회수', get: (vs) => (vs.length ? Math.round(vs.reduce((s, v) => s + v.viewCount, 0) / vs.length) : 0), fmt: fmtNumber }
   ]
   return (
-    <div className="g-table-wrap">
-      <table className="g-table cmp-table">
+    <div className={k.wrap}>
+      <table className={k.table('cmp-table')}>
         <thead>
           <tr>
             <th scope="col">구분</th>
@@ -291,6 +294,7 @@ function GroupTable({ rows }: { rows: Array<{ key: string; label: React.ReactNod
 
 // 직원별: 사람마다 A·B 와 조회수 변화(가운데 0 기준 막대). 이름을 누르면 그 직원만 기간 비교
 function PeopleTable({ a, b, onPick }: { a: Stats; b: Stats; onPick: (id: string) => void }) {
+  const k = useSkinCls() // 2026-11-18 '0': 모든 스킨
   const [sort, setSort] = useState<'dviews' | 'views' | 'dcount' | 'name'>('dviews')
   const ids = [...new Set([...a.perPerson.map((p) => p.userId), ...b.perPerson.map((p) => p.userId)])]
   const rows = ids.map((id) => {
@@ -309,13 +313,13 @@ function PeopleTable({ a, b, onPick }: { a: Stats; b: Stats; onPick: (id: string
   const up = rows.filter((r) => r.vb > r.va).length
   const down = rows.filter((r) => r.vb < r.va).length
   return (
-    <section className="g-glass">
-      <div className="g-card-head">
-        <h2 className="g-h2">직원별</h2>
+    <section className={k.section}>
+      <div className={k.head}>
+        <h2 className={k.h2}>직원별</h2>
         <span className="cmp-sum">
           <span className="cmp-delta up">▲ 조회수 오른 직원 {up}명</span>
           <span className="cmp-delta down">▼ 내린 직원 {down}명</span>
-          <select className="g-input sm" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="정렬">
+          <select className={k.inputSm} value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="정렬">
             <option value="dviews">조회수 변화 큰 순</option>
             <option value="views">비교 기간 조회수 많은 순</option>
             <option value="dcount">올린 영상 변화 큰 순</option>
@@ -323,8 +327,8 @@ function PeopleTable({ a, b, onPick }: { a: Stats; b: Stats; onPick: (id: string
           </select>
         </span>
       </div>
-      <div className="g-table-wrap">
-        <table className="g-table cmp-table cmp-people">
+      <div className={k.wrap}>
+        <table className={k.table('cmp-table cmp-people')}>
           <thead>
             <tr>
               <th scope="col">직원</th>
@@ -381,7 +385,7 @@ function PeopleTable({ a, b, onPick }: { a: Stats; b: Stats; onPick: (id: string
           </tbody>
         </table>
       </div>
-      <p className="g-muted">이름을 누르면 그 직원만 두 기간을 비교합니다. 총 관리자(admin)는 목록에서 뺍니다.</p>
+      <p className={k.muted}>이름을 누르면 그 직원만 두 기간을 비교합니다. 총 관리자(admin)는 목록에서 뺍니다.</p>
     </section>
   )
 }
