@@ -5025,3 +5025,41 @@ html:root .v5 table.g-table.bd-table td.bd-dbper {
 :root:not([data-theme='light']) .v5 table.g-table.bd-table td.bd-dbper {
   color: #facc15;
 }
+
+/* 직원근태 달력: 항상 한 달 + ◀ 달 고르기 ▶ (2026-11-18) */
+html:root .v5 .g-cal-top {
+  flex-wrap: wrap;
+}
+html:root .v5 .g-cal-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  margin-left: 6px;
+}
+html:root .v5 .g-cal-navbtn {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+html:root .v5 .g-cal-navbtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+html:root .v5 .g-cal-navbtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+html:root .v5 input.g-cal-month {
+  width: 150px;
+}
+html:root .v5 .g-cal-nav .g-cal-hint {
+  margin: 0;
+}

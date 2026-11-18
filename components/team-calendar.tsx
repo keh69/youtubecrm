@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addDays, fmtTime, todayKst, fmtYmdShort } from '@/lib/crm/client/format'
+import { addDays, fmtTime, todayKst, fmtYmdShort, shiftMonth } from '@/lib/crm/client/format'
+import { api } from '@/lib/crm/client/api'
 import { useSession, useWorkTimes, type useTeamAttendance } from '@/lib/crm/client/hooks'
 import type { DayRecord, TeamAttendance } from '@/lib/crm/client/types'
 
@@ -99,15 +100,48 @@ function EditDialog({ name, date, record, onClose, onSave }: { name: string; dat
   )
 }
 
-export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-panel', titleClass = 'xs-h', selectClass = 'xs-input sm' }: { data: TeamAttendance; team: Team; prefix?: string; sectionClass?: string; titleClass?: string; selectClass?: string }) {
+// monthNav(v5): 위쪽 기간(오늘·이번 주·이번 달)과 상관없이 항상 한 달 달력을 따로 불러 보여 주고, ◀ ▶ 와 달 고르기로 넘긴다
+export function TeamCalendar({
+  data: periodData,
+  team,
+  prefix = 'xs-',
+  sectionClass = 'xs-panel',
+  titleClass = 'xs-h',
+  selectClass = 'xs-input sm',
+  monthNav = false
+}: {
+  data: TeamAttendance
+  team: Team
+  prefix?: string
+  sectionClass?: string
+  titleClass?: string
+  selectClass?: string
+  monthNav?: boolean
+}) {
   const { me } = useSession()
   const canEdit = Boolean(me.canEditAttendance)
   const [userId, setUserId] = useState('')
   const [menu, setMenu] = useState<{ x: number; y: number; date: string } | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
+  // 한 달 달력(monthNav): 고른 달(YYYY-MM)의 근태를 따로 불러 둔다
+  const thisMonth = todayKst().slice(0, 7)
+  const [month, setMonth] = useState(thisMonth)
+  const [monthData, setMonthData] = useState<TeamAttendance | null>(null)
+  const [monthLoading, setMonthLoading] = useState(false)
+  const loadMonth = useCallback(async () => {
+    setMonthLoading(true)
+    const res = await api<TeamAttendance>(`/api/attendance/team?period=month&date=${month}-01`)
+    setMonthLoading(false)
+    if (res.ok) setMonthData(res.data)
+    else setMsg(res.error)
+  }, [month])
+  useEffect(() => {
+    if (monthNav) void loadMonth()
+  }, [monthNav, loadMonth])
+  const data = monthNav ? monthData : periodData
   // 직원 고르기 순서: 센터장이 항상 맨 위, 그다음은 이름 가나다순. 처음 열면 맨 위 사람(센터장)을 보여 준다.
-  const people = [...data.rows].sort((a, b) => {
+  const people = [...(data?.rows || [])].sort((a, b) => {
     const ca = (a.user.roles || []).includes('센터장') ? 0 : 1
     const cb = (b.user.roles || []).includes('센터장') ? 0 : 1
     return ca - cb || a.user.name.localeCompare(b.user.name, 'ko')
@@ -127,8 +161,15 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
     }
   }, [menu])
 
-  if (!row) return null
   const c = (name: string) => `${prefix}${name}`
+  if (monthNav && !data)
+    return (
+      <section className={sectionClass}>
+        <h2 className={titleClass}>달력</h2>
+        <p className={c('cal-hint')}>불러오는 중…</p>
+      </section>
+    )
+  if (!data || !row) return null
   const start = data.from
   const end = data.period === 'day' ? start : data.period === 'week' ? addDays(start, 6) : lastDayOfMonth(start)
   const cells: Array<string | null> = []
@@ -141,13 +182,31 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
     setMenu(null)
     if (!window.confirm(`${row.user.name}님의 ${fmtYmdShort(date)} 근태 기록을 지울까요?`)) return
     const res = await team.deleteDay(row.user.id, date)
+    if (res.ok && monthNav) await loadMonth()
     setMsg(res.ok ? `${fmtYmdShort(date)} 근태 기록을 지웠습니다.` : res.error || '지우지 못했습니다.')
   }
 
   return (
     <section className={sectionClass}>
       <div className={c('cal-top')}>
-        <h2 className={titleClass}>달력 · {data.label}</h2>
+        <h2 className={titleClass}>달력 · {monthNav ? `${Number(month.slice(0, 4))}년 ${Number(month.slice(5))}월` : data.label}</h2>
+        {monthNav && (
+          <div className={c('cal-nav')} role="group" aria-label="달 넘기기">
+            <button type="button" className={c('cal-navbtn')} onClick={() => setMonth(shiftMonth(month, -1))} aria-label="이전 달" title="이전 달">
+              ◀
+            </button>
+            <input className={`${selectClass} ${c('cal-month')}`} type="month" value={month} max={thisMonth} onChange={(e) => e.target.value && setMonth(e.target.value > thisMonth ? thisMonth : e.target.value)} aria-label="달 바로 고르기" title="달을 바로 고르기" />
+            <button type="button" className={c('cal-navbtn')} onClick={() => setMonth(shiftMonth(month, 1))} disabled={month >= thisMonth} aria-label="다음 달" title="다음 달">
+              ▶
+            </button>
+            {month !== thisMonth && (
+              <button type="button" className={c('cal-navbtn')} onClick={() => setMonth(thisMonth)}>
+                이번 달
+              </button>
+            )}
+            {monthLoading && <span className={c('cal-hint')}>불러오는 중…</span>}
+          </div>
+        )}
         <select className={selectClass} value={row.user.id} onChange={(e) => setUserId(e.target.value)} aria-label="달력에서 볼 직원">
           {people.map((r) => (
             <option key={r.user.id} value={r.user.id}>
@@ -247,6 +306,7 @@ export function TeamCalendar({ data, team, prefix = 'xs-', sectionClass = 'xs-pa
           onSave={async (v) => {
             const res = await team.editDay({ userId: row.user.id, workDate: editing, ...v })
             if (!res.ok) return res.error || '저장하지 못했습니다.'
+            if (monthNav) await loadMonth()
             setMsg(`${fmtYmdShort(editing)} 근태를 수정했습니다.`)
             setEditing(null)
             return null
